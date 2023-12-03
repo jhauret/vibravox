@@ -17,7 +17,7 @@ from torchmetrics import MetricCollection
 
 
 @hydra.main(
-    config_path="./configs",
+    config_path="configs",
     config_name="train_bwe.yaml",
     version_base="1.3",
 )

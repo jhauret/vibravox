@@ -1,0 +1,7 @@
+_target_: src.data.BWELightningDataModule
+
+dataset_name: "Cnam-LMSSC/vibravox",
+config_name: "BWE_In-ear_Comply_Foam_microphone"
+sample_rate: 16000
+batch_size: 32
+num_workers: 4
