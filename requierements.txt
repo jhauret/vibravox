@@ -7,3 +7,4 @@ rich>=13.5.2
 tensorboard>=2.14.0
 datasets[audio]>=2.15.0
 huggingface_hub[cli]>=0.0.12
+pytest>=7.4.3
