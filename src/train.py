@@ -36,7 +36,9 @@ def instantiate(
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.lightning_datamodule)
 
     # Instantiate Metrics
-    metrics: MetricCollection = MetricCollection(dict(hydra.utils.instantiate(cfg.metrics)))
+    metrics: MetricCollection = MetricCollection(
+        dict(hydra.utils.instantiate(cfg.metrics))
+    )
 
     # Instantiate LightningModule
     lightning_module: LightningModule = hydra.utils.instantiate(
@@ -47,7 +49,9 @@ def instantiate(
     # Instantiate all modules relative to the Trainer
     callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
     logger: TensorBoardLogger = hydra.utils.instantiate(cfg.logging.logger)
-    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial")
+    trainer: Trainer = hydra.utils.instantiate(
+        cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
+    )
 
     return trainer, lightning_module, datamodule
 
