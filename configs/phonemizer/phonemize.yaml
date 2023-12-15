@@ -1,0 +1,3 @@
+_target_: phonemizer.backend.EspeakBackend
+language: 'fr-fr'
+language_switch: 'remove-flags'

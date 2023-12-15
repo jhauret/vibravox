@@ -1,0 +1,17 @@
+_target_: dataloader.DataModule
+dataset_name: 'Cnam-LMSSC/vibravox' #'librispeech_asr' #'facebook/multilingual_librispeech'
+dataset_configuration: 'ASR_Temple_contact_microphone' #en: clean or other #'french'
+number_of_hours_train: -1 #en: {100, 360, 500} #fr: {1, 9} #-1 for all audios
+language: 'fr' #'en' #'9h+1h'
+max_input_length_in_sec: 10.0 #-1 for all audios (no_filter/)
+min_input_length_in_sec: 1.5 #0.0 for no minimum duration
+sampling_rate: 16000
+batch_size: ${batch_size}
+num_workers: ${num_workers}
+pin_memory: True
+processor_class: 'transformers.Wav2Vec2Processor'
+processor: '/configs/processor_config/wav2vec2processor'
+ckpt_path: ${ckpt}
+is_test: ${is_test}
+is_continue_training: ${is_continue_training}
+task_type: ${task_type}

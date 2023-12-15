@@ -1,0 +1,26 @@
+_target_: builtins.dict
+_args_:
+  - lr: ${lr}
+    model_name: ${neural_network.model.pretrained_model_name_or_path}
+    attention_dropout: ${neural_network.model.attention_dropout}
+    hidden_dropout: ${neural_network.model.hidden_dropout}
+    feat_proj_dropout: ${neural_network.model.feat_proj_dropout}
+    final_dropout: ${neural_network.model.final_dropout}
+    mask_time_prob: ${neural_network.model.mask_time_prob}
+    layerdrop: ${neural_network.model.layerdrop}
+    mask_feature_prob: ${neural_network.model.mask_feature_prob}
+    mask_feature_length: ${neural_network.model.mask_feature_length}
+    unfreeze_at_step: ${unfreeze_at_step}
+    gpus: ${trainer.gpus}
+    max_epochs: ${max_epochs}
+    gradient_accumulation: ${trainer.accumulate_grad_batches}
+    dataset_name: ${data_module.dataset_name}
+    dataset_configuration: ${data_module.dataset_configuration}
+    language: ${data_module.language}
+    max_input_length_in_sec: ${data_module.max_input_length_in_sec}
+    min_input_length_in_sec: ${data_module.min_input_length_in_sec}
+    sampling_rate: ${data_module.sampling_rate}
+    batch_size: ${data_module.batch_size}
+    num_workers: ${data_module.num_workers}
+    is_continue_training: ${is_continue_training}
+    task_type: ${task_type}

@@ -1,0 +1,26 @@
+_target_: asr_vibravox.NeuralNetwork
+
+model_class: 'transformers.Wav2Vec2ForCTC'
+unfreeze_at_step: ${unfreeze_at_step}
+ckpt_path: ${ckpt}
+lr: ${lr}
+is_test: ${is_test}
+is_continue_training: ${is_continue_training}
+task_type: ${task_type}
+
+model:
+  pretrained_model_name_or_path: 'facebook/wav2vec2-base-fr-voxpopuli-v2'
+  apply_spec_augment: True
+  ctc_loss_reduction: "mean"
+  attention_dropout: 0.1
+  hidden_dropout: 0.1
+  feat_proj_dropout: 0.1
+  final_dropout: 0
+  mask_time_prob: 0.75
+  layerdrop: 0.05
+  mask_feature_prob: 0.512
+  mask_feature_length: 64
+
+defaults:
+  - /optim/trapeze_lr_10min.yaml@scheduler
+  - /phonemizer/phonemize.yaml@phonemizer

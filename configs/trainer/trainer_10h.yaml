@@ -1,0 +1,18 @@
+_target_: pytorch_lightning.Trainer
+accelerator: "gpu"
+gpus: 4
+enable_progress_bar: True
+max_epochs: ${max_epochs}
+accumulate_grad_batches: 90
+enable_checkpointing: True
+strategy: "ddp"
+
+check_val_every_n_epoch: 10
+logger:
+  _target_: pytorch_lightning.loggers.TensorBoardLogger
+  save_dir: ${hydra:runtime.cwd}
+  name: outputs/vibravox_ds/
+  version: train/${now:%Y-%m-%d}/${now:%H-%M-%S}/logs
+callbacks:
+  - _target_: pytorch_lightning.callbacks.lr_monitor.LearningRateMonitor
+    logging_interval: "step"

@@ -1,0 +1,26 @@
+project_name: 'asr_vibravox'
+hydra:
+  run:
+    dir:
+      outputs/train/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+#main hparams
+ckpt: 2023-12-04/16-54-14/last-epoch=849 #/models
+lr: 1e-4
+unfreeze_at_step: 1000 #=1000 for 100~1000h, =100 for 10h, =50 for 10min~1h
+max_epochs: 850
+batch_size: 1
+num_workers: 4
+is_test: False
+is_continue_training: False
+task_type: 'phoneme' #Whether to do Speech-to-Text or Speech-to-Phoneme
+log_n_times_per_epoch: 4 #log once per epoch
+
+defaults:
+  - trainer: trainer_10h #trainer_10min
+  - neural_network: wav2vec2-base-fr-voxpopuli-v2_10h #wav2vec2-base-fr-voxpopuli-v2_10min
+  - data_module: data_module_10h #data_module_10min
+  - callbacks: callbacks_10h #callbacks_10min
+  - hparam_dict: hparam_dict
+  - list_unwanted_words: null #multilingual_librispeech_fr
+  - override hydra/job_logging: logging
