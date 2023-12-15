@@ -1,6 +1,6 @@
-# asr-vibravox
+# VibraVox
 
-Tâche d'ASR dans le cadre du développement du dataset Vibravox et du stage de Malo.
+Automatic Speech Recognition, Bandwidth Extension and Speaker Identification using the VibraVox dataset.
 
 ## Requirements
 ```pip install -r requirements.txt```
