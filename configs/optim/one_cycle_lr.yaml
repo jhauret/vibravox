@@ -1,4 +1,4 @@
-_target_: torch.optim.lr_scheduler.OneCycleLR
+_target_: torch.optim.scheduler.OneCycleLR
 max_epochs: ${max_epochs}
 anneal_strategy: "linear"
 pct_start: 1e-1

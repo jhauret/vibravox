@@ -13,7 +13,7 @@ from transformers.feature_extraction_sequence_utils import SequenceFeatureExtrac
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class VibravoxModelCheckpoint(ModelCheckpoint):
+class ASRCheckpoint(ModelCheckpoint):
     """
     Inherits ModelCheckpoint class and its attributes.
 
@@ -39,7 +39,7 @@ class VibravoxModelCheckpoint(ModelCheckpoint):
         save_on_train_epoch_end: Optional[bool] = None,
         every_n_val_epochs: Optional[int] = None,
     ):
-        super(VibravoxModelCheckpoint, self).__init__(
+        super().__init__(
             dirpath,
             filename,
             monitor,

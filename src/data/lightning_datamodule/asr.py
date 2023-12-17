@@ -26,7 +26,7 @@ data_path: str = "/home/Donnees/Data/asr_vibravox/"
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class DataModule(L.LightningDataModule):
+class ASRLightningDataModule(L.LightningDataModule):
     """
     Constructs a data_module. Inherits from LightningDataModule.
     The dataset is already prepared. The class just fetches it from the file system.

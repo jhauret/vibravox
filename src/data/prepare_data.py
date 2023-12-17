@@ -38,7 +38,7 @@ autres_symboles = [' ']
 alphabet_phonetique_francais = voyelles + in_an + semi_voyelles + consonnes + autres_symboles
 
 
-@hydra.main(config_path="configs", config_name="config")
+@hydra.main(config_path="../../configs", config_name="config")
 def main(cfg: DictConfig):
     """
     main downloads and extracts the dataset, splits them into {train, validation, test},

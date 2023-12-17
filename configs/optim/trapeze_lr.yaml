@@ -1,7 +1,7 @@
 max_epochs: ${max_epochs}
 
 trapeze:
-  _target_: lr_scheduler.tri_stage_lr_scheduler.TriStageLRScheduler
+  _target_: scheduler.tri_stage_lr_scheduler.TriStageLRScheduler
   init_lr: 1e-5
   peak_lr: 1e-4
   final_lr: 5e-7

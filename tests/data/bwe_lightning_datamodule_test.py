@@ -1,7 +1,7 @@
 import torch
 import hydra
 import pytest
-from src.data.bwe_lightning_datamodule import BWELightningDataModule
+from src.data.lightning_datamodule.bwe import BWELightningDataModule
 
 
 @pytest.fixture

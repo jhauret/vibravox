@@ -47,7 +47,7 @@ class NeuralNetwork(L.LightningModule):
         lr (float): The learning rate.
         model (kwargs): Parameters for instantiating the pre-trained model.
         model_class (str): The class of the model one wants to instantiate; expl: 'transformers.Wav2Vec2ForCTC'.
-        scheduler (torch.optim.lr_scheduler): Class for instantiating any scheduler one wants; expl: 'OneCycleLR'.
+        scheduler (torch.optim.scheduler): Class for instantiating any scheduler one wants; expl: 'OneCycleLR'.
         ckpt_path (str): Path for the checkpoint needed to load the model when testing.
         phonemizer (kwargs): Parameters for instantiating the phonemizer.phonemize class.
         nb_steps_per_epoch (int): Defaults to 1. Number of steps per epoch.
