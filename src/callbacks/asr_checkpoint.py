@@ -39,7 +39,7 @@ class ASRCheckpoint(ModelCheckpoint):
         save_on_train_epoch_end: Optional[bool] = None,
         every_n_val_epochs: Optional[int] = None,
     ):
-        super().__init__(
+        super(ASRCheckpoint, self).__init__(
             dirpath,
             filename,
             monitor,
