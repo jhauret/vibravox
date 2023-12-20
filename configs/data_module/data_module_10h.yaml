@@ -1,4 +1,4 @@
-_target_: dataloader.DataModule
+_target_: src.data.lightning_datamodule.asr.ASRLightningDataModule
 dataset_name: 'Cnam-LMSSC/vibravox' #'librispeech_asr' #'facebook/multilingual_librispeech'
 dataset_configuration: 'ASR_Temple_contact_microphone' #en: clean or other #'french'
 number_of_hours_train: -1 #en: {100, 360, 500} #fr: {1, 9} #-1 for all audios

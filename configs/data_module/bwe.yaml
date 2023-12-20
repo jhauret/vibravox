@@ -1,4 +1,4 @@
-_target_: src.data.BWELightningDataModule
+_target_: src.data.lightning_datamodule.asr.BWELightningDataModule
 
 dataset_name: "Cnam-LMSSC/vibravox",
 config_name: "BWE_In-ear_Comply_Foam_microphone"

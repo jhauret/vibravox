@@ -1,4 +1,4 @@
-project_name: 'asr_vibravox'
+project_name: 'asr'
 hydra:
   run:
     dir:

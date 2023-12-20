@@ -1,4 +1,4 @@
-_target_: asr_vibravox.NeuralNetwork
+_target_: src.lightning_module.asr.NeuralNetwork
 
 model_class: 'transformers.Wav2Vec2ForCTC'
 unfreeze_at_step: ${unfreeze_at_step}

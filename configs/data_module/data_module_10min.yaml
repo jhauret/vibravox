@@ -1,4 +1,4 @@
-_target_: dataloader.DataModule
+_target_: src.data.lightning_datamodule.asr.ASRLightningDataModule
 dataset_name: 'cnamLMSSC/vibravox'
 dataset_configuration: 'french'
 number_of_hours_train: 10min
