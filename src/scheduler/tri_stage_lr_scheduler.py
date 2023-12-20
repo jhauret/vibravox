@@ -25,6 +25,7 @@ from typing import Optional
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
+
 class TriStageLRScheduler(_LRScheduler):
     r"""
     Tri-Stage Learning Rate Scheduler. Implement the learning rate scheduler in "SpecAugment"
@@ -62,7 +63,6 @@ class TriStageLRScheduler(_LRScheduler):
 
         super(_LRScheduler, self).__init__()
         self.optimizer = optimizer
-        self.lr = init_lr
         self.init_lr = init_lr
         self.init_lr *= init_lr_scale
         self.final_lr = final_lr
