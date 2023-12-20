@@ -24,18 +24,37 @@ dir_path: str = str(os.path.abspath(os.path.dirname(os.path.abspath(__file__))))
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# Voyelles
-voyelles = ['i', 'e', 'ɛ', 'a', 'ɑ', 'o', 'ɔ', 'u', 'y', 'ø', 'œ', 'ə']
-# Ajouts pour "in" et "an"
-in_an = ['̃']
-# Semi-voyelles
-semi_voyelles = ['j', 'w']
-# Consonnes
-consonnes = ['p', 'b', 't', 'd', 'k', 'ɡ', 'f', 'v', 's', 'z', 'ʃ', 'ʒ', 'm', 'n', 'ɲ', 'ŋ', 'l', 'ʁ']
-# Autres symboles
-autres_symboles = [' ']
-# Liste complète
-alphabet_phonetique_francais = voyelles + in_an + semi_voyelles + consonnes + autres_symboles
+# French vowels
+vowels = ["i", "e", "ɛ", "a", "ɑ", "o", "ɔ", "u", "y", "ø", "œ", "ə"]
+# tilde
+tilde = ["̃"]
+# Semi-vowels
+semi_vowels = ["j", "w"]
+# French consonants
+consonants = [
+    "p",
+    "b",
+    "t",
+    "d",
+    "k",
+    "ɡ",
+    "f",
+    "v",
+    "s",
+    "z",
+    "ʃ",
+    "ʒ",
+    "m",
+    "n",
+    "ɲ",
+    "ŋ",
+    "l",
+    "ʁ",
+]
+# Other symbols
+other_symbols = [" "]
+# Complete list
+french_phonetic_alphabet = vowels + tilde + semi_vowels + consonants + other_symbols
 
 
 @hydra.main(config_path="../../configs", config_name="config")
@@ -101,12 +120,19 @@ def main(cfg: DictConfig):
         ld_eval = ld_eval.map(phonemize_characters, batched=True, batch_size=2_000)
         ld_test = ld_test.map(phonemize_characters, batched=True, batch_size=2_000)
 
-
         logger.info("Removing sentences with bad phonemes")
-        filter_for_french_phonetic_alphabet = lambda x: all(char in alphabet_phonetique_francais for char in x)
-        ld_train = ld_train.filter(filter_for_french_phonetic_alphabet, input_columns=["phoneme"])
-        ld_eval = ld_eval.filter(filter_for_french_phonetic_alphabet, input_columns=["phoneme"])
-        ld_test = ld_test.filter(filter_for_french_phonetic_alphabet, input_columns=["phoneme"])
+        filter_for_french_phonetic_alphabet = lambda x: all(
+            char in french_phonetic_alphabet for char in x
+        )
+        ld_train = ld_train.filter(
+            filter_for_french_phonetic_alphabet, input_columns=["phoneme"]
+        )
+        ld_eval = ld_eval.filter(
+            filter_for_french_phonetic_alphabet, input_columns=["phoneme"]
+        )
+        ld_test = ld_test.filter(
+            filter_for_french_phonetic_alphabet, input_columns=["phoneme"]
+        )
 
         logger.info(
             "Filtering labels by length (keeping only phonemized labels with more than 4 phonemes in order to avoid NaNs in CTC loss)"
