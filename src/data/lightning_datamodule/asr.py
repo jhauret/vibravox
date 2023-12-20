@@ -69,7 +69,7 @@ class ASRLightningDataModule(L.LightningDataModule):
         is_continue_training: bool = False,
         task_type: str = "phoneme",
     ):
-        super(DataModule, self).__init__()
+        super(ASRLightningDataModule, self).__init__()
         self.dataset_name: str = dataset_name
         self.dataset_configuration: str = dataset_configuration
         self.language: str = language
