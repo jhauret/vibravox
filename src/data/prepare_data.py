@@ -7,19 +7,15 @@ from typing import List, Union
 import datasets
 import hydra
 import pandas
-import phonemizer
+
+# import phonemizer
 import soundfile
 from omegaconf import DictConfig
 from torch.utils.data import Dataset
 
-# Set environment variables for Huggingface cache, for datasets (should be defined before importing datasets module)
-dir_huggingface_cache_path: str = "/home/Donnees/Data/Huggingface_cache"
-os.environ["HF_HOME"] = dir_huggingface_cache_path
-os.environ["HF_DATASETS_CACHE"] = f"{dir_huggingface_cache_path}/datasets"
-
 # Set environment variables for full trace of errors
 os.environ["HYDRA_FULL_ERROR"] = "1"
-data_path: str = "/home/Donnees/Data/asr_vibravox/"
+data_path: str = os.path.join(os.environ.get("HF_HOME"), "../asr_vibravox/")
 dir_path: str = str(os.path.abspath(os.path.dirname(os.path.abspath(__file__))))
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -57,7 +53,7 @@ other_symbols = [" "]
 french_phonetic_alphabet = vowels + tilde + semi_vowels + consonants + other_symbols
 
 
-@hydra.main(config_path="../../configs", config_name="config")
+@hydra.main(config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     """
     main downloads and extracts the dataset, splits them into {train, validation, test},
@@ -73,7 +69,6 @@ def main(cfg: DictConfig):
     ld_train = datasets.load_dataset(
         cfg.data_module.dataset_name,
         cfg.data_module.dataset_configuration,
-        # split="train.9h+train.1h"
         split=f"train.{str(cfg.data_module.number_of_hours_train)}"
         if not str(cfg.data_module.number_of_hours_train) == "-1"
         else "train",
@@ -89,13 +84,14 @@ def main(cfg: DictConfig):
         split="test",
     )
 
-    logger.info("Removing unwanted characters")
-    f_remove_unwanted_characters = lambda batch: remove_unwanted_characters(
-        batch, cfg.data_module.task_type
-    )
-    ld_train = ld_train.map(f_remove_unwanted_characters)
-    ld_eval = ld_eval.map(f_remove_unwanted_characters)
-    ld_test = ld_test.map(f_remove_unwanted_characters)
+    if "vibravox" not in cfg.data_module.dataset_name:
+        logger.info("Removing unwanted characters")
+        f_remove_unwanted_characters = lambda batch: remove_unwanted_characters(
+            batch, cfg.data_module.task_type
+        )
+        ld_train = ld_train.map(f_remove_unwanted_characters)
+        ld_eval = ld_eval.map(f_remove_unwanted_characters)
+        ld_test = ld_test.map(f_remove_unwanted_characters)
 
     def filter_dict_words(batch, list_str):
         for x in list_str:
@@ -114,7 +110,10 @@ def main(cfg: DictConfig):
         ld_eval = ld_eval.filter(f_filter_dict_words, input_columns=["text"])
         ld_test = ld_test.filter(f_filter_dict_words, input_columns=["text"])
 
-    if "vibravox" not in cfg.dataset_name and cfg.data_module.task_type == "phoneme":
+    if (
+        "vibravox" not in cfg.data_module.dataset_name
+        and cfg.data_module.task_type == "phoneme"
+    ):
         logger.info("Phonemizing texts")
         ld_train = ld_train.map(phonemize_characters, batched=True, batch_size=1_000)
         ld_eval = ld_eval.map(phonemize_characters, batched=True, batch_size=2_000)
@@ -176,7 +175,7 @@ def main(cfg: DictConfig):
 
         logger.info("Filtering audios by length")
 
-        if "vibravox" not in cfg.dataset_name:
+        if "vibravox" not in cfg.data_module.dataset_name:
             ld_train = ld_train.map(add_column_input_length)
             ld_eval = ld_eval.map(add_column_input_length)
             ld_test = ld_test.map(add_column_input_length)
