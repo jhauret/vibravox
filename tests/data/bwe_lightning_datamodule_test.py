@@ -3,10 +3,10 @@ import torch
 import lightning
 import hydra
 import pytest
-from vibravox.data.bwe_lightning_datamodule import BWELightningDataModule
+from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 
 
-@pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
+@pytest.fixture(params=os.listdir("./configs/lightning_datamodules"))
 def datamodule_config_name(request) -> str:
     return request.param
 

@@ -1,4 +1,4 @@
-_target_: vibravox.data.bwe_lightning_datamodule.BWELightningDataModule
+_target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 
 config_name: "bwe_in-ear_rigid_earpiece_microphone"
 streaming: True
