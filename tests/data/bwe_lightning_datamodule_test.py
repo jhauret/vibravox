@@ -17,12 +17,14 @@ from datasets import load_dataset, Audio
 #         return hydra.utils.instantiate(cfg)
 
 
-@pytest.fixture(params=["bwe_in-ear_rigid_earpiece_microphone"]) # , "bwe_throat_piezoelectric_sensor"
+@pytest.fixture(
+    params=["bwe_in-ear_rigid_earpiece_microphone"]
+)  # , "bwe_throat_piezoelectric_sensor"
 def config_name(request) -> str:
     return request.param
 
 
-@pytest.fixture(params=[False])
+@pytest.fixture(params=[True, False])
 def streaming(request) -> bool:
     return request.param
 
@@ -59,7 +61,6 @@ def bwe_lightning_datamodule_instance(
 
 
 class TestBWELightningDataModule:
-
     def test_dataset_returns_torch_tensor(self, bwe_lightning_datamodule_instance):
         bwe_lightning_datamodule_instance.setup()
         train_dataset = bwe_lightning_datamodule_instance.train_dataset
@@ -72,7 +73,8 @@ class TestBWELightningDataModule:
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         sample = next(iter(train_dataloder))
 
-        assert isinstance(sample["audio"]["array"], torch.Tensor)
+        assert isinstance(sample[0], torch.Tensor), "Expected two tensors in the batch."
+        assert isinstance(sample[1], torch.Tensor), "Expected two tensors in the batch."
 
     # def test_hydra_instantiation(self, hydra_lightning_datamodule_instance):
     #     bwe_lightning_datamodule_instance.setup()

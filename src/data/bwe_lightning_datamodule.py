@@ -38,24 +38,18 @@ class BWELightningDataModule(pl.LightningDataModule):
         datasets = load_dataset(
             self.DATASET_NAME, self.config_name, streaming=self.streaming
         )
-        datasets = datasets.remove_columns(
-            [
-                "audio_length",
-                "transcription",
-                "text",
-                "is_gold_transcript",
-                "num_channels",
-                "sensor_id",
-                "speaker_id",
-                "gender",
-                "is_speech",
-                "is_noisy",
-                "split",
-                "sentence_id",
-            ]
+
+        datasets = datasets.select_columns(["audio"])
+        datasets = datasets.cast_column(
+            "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
-        datasets = datasets.cast_column("audio", Audio(sampling_rate=self.sample_rate))
         datasets = datasets.with_format("torch")
+        datasets = datasets.map(
+            lambda sample: {
+                "body_conducted": sample["audio"]["array"][0, :],
+                "air_conducted": sample["audio"]["array"][1, :],
+            }
+        )
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]
@@ -66,7 +60,6 @@ class BWELightningDataModule(pl.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            shuffle=True,
             collate_fn=self.data_collator,
         )
 
@@ -75,7 +68,6 @@ class BWELightningDataModule(pl.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            shuffle=False,
             collate_fn=self.data_collator,
         )
 
@@ -84,10 +76,14 @@ class BWELightningDataModule(pl.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            shuffle=False,
             collate_fn=self.data_collator,
         )
 
     def data_collator(self, batch):
-        padded_batch = pad_sequence(batch["audio"], batch_first=True, padding_value=0.0)
-        return padded_batch
+        body_conducted_batch = [item["body_conducted"] for item in batch]
+        air_conducted_batch = [item["air_conducted"] for item in batch]
+
+        body_conducted_padded_batch = pad_sequence(body_conducted_batch, batch_first=True, padding_value=0.0)
+        air_conducted_padded_batch = pad_sequence(air_conducted_batch, batch_first=True, padding_value=0.0)
+
+        return [body_conducted_padded_batch, air_conducted_padded_batch]
