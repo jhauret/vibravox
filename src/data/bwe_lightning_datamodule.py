@@ -11,7 +11,7 @@ class BWELightningDataModule(pl.LightningDataModule):
     def __init__(
         self,
         config_name="bwe_in-ear_rigid_earpiece_microphone",
-        streaming=True,
+        streaming=False,
         sample_rate=16000,
         batch_size=32,
         num_workers=4,
