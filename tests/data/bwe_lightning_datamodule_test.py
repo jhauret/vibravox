@@ -6,7 +6,7 @@ import pytest
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 
 
-@pytest.fixture(params=os.listdir("./configs/lightning_datamodules"))
+@pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
 def datamodule_config_name(request) -> str:
     return request.param
 
