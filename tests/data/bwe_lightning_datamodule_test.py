@@ -1,20 +1,20 @@
+import os
 import torch
 import lightning
 import hydra
 import pytest
-from src.data.bwe_lightning_datamodule import BWELightningDataModule
-from datasets import load_dataset, Audio
+from vibravox.data.bwe_lightning_datamodule import BWELightningDataModule
 
-#
-# @pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
-# def datamodule_config_name(request) -> str:
-#     return request.param
-#
-# @pytest.fixture
-# def hydra_lightning_datamodule_instance(datamodule_config_name) -> lightning.LightningModule:
-#     with hydra.initialize(version_base="1.3", config_path="./configs/lightning_datamodule"):
-#         cfg = hydra.compose(config_name=datamodule_config_name)
-#         return hydra.utils.instantiate(cfg)
+
+@pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
+def datamodule_config_name(request) -> str:
+    return request.param
+
+@pytest.fixture
+def bwe_lightning_datamodule_instance_from_hydra(datamodule_config_name) -> lightning.LightningModule:
+    with hydra.initialize(version_base="1.3", config_path="../../configs/lightning_datamodule"):
+        cfg = hydra.compose(config_name=datamodule_config_name)
+        return hydra.utils.instantiate(cfg)
 
 
 @pytest.fixture(
@@ -76,9 +76,7 @@ class TestBWELightningDataModule:
         assert isinstance(sample[0], torch.Tensor), "Expected two tensors in the batch."
         assert isinstance(sample[1], torch.Tensor), "Expected two tensors in the batch."
 
-    # def test_hydra_instantiation(self, hydra_lightning_datamodule_instance):
-    #     bwe_lightning_datamodule_instance.setup()
-    #     train_dataset = bwe_lightning_datamodule_instance.train_dataset
-    #     sample = next(iter(train_dataset))
-    #
-    #     assert isinstance(sample["audio"], torch.Tensor)
+    def test_hydra_instantiation(self, bwe_lightning_datamodule_instance_from_hydra):
+        bwe_lightning_datamodule_instance_from_hydra.setup()
+
+        assert isinstance(bwe_lightning_datamodule_instance_from_hydra, BWELightningDataModule)
