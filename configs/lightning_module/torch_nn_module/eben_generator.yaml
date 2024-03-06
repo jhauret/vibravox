@@ -1,4 +1,4 @@
-_target_: vibravox.torch_modules.eben.GeneratorEBEN
+_target_: vibravox.torch_modules.eben_generator.GeneratorEBEN
 bands_nbr: 4
 active_bands: 1
 pqmf_ks: 32

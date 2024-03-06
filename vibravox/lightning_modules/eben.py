@@ -104,7 +104,7 @@ class EBENLightningModule(LightningModule):
         Method to configure optimizers and schedulers. Automatically called by Lightning's Trainer.
 
         Returns:
-            List[torch.optim.Optimizer]
+            List[torch.optimizer.Optimizer]
 
         """
 

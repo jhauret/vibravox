@@ -1,0 +1,5 @@
+_target_: pulse_ai.nnet.melgan_discriminators_modules.DiscriminatorMelganMultiScales
+
+sample_rate: ${sample_rate}
+scales: 3
+alpha_leaky_relu: 0.2
