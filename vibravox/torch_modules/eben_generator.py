@@ -1,8 +1,9 @@
 """ EBEN generator and sub blocks definition in Pytorch"""
 
 import torch
-from src.pqmf import PseudoQMFBanks
 from torch import nn
+
+from vibravox.torch_modules.pqmf import PseudoQMFBanks
 
 
 class GeneratorEBEN(nn.Module):
@@ -117,19 +118,15 @@ class GeneratorEBEN(nn.Module):
 
         # Recompose PQMF bands ( + avoiding any inplace operation for backprop )
         b, c, t = first_bands.shape  # (batch_size, channels, time_len)
-        fill_up_tensor = torch.zeros(
-            (b, self.pqmf.decimation - self.p, t), requires_grad=False
-        ).type_as(first_bands)
+        fill_up_tensor = torch.zeros((b, self.pqmf.decimation - self.p, t), requires_grad=False).type_as(first_bands)
         cat_tensor = torch.cat(tensors=(first_bands, fill_up_tensor), dim=1)
         enhanced_speech_decomposed = torch.tanh(x + cat_tensor)
-        enhanced_speech = torch.sum(
-            self.pqmf(enhanced_speech_decomposed, "synthesis"), 1, keepdim=True
-        )
+        enhanced_speech = torch.sum(self.pqmf(enhanced_speech_decomposed, "synthesis"), 1, keepdim=True)
 
         return enhanced_speech, enhanced_speech_decomposed
 
-    def cut_tensor(self, tensor):
-        """This function is used to make tensor's dim 2 len divisible by multiple"""
+    def cut_to_valid_length(self, tensor):
+        """This function is used to make a tensor divisible by the minimal chunk length"""
 
         old_len = tensor.shape[2]
         new_len = old_len - (old_len + self.pqmf.kernel_size) % self.multiple
@@ -247,7 +244,7 @@ if __name__ == "__main__":
     # Instantiate tensor with shape: (batch_size, channel, time_len)
     corrupted_signal = torch.randn((5, 1, 60000))
     #  cut tensor to ensure forward pass run well
-    corrupted_signal = generator.cut_tensor(corrupted_signal)
+    corrupted_signal = generator.cut_to_valid_length(corrupted_signal)
 
     # Test forward of model
     enhanced_signal, enhanced_signal_decomposed = generator(corrupted_signal)

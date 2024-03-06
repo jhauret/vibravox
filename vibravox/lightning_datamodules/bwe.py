@@ -1,6 +1,6 @@
-from datasets import load_dataset, Audio
-from torch.nn.utils.rnn import pad_sequence
 import pytorch_lightning as pl
+from datasets import Audio, load_dataset
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
 
@@ -35,14 +35,10 @@ class BWELightningDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
 
     def setup(self, stage=None):
-        datasets = load_dataset(
-            self.DATASET_NAME, self.config_name, streaming=self.streaming
-        )
+        datasets = load_dataset(self.DATASET_NAME, self.config_name, streaming=self.streaming)
 
         datasets = datasets.select_columns(["audio"])
-        datasets = datasets.cast_column(
-            "audio", Audio(sampling_rate=self.sample_rate, mono=False)
-        )
+        datasets = datasets.cast_column("audio", Audio(sampling_rate=self.sample_rate, mono=False))
         datasets = datasets.with_format("torch")
         datasets = datasets.map(
             lambda sample: {

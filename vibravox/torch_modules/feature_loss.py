@@ -18,9 +18,7 @@ class FeatureLossForDiscriminatorMelganMultiScales(torch.nn.Module):
 
         self.l1 = nn.L1Loss()
 
-    def forward(
-        self, embeddings_a: List[List[torch.Tensor]], embeddings_b: List[List[torch.Tensor]]
-    ) -> torch.Tensor:
+    def forward(self, embeddings_a: List[List[torch.Tensor]], embeddings_b: List[List[torch.Tensor]]) -> torch.Tensor:
         """
 
         Args:
@@ -35,12 +33,8 @@ class FeatureLossForDiscriminatorMelganMultiScales(torch.nn.Module):
         feature_loss = 0.0
 
         for scale_a, scale_b in zip(embeddings_a, embeddings_b):
-            for layer_a, layer_b in zip(
-                scale_a[1:-1], scale_b[1:-1]
-            ):  # Do not consider audio and certainties
-                feature_loss = feature_loss + self.l1(layer_a, layer_b) / torch.mean(
-                    torch.abs(layer_a)
-                )
+            for layer_a, layer_b in zip(scale_a[1:-1], scale_b[1:-1]):  # Do not consider audio and certainties
+                feature_loss = feature_loss + self.l1(layer_a, layer_b) / torch.mean(torch.abs(layer_a))
 
         # Divide by number of layers and scales
         feature_loss = feature_loss / (len(embeddings_a) * len(scale_a[1:-1]))
