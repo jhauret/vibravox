@@ -2,7 +2,7 @@ _target_: lightning.Trainer
 accelerator: gpu
 num_nodes: 1
 devices: '0,'
-strategy: 'ddp'
+strategy: 'ddp_find_unused_parameters_true'
 max_epochs: -1
 # limit_test_batches: 0.05
 #check_val_every_n_epoch: 2

@@ -32,8 +32,8 @@ class EBENLightningModule(LightningModule):
         self.discriminator_optimizer: torch.optim.Optimizer = discriminator_optimizer(
             params=self.discriminator.parameters()
         )
-        self.adversarial_loss = FeatureLossForDiscriminatorMelganMultiScales()
-        self.feature_matching_loss = HingeLossForDiscriminatorMelganMultiScales()
+        self.feature_matching_loss = FeatureLossForDiscriminatorMelganMultiScales()
+        self.adversarial_loss = HingeLossForDiscriminatorMelganMultiScales()
 
         self.automatic_optimization = False
 
@@ -57,8 +57,10 @@ class EBENLightningModule(LightningModule):
 
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
         decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
-        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech[:, 1:, :], audio=enhanced_speech)
-        reference_embeddings = self.discriminator(bands=decomposed_reference_speech[:, 1:, :], audio=reference_speech)
+        # enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech[:, 1:, :], audio=enhanced_speech)
+        # reference_embeddings = self.discriminator(bands=decomposed_reference_speech[:, 1:, :], audio=reference_speech)
+        enhanced_embeddings = self.discriminator(enhanced_speech)
+        reference_embeddings = self.discriminator(reference_speech)
 
         # Compute adversarial_loss
         adv_loss_gen = self.adversarial_loss(embeddings=enhanced_embeddings, target=1)

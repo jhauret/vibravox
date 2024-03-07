@@ -3,5 +3,5 @@ _target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 config_name: "bwe_in-ear_rigid_earpiece_microphone"
 streaming: True
 sample_rate: 16000
-batch_size: 32
+batch_size: 2
 num_workers: 4
