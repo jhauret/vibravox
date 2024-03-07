@@ -6,3 +6,6 @@ gen
 
 # Pyenv
 .python-version
+
+# run outputs
+run_outputs
