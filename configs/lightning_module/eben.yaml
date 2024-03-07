@@ -1,7 +1,7 @@
 _target_: vibravox.lightning_modules.eben.EBENLightningModule
 
 defaults:
-  - torch_nn_module@lightning_module.generator: eben_generator
-  - torch_nn_module@lightning_module.discriminator: melgan_multi_scales
-  - optimizer@lightning_module.generator_optimizer: adam
-  - optimizer@lightning_module.discriminator_optimizer: adam
+  - torch_nn_module@generator: eben_generator
+  - torch_nn_module@discriminator: melgan_multi_scales
+  - optimizer@generator_optimizer: adam
+  - optimizer@discriminator_optimizer: adam
