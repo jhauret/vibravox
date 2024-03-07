@@ -21,19 +21,15 @@ from torchmetrics import MetricCollection
     config_name="train_bwe.yaml",
     version_base="1.3",
 )
-def instantiate(
-    cfg: DictConfig,
-) -> Tuple[Trainer, LightningModule, LightningDataModule]:
+def main(cfg: DictConfig):
     """
     Instantiate all necessary modules for training
 
     Args:
-        cfg (DictConfig): Hydra configuration object
-    Returns
-        Tuple[Trainer, LightningModule, LightningDataModule]: Trainer, LightningModule, LightningDataModule
+        cfg (DictConfig): Hydra configuration object, passed in by the @hydra.main decorator
     """
     # Instantiate LightningDataModule
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.lightning_datamodule)
+    lightning_datamodule: LightningDataModule = hydra.utils.instantiate(cfg.lightning_datamodule)
 
     # Instantiate Metrics
     # metrics: MetricCollection = MetricCollection(
@@ -55,7 +51,11 @@ def instantiate(
                                                _convert_="partial"
     )
 
-    return trainer, lightning_module, datamodule
+    # Train the model ⚡
+    trainer.fit(lightning_module, datamodule=lightning_datamodule)
+
+    # Test the model
+    trainer.test(ckpt_path="best")
 
 
 def setup_environment():
@@ -78,14 +78,8 @@ def setup_environment():
 
 
 if __name__ == "__main__":
-    # Setup environment
+
     setup_environment()
+    main()
 
-    # Instantiate three main modules
-    trainer, lightning_module, datamodule = instantiate()
 
-    # Train the model ⚡
-    trainer.fit(lightning_module, datamodule=datamodule)
-
-    # Test the model
-    trainer.test(ckpt_path="best")
