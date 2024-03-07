@@ -7,14 +7,14 @@ from vibravox.torch_modules.pqmf import PseudoQMFBanks
 
 
 class GeneratorEBEN(nn.Module):
-    def __init__(self, m: int, n: int, p: int = 1):
+    def __init__(self, m: int, n: int, p: int):
         """
         Generator of EBEN
 
         Args:
             m: The number of PQMF bands, which is also the decimation factor of the waveform after the analysis step
-            n: The kernel size of PQMF
             p: The number of informative PMQF bands sent to the generator
+            n: The kernel size of PQMF
         """
         super().__init__()
 
