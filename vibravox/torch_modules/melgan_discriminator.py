@@ -12,7 +12,7 @@ import torch.nn as nn
 from torchaudio.transforms import Resample
 
 
-class DiscriminatorMelganMultiScales(nn.Module):
+class MelganMultiScalesDiscriminator(nn.Module):
     def __init__(self, sample_rate: int, scales: int = 3, alpha_leaky_relu: float = 0.2):
         """
         Aggregation of multiple MelGAN discriminators to extract features at multiple scales

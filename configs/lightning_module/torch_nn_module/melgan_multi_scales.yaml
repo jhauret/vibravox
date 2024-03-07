@@ -1,4 +1,4 @@
-_target_: pulse_ai.nnet.melgan_discriminators_modules.DiscriminatorMelganMultiScales
+_target_: vibravox.torch_modules.melgan_discriminator.MelganMultiScalesDiscriminator
 
 sample_rate: ${sample_rate}
 scales: 3
