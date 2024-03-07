@@ -68,13 +68,15 @@ class TestBWELightningDataModule:
 
         assert isinstance(sample["audio"]["array"], torch.Tensor)
 
-    def test_dataloader_returns_torch_tensor(self, bwe_lightning_datamodule_instance):
+    def test_dataloader_returns_format(self, bwe_lightning_datamodule_instance):
         bwe_lightning_datamodule_instance.setup()
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         sample = next(iter(train_dataloder))
 
         assert isinstance(sample[0], torch.Tensor), "Expected two tensors in the batch."
         assert isinstance(sample[1], torch.Tensor), "Expected two tensors in the batch."
+        assert sample[0].shape == sample[1].shape, "Expected the same number of samples in both tensors."
+        assert sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
 
     def test_hydra_instantiation(self, bwe_lightning_datamodule_instance_from_hydra):
         bwe_lightning_datamodule_instance_from_hydra.setup()
