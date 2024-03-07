@@ -9,7 +9,7 @@ hydra:
   job:
     chdir: True # change working directory to the job directory
   run:
-    dir: "outputs/bwe/${now:%Y-%m-%d_%H-%M-%S}"
+    dir: "run_outputs/bwe/${now:%Y-%m-%d_%H-%M-%S}"
 
 
 # Composing configs
