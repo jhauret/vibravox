@@ -6,7 +6,7 @@ from torch import nn
 from vibravox.torch_modules.pqmf import PseudoQMFBanks
 
 
-class GeneratorEBEN(nn.Module):
+class EBENGenerator(nn.Module):
     def __init__(self, m: int, n: int, p: int):
         """
         Generator of EBEN
@@ -236,19 +236,3 @@ def normalized_conv1d(*args, **kwargs):
 def normalized_conv_trans1d(*args, **kwargs):
     return nn.utils.parametrizations.weight_norm(nn.ConvTranspose1d(*args, **kwargs))
 
-
-if __name__ == "__main__":
-    # Instantiate nn.module
-    generator = GeneratorEBEN(m=4, n=32, p=1)
-
-    # Instantiate tensor with shape: (batch_size, channel, time_len)
-    corrupted_signal = torch.randn((5, 1, 60000))
-    #  cut tensor to ensure forward pass run well
-    corrupted_signal = generator.cut_to_valid_length(corrupted_signal)
-
-    # Test forward of model
-    enhanced_signal, enhanced_signal_decomposed = generator(corrupted_signal)
-
-    # Number of parameters
-    pytorch_total_params = sum(p.numel() for p in generator.parameters())
-    print(f"pytorch_total_params: {pytorch_total_params * 1e-6:.2f} Millions")

@@ -1,4 +1,4 @@
-_target_: vibravox.torch_modules.eben_generator.GeneratorEBEN
+_target_: vibravox.torch_modules.eben_generator.EBENGenerator
 m: 4  # Number of subbands
 p: 1 # Number of information bands
 n: 32 # Kernel size of the PQMF

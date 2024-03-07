@@ -15,7 +15,7 @@ class TestBWELightningDataModule:
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         sample = next(iter(train_dataloder))
 
-        assert isinstance(sample, tuple), "Expected a tuple."
+        assert isinstance(sample, list), "Expected a tuple."
         assert all([isinstance(sample[0], torch.Tensor), isinstance(sample[1], torch.Tensor)]), "Expected all elements in the tuple to be torch.Tensor."
         assert sample[0].shape == sample[1].shape, "Expected the same number of samples in both tensors."
         assert sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
