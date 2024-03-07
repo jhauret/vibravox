@@ -1,16 +1,16 @@
-_target_: pytorch_lightning.Trainer
-gpus: '0,' #'0, 1, 2, 3' #chose your GPUs (by bus ordering) #'3,'
-strategy: ddp
-log_every_n_steps: 200
-max_epochs: 13
+_target_: lightning.Trainer
+accelerator: gpu
+num_nodes: 1
+devices: '0,'
+strategy: 'ddp'
+max_epochs: -1
+# limit_test_batches: 0.05
 #check_val_every_n_epoch: 2
 #overfit_batches: 1
 #track_grad_norm: 1
 #precision: 64
 #accumulate_grad_batches: 2
-#val_check_interval: 0.2
-#limit_train_batches: 1
-#limit_val_batches: 0
-#limit_test_batches: 0.1
+# limit_train_batches: 50
+# limit_val_batches: 10
 #weights_summary: "full"
 #precision=16
