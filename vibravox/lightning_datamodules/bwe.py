@@ -82,4 +82,4 @@ class BWELightningDataModule(LightningDataModule):
         body_conducted_padded_batch = pad_sequence(body_conducted_batch, batch_first=True, padding_value=0.0)
         air_conducted_padded_batch = pad_sequence(air_conducted_batch, batch_first=True, padding_value=0.0)
 
-        return [body_conducted_padded_batch, air_conducted_padded_batch]
+        return [body_conducted_padded_batch.unsqueeze(1), air_conducted_padded_batch.unsqueeze(1)]
