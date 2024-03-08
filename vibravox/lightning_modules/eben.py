@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any
+from typing import Any, Dict
 
 import torch
 from lightning import LightningModule
@@ -181,6 +181,8 @@ class EBENLightningModule(LightningModule):
             prog_bar=True,
         )
 
+        self.log_audio(prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx)
+
     def log_dict(self, *args, **kwargs):
         """
         Logging passed dictionary and adding prefix on logging name if defined
@@ -194,3 +196,28 @@ class EBENLightningModule(LightningModule):
         else:
             return super().log_dict(*args, **kwargs)
 
+
+    @staticmethod
+    def ready_to_log(audio_tensor):
+        audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
+        return audio_tensor
+
+    def log_audio(self, speech_dict: Dict[str, torch.Tensor], prefix: str, batch_idx: int = 0):
+        """
+        Log the first audio of the batch of every speech_dict values to tensorboard.
+
+        Args:
+            speech_dict (Dict[str, torch.Tensor]): Dictionary of tensors of shape (batch_size, channels, samples)
+            prefix (str): Prefix to be added to the name of the audio
+            batch_idx (int): Batch index to be added to the global_step as `self.trainer.global_step` only counts optimizer steps
+        """
+
+        if self.logger:
+            for speech_name, speech_tensor in speech_dict.items():
+                speech_tensor = self.ready_to_log(speech_tensor)
+                self.logger.experiment.add_audio(
+                    tag=f"{prefix}{speech_name}",
+                    snd_tensor=speech_tensor,
+                    global_step=self.trainer.global_step + batch_idx,
+                    sample_rate=self.sample_rate,
+                )
