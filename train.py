@@ -43,10 +43,9 @@ def main(cfg: DictConfig):
     )
 
     # Instantiate all modules relative to the Trainer
-    #callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
+    callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
     #logger: TensorBoardLogger = hydra.utils.instantiate(cfg.logging.logger)
-    trainer: Trainer = hydra.utils.instantiate(cfg.trainer,
-                                               #callbacks=callbacks,
+    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks,
                                              #  logger=logger,
                                                _convert_="partial"
     )

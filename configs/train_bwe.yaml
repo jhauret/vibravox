@@ -17,4 +17,7 @@ defaults:
   - lightning_datamodule: bwe
   - lightning_module: eben
   - trainer: ddp
+  - callbacks: #dict of callbacks
+      # - checkpoint
+      - rich_model_summary
   - _self_ # priority is given to train.yaml for overrides
