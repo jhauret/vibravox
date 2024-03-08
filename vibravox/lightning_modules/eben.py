@@ -15,6 +15,7 @@ from vibravox.torch_modules.hinge_loss import HingeLossForDiscriminatorMelganMul
 class EBENLightningModule(LightningModule):
     def __init__(
         self,
+        sample_rate: int,
         generator: torch.nn.Module,
         discriminator: torch.nn.Module,
         generator_optimizer: partial[torch.optim.Optimizer],
@@ -25,6 +26,7 @@ class EBENLightningModule(LightningModule):
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
 
         Args:
+            sample_rate (int): Sample rate of the audio
             generator (torch.nn.Module): Neural network to enhance the speech
             discriminator (torch.nn.Module): Neural networks to discriminate between real and fake audio
             generator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the generator
@@ -33,6 +35,7 @@ class EBENLightningModule(LightningModule):
         """
         super().__init__()
 
+        self.sample_rate: int = sample_rate
         self.generator: torch.nn.Module = generator
         self.discriminator: torch.nn.Module = discriminator
         self.generator_optimizer: torch.optim.Optimizer = generator_optimizer(

@@ -1,5 +1,7 @@
 _target_: vibravox.lightning_modules.eben.EBENLightningModule
 
+sample_rate: ${sample_rate}
+
 defaults:
   - torch_nn_module@generator: eben_generator
   - torch_nn_module@discriminator: melgan_multi_scales

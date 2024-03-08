@@ -8,3 +8,4 @@ tensorboard>=2.14.0
 datasets[audio]>=2.18.0
 huggingface_hub[cli]>=0.0.12
 pytest>=7.4.3
+torch_stoi==0.2.1
