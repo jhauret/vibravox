@@ -20,7 +20,8 @@ defaults:
   - callbacks: #dict of callbacks
       # - checkpoint
       - rich_model_summary
-  - logger: tensorboard
+  - logging: tensorboard
   - metrics:
     - noresqa_mos
+    - stoi
   - _self_ # priority is given to train.yaml for overrides

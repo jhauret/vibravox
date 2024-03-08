@@ -1,6 +1,6 @@
 log_every_n_steps: 10
 
-tensorboard_logger:
+logger:
   _target_: lightning.pytorch.loggers.tensorboard.TensorBoardLogger
   save_dir: "tensorboard/"
   name: null

@@ -45,8 +45,9 @@ class BWELightningDataModule(LightningDataModule):
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
         datasets = datasets.with_format("torch")
-        datasets = datasets.map(
-            lambda sample: {
+
+        def foo(sample):
+            return {
                 "body_conducted": self.set_audio_duration(
                     audio=sample["audio"]["array"][0, :],
                     desired_duration=3,
@@ -58,7 +59,8 @@ class BWELightningDataModule(LightningDataModule):
                     deterministic=False,
                 ),
             }
-        )
+
+        datasets = datasets.map(foo)
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]
