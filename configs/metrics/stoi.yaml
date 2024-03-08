@@ -1,5 +1,5 @@
 pytorch_stoi:
-  _target_: vibravox.metrics.pytorch_stoi.PytorchSTOI
+  _target_: vibravox.metrics.stoi.PytorchSTOI
   sample_rate: ${sample_rate}
   use_vad: True
   extended: True
