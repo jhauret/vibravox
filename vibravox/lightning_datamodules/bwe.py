@@ -1,4 +1,3 @@
-import torch
 from lightning import LightningDataModule
 from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
@@ -94,7 +93,8 @@ class BWELightningDataModule(LightningDataModule):
             collate_fn=self.data_collator,
         )
 
-    def data_collator(self, batch):
+    @staticmethod
+    def data_collator(batch):
         body_conducted_batch = [item["body_conducted"] for item in batch]
         air_conducted_batch = [item["air_conducted"] for item in batch]
 
