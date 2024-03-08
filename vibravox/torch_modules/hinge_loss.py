@@ -36,6 +36,8 @@ class HingeLossForDiscriminatorMelganMultiScales(torch.nn.Module):
 
         for scale_embedding in embeddings:
             certainties = scale_embedding[-1]
-            hinge_loss = hinge_loss + self.relu(1 - target * certainties).mean()  # across time
+            hinge_loss = (
+                hinge_loss + self.relu(1 - target * certainties).mean()
+            )  # across time
 
         return hinge_loss / len(embeddings)

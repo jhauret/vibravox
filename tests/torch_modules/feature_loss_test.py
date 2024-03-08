@@ -1,5 +1,6 @@
 import torch
 
+
 class TestHingeLossForDiscriminatorMelganMultiScales:
     def test_forward(
         self,

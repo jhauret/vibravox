@@ -36,15 +36,27 @@ class BWELightningDataModule(LightningDataModule):
         self.num_workers = num_workers
 
     def setup(self, stage=None):
-        datasets = load_dataset(self.DATASET_NAME, self.config_name, streaming=self.streaming)
+        datasets = load_dataset(
+            self.DATASET_NAME, self.config_name, streaming=self.streaming
+        )
 
         datasets = datasets.select_columns(["audio"])
-        datasets = datasets.cast_column("audio", Audio(sampling_rate=self.sample_rate, mono=False))
+        datasets = datasets.cast_column(
+            "audio", Audio(sampling_rate=self.sample_rate, mono=False)
+        )
         datasets = datasets.with_format("torch")
         datasets = datasets.map(
             lambda sample: {
-                "body_conducted": self.set_audio_duration(audio=sample["audio"]["array"][0, :],desired_duration=3, deterministic=False),
-                "air_conducted": self.set_audio_duration(audio=sample["audio"]["array"][1, :],desired_duration=3, deterministic=False),
+                "body_conducted": self.set_audio_duration(
+                    audio=sample["audio"]["array"][0, :],
+                    desired_duration=3,
+                    deterministic=False,
+                ),
+                "air_conducted": self.set_audio_duration(
+                    audio=sample["audio"]["array"][1, :],
+                    desired_duration=3,
+                    deterministic=False,
+                ),
             }
         )
 
@@ -80,12 +92,21 @@ class BWELightningDataModule(LightningDataModule):
         body_conducted_batch = [item["body_conducted"] for item in batch]
         air_conducted_batch = [item["air_conducted"] for item in batch]
 
-        body_conducted_padded_batch = pad_sequence(body_conducted_batch, batch_first=True, padding_value=0.0)
-        air_conducted_padded_batch = pad_sequence(air_conducted_batch, batch_first=True, padding_value=0.0)
+        body_conducted_padded_batch = pad_sequence(
+            body_conducted_batch, batch_first=True, padding_value=0.0
+        )
+        air_conducted_padded_batch = pad_sequence(
+            air_conducted_batch, batch_first=True, padding_value=0.0
+        )
 
-        return [body_conducted_padded_batch.unsqueeze(1), air_conducted_padded_batch.unsqueeze(1)]
+        return [
+            body_conducted_padded_batch.unsqueeze(1),
+            air_conducted_padded_batch.unsqueeze(1),
+        ]
 
-    def set_audio_duration(self, audio: torch.Tensor, desired_duration: float, deterministic: bool = False):
+    def set_audio_duration(
+        self, audio: torch.Tensor, desired_duration: float, deterministic: bool = False
+    ):
         """
         Make the audio signal have the desired duration.
 
@@ -106,20 +127,19 @@ class BWELightningDataModule(LightningDataModule):
                 offset_time_len = torch.randint(
                     low=0, high=original_time_len - desired_time_len + 1, size=(1,)
                 )
-            audio = audio[offset_time_len: offset_time_len + desired_time_len]
+            audio = audio[offset_time_len : offset_time_len + desired_time_len]
 
         # If the signal is shorter than the desired duration, pad the signal with zeros
         else:
             num_zeros_left = desired_time_len - original_time_len // 2
             audio = torch.nn.functional.pad(
                 audio,
-                pad=(num_zeros_left, desired_time_len - original_time_len - num_zeros_left),
+                pad=(
+                    num_zeros_left,
+                    desired_time_len - original_time_len - num_zeros_left,
+                ),
                 mode="constant",
                 value=0,
             )
 
         return audio
-
-
-
-

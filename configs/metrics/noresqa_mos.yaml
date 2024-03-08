@@ -1,0 +1,3 @@
+noresqa_mos:
+  _target_: vibravox.metrics.noresqa_mos.NoresqaMOS
+  sample_rate: ${sample_rate}

@@ -118,10 +118,14 @@ class EBENGenerator(nn.Module):
 
         # Recompose PQMF bands ( + avoiding any inplace operation for backprop )
         b, c, t = first_bands.shape  # (batch_size, channels, time_len)
-        fill_up_tensor = torch.zeros((b, self.pqmf.decimation - self.p, t), requires_grad=False).type_as(first_bands)
+        fill_up_tensor = torch.zeros(
+            (b, self.pqmf.decimation - self.p, t), requires_grad=False
+        ).type_as(first_bands)
         cat_tensor = torch.cat(tensors=(first_bands, fill_up_tensor), dim=1)
         enhanced_speech_decomposed = torch.tanh(x + cat_tensor)
-        enhanced_speech = torch.sum(self.pqmf(enhanced_speech_decomposed, "synthesis"), 1, keepdim=True)
+        enhanced_speech = torch.sum(
+            self.pqmf(enhanced_speech_decomposed, "synthesis"), 1, keepdim=True
+        )
 
         return enhanced_speech, enhanced_speech_decomposed
 
@@ -235,4 +239,3 @@ def normalized_conv1d(*args, **kwargs):
 
 def normalized_conv_trans1d(*args, **kwargs):
     return nn.utils.parametrizations.weight_norm(nn.ConvTranspose1d(*args, **kwargs))
-

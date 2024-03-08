@@ -48,8 +48,12 @@ class PseudoQMFBanks(nn.Module):
         # real initializations are found below
         self._cutoff_ratio = self.initialize_cutoff_ratio()
         analysis_weights, synthesis_weights = self.initialize_pqmf_bank()
-        self.analysis_weights = nn.parameter.Parameter(data=analysis_weights, requires_grad=False)
-        self.synthesis_weights = nn.parameter.Parameter(data=synthesis_weights, requires_grad=False)
+        self.analysis_weights = nn.parameter.Parameter(
+            data=analysis_weights, requires_grad=False
+        )
+        self.synthesis_weights = nn.parameter.Parameter(
+            data=synthesis_weights, requires_grad=False
+        )
 
     @property
     def kernel_size(self):
@@ -71,11 +75,14 @@ class PseudoQMFBanks(nn.Module):
         """
 
         kaiser = torch.ones(1, 1, self._kernel_size, dtype=torch.double)
-        kaiser[0, 0, :] = torch.kaiser_window(self._kernel_size, periodic=False, beta=self._beta, requires_grad=True)
+        kaiser[0, 0, :] = torch.kaiser_window(
+            self._kernel_size, periodic=False, beta=self._beta, requires_grad=True
+        )
 
         sinc = torch.ones(1, 1, self._kernel_size)
         sinc[0, 0, :] = cutoff_ratio * torch.special.sinc(
-            cutoff_ratio * (torch.arange(self._kernel_size) - (self._kernel_size - 1) / 2)
+            cutoff_ratio
+            * (torch.arange(self._kernel_size) - (self._kernel_size - 1) / 2)
         )
 
         prototype = torch.ones(1, 1, self._kernel_size)
@@ -119,7 +126,9 @@ class PseudoQMFBanks(nn.Module):
         cutoff_ratio_lbfgs = torch.ones(1) / (2 * self._decimation)
         cutoff_ratio_lbfgs.requires_grad = True
 
-        optimizer = torch.optim.LBFGS([cutoff_ratio_lbfgs], line_search_fn="strong_wolfe")
+        optimizer = torch.optim.LBFGS(
+            [cutoff_ratio_lbfgs], line_search_fn="strong_wolfe"
+        )
 
         # Perform 5 optimization steps to find the optimal cutoff_ratio
         for _ in range(5):
@@ -248,9 +257,18 @@ if __name__ == "__main__":
 
     # Statistics
     print(f"Original signal length: {audio.shape[2]} with {audio.shape[1]} channel")
-    print(f"Decomposed signal length: {audio_decomposed.shape[2]} with {audio_decomposed.shape[1]} channels")
-    print(f"Recomposed signal length: {audio_recomposed.shape[2]} with {audio_recomposed.shape[1]} channel")
-    snr = 10 * torch.log10((audio_recomposed ** 2).mean() / ((audio - audio_recomposed) ** 2).mean()).item()
+    print(
+        f"Decomposed signal length: {audio_decomposed.shape[2]} with {audio_decomposed.shape[1]} channels"
+    )
+    print(
+        f"Recomposed signal length: {audio_recomposed.shape[2]} with {audio_recomposed.shape[1]} channel"
+    )
+    snr = (
+        10
+        * torch.log10(
+            (audio_recomposed ** 2).mean() / ((audio - audio_recomposed) ** 2).mean()
+        ).item()
+    )
     print(f"SNR of chirp_recomposed: {snr:.2f}dB")
     pqmf_params = sum(p.numel() for p in pqmf.parameters())
     print(f"PQMF params: {pqmf_params}")

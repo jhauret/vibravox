@@ -16,11 +16,17 @@ class TestBWELightningDataModule:
         sample = next(iter(train_dataloder))
 
         assert isinstance(sample, list), "Expected a tuple."
-        assert all([isinstance(sample[0], torch.Tensor), isinstance(sample[1], torch.Tensor)]), "Expected all elements in the tuple to be torch.Tensor."
-        assert sample[0].shape == sample[1].shape, "Expected the same number of samples in both tensors."
+        assert all(
+            [isinstance(sample[0], torch.Tensor), isinstance(sample[1], torch.Tensor)]
+        ), "Expected all elements in the tuple to be torch.Tensor."
+        assert (
+            sample[0].shape == sample[1].shape
+        ), "Expected the same number of samples in both tensors."
         assert sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
 
     def test_hydra_instantiation(self, bwe_lightning_datamodule_instance_from_hydra):
         bwe_lightning_datamodule_instance_from_hydra.setup()
 
-        assert isinstance(bwe_lightning_datamodule_instance_from_hydra, BWELightningDataModule)
+        assert isinstance(
+            bwe_lightning_datamodule_instance_from_hydra, BWELightningDataModule
+        )

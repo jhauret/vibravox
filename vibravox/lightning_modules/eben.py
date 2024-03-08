@@ -1,9 +1,14 @@
 from functools import partial
+from typing import Any
 
 import torch
 from lightning import LightningModule
+from lightning.pytorch.utilities.types import STEP_OUTPUT
+from torchmetrics import MetricCollection
 
-from vibravox.torch_modules.feature_loss import FeatureLossForDiscriminatorMelganMultiScales
+from vibravox.torch_modules.feature_loss import (
+    FeatureLossForDiscriminatorMelganMultiScales,
+)
 from vibravox.torch_modules.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
 
 
@@ -14,6 +19,7 @@ class EBENLightningModule(LightningModule):
         discriminator: torch.nn.Module,
         generator_optimizer: partial[torch.optim.Optimizer],
         discriminator_optimizer: partial[torch.optim.Optimizer],
+        metrics: MetricCollection,
     ):
         """
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
@@ -23,17 +29,21 @@ class EBENLightningModule(LightningModule):
             discriminator (torch.nn.Module): Neural networks to discriminate between real and fake audio
             generator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the generator
             discriminator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the discriminator
+            metrics (MetricCollection): Metrics to be computed.
         """
         super().__init__()
 
         self.generator: torch.nn.Module = generator
         self.discriminator: torch.nn.Module = discriminator
-        self.generator_optimizer: torch.optim.Optimizer = generator_optimizer(params=self.generator.parameters())
+        self.generator_optimizer: torch.optim.Optimizer = generator_optimizer(
+            params=self.generator.parameters()
+        )
         self.discriminator_optimizer: torch.optim.Optimizer = discriminator_optimizer(
             params=self.discriminator.parameters()
         )
         self.feature_matching_loss = FeatureLossForDiscriminatorMelganMultiScales()
         self.adversarial_loss = HingeLossForDiscriminatorMelganMultiScales()
+        self.metrics: MetricCollection = metrics
 
         self.automatic_optimization = False
 
@@ -50,13 +60,29 @@ class EBENLightningModule(LightningModule):
         corrupted_speech, reference_speech = cut_batch
 
         # Get optimizers
-        generator_optimizer, discriminator_optimizer = self.optimizers(use_pl_optimizer=True)
+        generator_optimizer, discriminator_optimizer = self.optimizers(
+            use_pl_optimizer=True
+        )
 
         ######################## Train Generator ########################
         self.toggle_optimizer(generator_optimizer)
 
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
-        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
+        decomposed_reference_speech = self.generator.pqmf.forward(
+            reference_speech, "analysis"
+        )
+
+        # Initialize step_output
+        step_output = {
+            # "loss": None, we don't need this because we are using manual optimization
+            "audio": {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            },
+            "scalars_to_log": dict(),
+        }
+
         # enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech[:, 1:, :], audio=enhanced_speech)
         # reference_embeddings = self.discriminator(bands=decomposed_reference_speech[:, 1:, :], audio=reference_speech)
         enhanced_embeddings = self.discriminator(enhanced_speech)
@@ -66,7 +92,9 @@ class EBENLightningModule(LightningModule):
         adv_loss_gen = self.adversarial_loss(embeddings=enhanced_embeddings, target=1)
 
         # Compute feature_matching_loss
-        feature_matching_loss = self.feature_matching_loss(enhanced_embeddings, reference_embeddings)
+        feature_matching_loss = self.feature_matching_loss(
+            enhanced_embeddings, reference_embeddings
+        )
 
         # Compute loss to backprop on
         backprop_loss_gen = adv_loss_gen + feature_matching_loss
@@ -95,11 +123,39 @@ class EBENLightningModule(LightningModule):
         discriminator_optimizer.zero_grad()
         self.untoggle_optimizer(discriminator_optimizer)
 
+        return step_output
+
     def validation_step(self, batch, batch_idx):
-        pass
+        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
+        corrupted_speech, reference_speech = cut_batch
+        enhanced_speech, _ = self.generator(corrupted_speech)
+
+        step_output = {
+            "audio": {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            },
+            "scalars_to_log": dict(),
+        }
+
+        return step_output
 
     def test_step(self, batch, batch_idx):
-        pass
+        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
+        corrupted_speech, reference_speech = cut_batch
+        enhanced_speech, _ = self.generator(corrupted_speech)
+
+        step_output = {
+            "audio": {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            },
+            "scalars_to_log": dict(),
+        }
+
+        return step_output
 
     def configure_optimizers(self):
         """
@@ -111,3 +167,30 @@ class EBENLightningModule(LightningModule):
         """
 
         return [self.generator_optimizer, self.discriminator_optimizer]
+
+    def on_validation_batch_end(
+        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
+
+        assert "audio" in outputs, "audio key must be in outputs"
+
+        self.log_dict(
+            prefix="validation/metrics/",
+            dictionary=self.metrics(outputs["audio"]["enhanced"], outputs["audio"]["reference"]),
+            sync_dist=True,
+            prog_bar=True,
+        )
+
+    def log_dict(self, *args, **kwargs):
+        """
+        Logging passed dictionary and adding prefix on logging name if defined
+        """
+
+        if "dictionary" in kwargs and "prefix" in kwargs:
+            dictionary = kwargs["dictionary"]
+            prefix = kwargs.pop("prefix")
+            kwargs["dictionary"] = {f"{prefix}{k}": v for k, v in dictionary.items()}
+            return super().log_dict(*args, **kwargs)
+        else:
+            return super().log_dict(*args, **kwargs)
+
