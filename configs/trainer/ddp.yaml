@@ -1,16 +1,25 @@
 _target_: lightning.Trainer
+
+# Hardware
 accelerator: gpu
 num_nodes: 1
 devices: '0,'
 strategy: 'ddp_find_unused_parameters_true'
+
+# Epochs and batch sizes
 max_epochs: -1
-# limit_test_batches: 0.05
-#check_val_every_n_epoch: 2
-#overfit_batches: 1
-#track_grad_norm: 1
-#precision: 64
 #accumulate_grad_batches: 2
-# limit_train_batches: 50
-# limit_val_batches: 10
+limit_train_batches: 20
+limit_val_batches: 10
+#limit_test_batches: 0.05
+#check_val_every_n_epoch: 2
+
+# Logging
+log_every_n_steps: ${logging.log_every_n_steps}
+#track_grad_norm: 1
+
+# Training
+#overfit_batches: 1
+#precision: 64
 #weights_summary: "full"
 #precision=16
