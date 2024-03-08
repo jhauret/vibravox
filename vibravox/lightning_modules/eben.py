@@ -199,7 +199,6 @@ class EBENLightningModule(LightningModule):
         else:
             return super().log_dict(*args, **kwargs)
 
-
     @staticmethod
     def ready_to_log(audio_tensor):
         audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
