@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from lightning import LightningDataModule
 from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
@@ -12,9 +14,9 @@ class BWELightningDataModule(LightningDataModule):
 
     def __init__(
         self,
+        sample_rate=16000,
         config_name="bwe_in-ear_rigid_earpiece_microphone",
         streaming=False,
-        sample_rate=16000,
         batch_size=32,
         num_workers=4,
     ):
@@ -22,19 +24,22 @@ class BWELightningDataModule(LightningDataModule):
         LightningDataModule for Bandwidth Extension (BWE)
 
         Args:
+            sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
             config_name (str, optional): Name of the configuration. Defaults to "BWE_In-ear_Comply_Foam_microphone".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
-            sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
         """
         super().__init__()
 
-        self.config_name = config_name
         self.sample_rate = sample_rate
+        self.config_name = config_name
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
+
+    def hash(self):
+        return hash((self.sample_rate, self.config_name, self.streaming, self.batch_size, self.num_workers))
 
     def setup(self, stage=None):
         datasets = load_dataset(
@@ -47,23 +52,22 @@ class BWELightningDataModule(LightningDataModule):
         )
         datasets = datasets.with_format("torch")
 
-        def foo(sample):
-            return {
+        # The hash of self is not deterministic, so we need to externalize the compute
+        # So the map function is serializable. This makes possible to re-use the huggingface cache
+        desired_time_len = int(3 * self.sample_rate)
+
+        datasets = datasets.map(lambda sample: {
                 "body_conducted": set_audio_duration(
-                    sample_rate=16_000,
                     audio=sample["audio"]["array"][0, :],
-                    desired_duration=3,
+                    desired_time_len=desired_time_len,
                     deterministic=False,
                 ),
                 "air_conducted": set_audio_duration(
-                    sample_rate=16_000,
                     audio=sample["audio"]["array"][1, :],
-                    desired_duration=3,
+                    desired_time_len=desired_time_len,
                     deterministic=False,
                 ),
-            }
-
-        datasets = datasets.map(foo)
+            })
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]

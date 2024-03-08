@@ -3,20 +3,18 @@
 import torch
 
 def set_audio_duration(
-        sample_rate:int, audio: torch.Tensor, desired_duration: float, deterministic: bool = False
+        audio: torch.Tensor, desired_time_len: int, deterministic: bool = False
 ):
     """
     Make the audio signal have the desired duration.
 
     Args:
-        sample_rate (int): sample rate of the audio signal
         audio (torch.Tensor): input signal. Shape: (time_len,)
-        desired_duration (float): duration of selected signal in seconds
+        desired_time_len (int): duration of selected signal in number of time steps
         deterministic (bool): if True, always select the same part of the signal
 
     """
     original_time_len = audio.numel()
-    desired_time_len = int(desired_duration * sample_rate)
 
     # If the signal is longer than the desired duration, select a random part of the signal
     if original_time_len >= desired_time_len:
