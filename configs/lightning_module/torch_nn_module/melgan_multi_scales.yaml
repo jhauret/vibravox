@@ -1,4 +1,4 @@
-_target_: vibravox.torch_modules.melgan_discriminator.MelganMultiScalesDiscriminator
+_target_: vibravox.torch_modules.dnn.melgan_discriminator.MelganMultiScalesDiscriminator
 
 sample_rate: ${sample_rate}
 scales: 3
