@@ -18,10 +18,11 @@ defaults:
   - lightning_module: eben
   - trainer: ddp
   - callbacks: #dict of callbacks
-      # - checkpoint
+      - checkpoint
       - rich_model_summary
   - logging: tensorboard
   - metrics:
     - noresqa_mos
     - stoi
+    - si_sdr
   - _self_ # priority is given to train.yaml for overrides

@@ -5,5 +5,5 @@ logger:
   save_dir: "tensorboard/"
   name: null
   version: .
-  log_graph: True
+  log_graph: False
   default_hp_metric: False
