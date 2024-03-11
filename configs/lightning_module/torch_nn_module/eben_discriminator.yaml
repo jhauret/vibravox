@@ -1,0 +1,2 @@
+_target_: vibravox.torch_modules.dnn.eben_discriminator.DiscriminatorEBENMultiScales
+q: 3 # Number of subbands to discriminate

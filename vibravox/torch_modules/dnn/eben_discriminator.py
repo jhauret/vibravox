@@ -3,6 +3,7 @@
 import torch
 from torch import nn
 
+from vibravox.torch_modules.dnn.melgan_discriminator import DiscriminatorMelGAN
 from vibravox.torch_modules.utils import normalized_conv1d
 
 
@@ -23,18 +24,18 @@ class DiscriminatorEBENMultiScales(nn.Module):
         self.pqmf_discriminators = torch.nn.ModuleList()
 
         # having multiple dilation helps to focus on multiscale structure of bands
-        for dila in [1, 2, 3]:
-            self.pqmf_discriminators.append(DiscriminatorEBEN(dilation=dila, q=q))
+        for dilation in [1, 2, 3]:
+            self.pqmf_discriminators.append(DiscriminatorEBEN(dilation=dilation, q=q))
 
         # MelGAN discriminator
-        self.melgan_discriminator = DiscriminatorMelGAN()
+        self.melgan_discriminator = DiscriminatorMelGAN(alpha_leaky_relu=0.2)
 
     def forward(self, bands, audio):
         """
         Forward pass of the EBEN discriminators module.
 
         Args:
-            bands (torch.Tensor): PQMF bands
+            bands (torch.Tensor): all PQMF bands
             audio (torch.Tensor): corresponding speech signal
 
         Returns:
@@ -43,7 +44,7 @@ class DiscriminatorEBENMultiScales(nn.Module):
         embeddings = []
 
         for dis in self.pqmf_discriminators:
-            embeddings.append(dis(bands))
+            embeddings.append(dis(bands[:, -self.q:, :]))
 
         embeddings.append(self.melgan_discriminator(audio))
 

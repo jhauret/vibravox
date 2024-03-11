@@ -86,10 +86,8 @@ class EBENLightningModule(LightningModule):
             "scalars_to_log": dict(),
         }
 
-        # enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech[:, 1:, :], audio=enhanced_speech)
-        # reference_embeddings = self.discriminator(bands=decomposed_reference_speech[:, 1:, :], audio=reference_speech)
-        enhanced_embeddings = self.discriminator(enhanced_speech)
-        reference_embeddings = self.discriminator(reference_speech)
+        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech, audio=enhanced_speech)
+        reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
 
         # Compute adversarial_loss
         adv_loss_gen = self.adversarial_loss(embeddings=enhanced_embeddings, target=1)
@@ -111,8 +109,8 @@ class EBENLightningModule(LightningModule):
         self.toggle_optimizer(discriminator_optimizer)
 
         # Compute forwards again is necessary because we haven't retain_graph
-        enhanced_embeddings = self.discriminator(enhanced_speech.detach())
-        reference_embeddings = self.discriminator(reference_speech)
+        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach())
+        reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
 
         # Compute adversarial_loss
         real_loss = self.adversarial_loss(embeddings=reference_embeddings, target=1)
