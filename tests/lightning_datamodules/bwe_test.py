@@ -38,10 +38,6 @@ class TestBWELightningDataModule:
 
         correlation = torch.nn.functional.conv1d(corrupted_audio, reference_audio, padding=corrupted_audio.shape[-1])
 
-        torch.save(correlation, "correlation.pt")
-        print(f"correlation.shape: {correlation.shape}")
-        print(f"corrupted_audio.shape: {corrupted_audio.shape}")
-
         shift = torch.argmax(correlation) - corrupted_audio.shape[-1] + 1
 
         assert shift in range(-12, 12), "Expected minimal offset between audio samples."
