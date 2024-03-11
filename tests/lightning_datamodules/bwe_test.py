@@ -40,7 +40,7 @@ class TestBWELightningDataModule:
 
         shift = torch.argmax(correlation) - corrupted_audio.shape[-1] + 1
 
-        assert shift in range(-12, 12), "Expected minimal offset between audio samples."
+        assert shift in range(-12, 12), "Expected minimal offset between audio samples. [-12,12] corresponds to a spacing of 21cm between the microphones."
 
 
 
