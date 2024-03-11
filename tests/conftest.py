@@ -40,25 +40,25 @@ def sample(batch_size, time_len) -> torch.Tensor:
 
 
 @pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
-def datamodule_config_name(request) -> str:
+def datamodule_name(request) -> str:
     return request.param
 
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance_from_hydra(
-    datamodule_config_name,
+    datamodule_name,
 ) -> lightning.LightningDataModule:
     with hydra.initialize(
         version_base="1.3", config_path="../configs/lightning_datamodule"
     ):
-        cfg = hydra.compose(config_name=datamodule_config_name)
+        cfg = hydra.compose(config_name=datamodule_name)
         return hydra.utils.instantiate(cfg)
 
 
 @pytest.fixture(
     params=["bwe_in-ear_rigid_earpiece_microphone"]
 )  # , "bwe_throat_piezoelectric_sensor"
-def config_name(request) -> str:
+def subset_name(request) -> str:
     return request.param
 
 
@@ -69,11 +69,11 @@ def streaming(request) -> bool:
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance(
-    config_name, streaming, sample_rate, batch_size
+    subset_name, streaming, sample_rate, batch_size
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
-    datamodule = BWELightningDataModule(sample_rate, config_name, streaming, batch_size)
+    datamodule = BWELightningDataModule(sample_rate, subset_name, streaming, batch_size)
 
     return datamodule
 

@@ -14,18 +14,18 @@ class BWELightningDataModule(LightningDataModule):
 
     def __init__(
         self,
-        sample_rate=16000,
-        config_name="bwe_in-ear_rigid_earpiece_microphone",
-        streaming=False,
-        batch_size=32,
-        num_workers=4,
+        sample_rate: int = 16000,
+        subset_name: str = "bwe_in-ear_rigid_earpiece_microphone",
+        streaming: bool = False,
+        batch_size: int = 32,
+        num_workers: int = 4,
     ):
         """
         LightningDataModule for Bandwidth Extension (BWE)
 
         Args:
             sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
-            config_name (str, optional): Name of the configuration. Defaults to "BWE_In-ear_Comply_Foam_microphone".
+            subset_name (str, optional): Name of the configuration. Defaults to "BWE_In-ear_Comply_Foam_microphone".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -33,18 +33,18 @@ class BWELightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        self.config_name = config_name
+        self.subset_name = subset_name
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     def hash(self):
-        return hash((self.sample_rate, self.config_name, self.streaming, self.batch_size, self.num_workers))
+        return hash((self.sample_rate, self.subset_name, self.streaming, self.batch_size, self.num_workers))
 
     def setup(self, stage=None):
 
         datasets = load_dataset(
-            self.DATASET_NAME, self.config_name, streaming=self.streaming
+            self.DATASET_NAME, self.subset_name, streaming=self.streaming
         )
 
         datasets = datasets.select_columns(["audio"])
