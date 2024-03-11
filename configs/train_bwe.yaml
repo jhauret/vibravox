@@ -23,6 +23,7 @@ defaults:
   - logging: tensorboard
   - metrics:
     - noresqa_mos
+    - pytorch_stoi
     - stoi
     - si_sdr
   - _self_ # priority is given to train.yaml for overrides

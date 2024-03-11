@@ -6,10 +6,10 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
-from vibravox.torch_modules.feature_loss import (
+from vibravox.torch_modules.losses.feature_loss import (
     FeatureLossForDiscriminatorMelganMultiScales,
 )
-from vibravox.torch_modules.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
+from vibravox.torch_modules.losses.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
 
 
 class EBENLightningModule(LightningModule):

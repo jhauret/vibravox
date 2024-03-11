@@ -11,6 +11,8 @@ import torch
 import torch.nn as nn
 from torchaudio.transforms import Resample
 
+from vibravox.torch_modules.utils import normalized_conv1d
+
 
 class MelganMultiScalesDiscriminator(nn.Module):
     def __init__(
@@ -166,6 +168,3 @@ class DiscriminatorMelGAN(nn.Module):
             embeddings.append(module(embeddings[-1]))
         return embeddings
 
-
-def normalized_conv1d(*args, **kwargs):
-    return nn.utils.parametrizations.weight_norm(nn.Conv1d(*args, **kwargs))

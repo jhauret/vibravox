@@ -1,6 +1,2 @@
-pytorch_stoi:
-  _target_: vibravox.metrics.stoi.PytorchSTOI
-  sample_rate: ${sample_rate}
-  use_vad: True
-  extended: True
-  do_resample: True
+_target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
+fs: ${sampling_rate}

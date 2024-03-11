@@ -3,7 +3,8 @@
 import torch
 from torch import nn
 
-from vibravox.torch_modules.pqmf import PseudoQMFBanks
+from vibravox.torch_modules.dsp.pqmf import PseudoQMFBanks
+from vibravox.torch_modules.utils import normalized_conv1d, normalized_conv_trans1d
 
 
 class EBENGenerator(nn.Module):
@@ -231,11 +232,3 @@ class ResidualUnit(nn.Module):
     def forward(self, x):
         out = x + self.nl(self.pointwise_conv(self.dilated_conv(x)))
         return out
-
-
-def normalized_conv1d(*args, **kwargs):
-    return nn.utils.parametrizations.weight_norm(nn.Conv1d(*args, **kwargs))
-
-
-def normalized_conv_trans1d(*args, **kwargs):
-    return nn.utils.parametrizations.weight_norm(nn.ConvTranspose1d(*args, **kwargs))

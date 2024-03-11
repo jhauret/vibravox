@@ -5,12 +5,12 @@ import lightning
 import torch
 
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
-from vibravox.torch_modules.eben_generator import EBENGenerator
-from vibravox.torch_modules.feature_loss import (
+from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
+from vibravox.torch_modules.losses.feature_loss import (
     FeatureLossForDiscriminatorMelganMultiScales,
 )
-from vibravox.torch_modules.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
-from vibravox.torch_modules.melgan_discriminator import MelganMultiScalesDiscriminator
+from vibravox.torch_modules.losses.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
+from vibravox.torch_modules.dnn.melgan_discriminator import MelganMultiScalesDiscriminator
 
 
 @pytest.fixture(params=[16000])
@@ -73,7 +73,7 @@ def bwe_lightning_datamodule_instance(
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
-    datamodule = BWELightningDataModule(config_name, streaming, sample_rate, batch_size)
+    datamodule = BWELightningDataModule(sample_rate, config_name, streaming, batch_size)
 
     return datamodule
 

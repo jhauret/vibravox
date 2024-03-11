@@ -42,6 +42,10 @@ class BWELightningDataModule(LightningDataModule):
         return hash((self.sample_rate, self.config_name, self.streaming, self.batch_size, self.num_workers))
 
     def setup(self, stage=None):
+        print("Setting up the dataset")
+        print(f"streaming: {self.streaming}")
+        print(f"DATASET_NAME: {self.DATASET_NAME}")
+        print(f"self.config_name: {self.config_name}")
         datasets = load_dataset(
             self.DATASET_NAME, self.config_name, streaming=self.streaming
         )
