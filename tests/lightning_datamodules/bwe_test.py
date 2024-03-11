@@ -26,17 +26,25 @@ class TestBWELightningDataModule:
         ), "Expected the same number of samples in both tensors."
         assert dataloader_sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
 
-
     def test_no_offset_between_audio_samples(self, bwe_lightning_datamodule_instance):
         bwe_lightning_datamodule_instance.setup()
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
-        corrupted_audio = dataloader_sample[0]
-        reference_audio = dataloader_sample[1]
+        corrupted_audio = dataloader_sample[0][0:1, 0:1, :]
+        reference_audio = dataloader_sample[1][0:1, 0:1, :]
 
-        lowpass_filtered_reference = torchaudio.functional.lowpass_biquad(waveform=reference_audio, sample_rate=bwe_lightning_datamodule_instance.sample_rate, cutoff_freq=2000)
+        # Note: applying remove_hf on reference_audio and remove_bf on corrupted audio is not necessary
 
+        correlation = torch.nn.functional.conv1d(corrupted_audio, reference_audio, padding=corrupted_audio.shape[-1])
+
+        torch.save(correlation, "correlation.pt")
+        print(f"correlation.shape: {correlation.shape}")
+        print(f"corrupted_audio.shape: {corrupted_audio.shape}")
+
+        shift = torch.argmax(correlation) - corrupted_audio.shape[-1] + 1
+
+        assert shift in range(-12, 12), "Expected minimal offset between audio samples."
 
 
 

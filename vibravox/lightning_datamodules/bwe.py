@@ -60,18 +60,18 @@ class BWELightningDataModule(LightningDataModule):
         # So the map function is serializable. This makes possible to re-use the huggingface cache
         desired_time_len = int(3 * self.sample_rate)
 
-        datasets = datasets.map(lambda sample: {
-                "body_conducted": set_audio_duration(
-                    audio=sample["audio"]["array"][0, :],
-                    desired_time_len=desired_time_len,
-                    deterministic=False,
-                ),
-                "air_conducted": set_audio_duration(
-                    audio=sample["audio"]["array"][1, :],
-                    desired_time_len=desired_time_len,
-                    deterministic=False,
-                ),
-            })
+        def process_sample(sample):
+            """
+            Extract and process the sample to have the desired duration.
+
+            Args:
+                sample (dict): sample from the dataset
+            """
+            waveform = sample["audio"]["array"]
+            waveform = set_audio_duration(audio=waveform, desired_time_len=desired_time_len, deterministic=False)
+            return {"body_conducted": waveform[0, :], "air_conducted": waveform[1, :]}
+
+        datasets = datasets.map(process_sample)
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]
