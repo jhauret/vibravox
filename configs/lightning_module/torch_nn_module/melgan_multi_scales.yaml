@@ -1,0 +1,5 @@
+_target_: vibravox.torch_modules.dnn.melgan_discriminator.MelganMultiScalesDiscriminator
+
+sample_rate: ${sample_rate}
+scales: 3
+alpha_leaky_relu: 0.2

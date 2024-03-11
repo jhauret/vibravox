@@ -1,0 +1,29 @@
+### Top-level config file for train.py
+
+# Top-level variables available in all config files
+sample_rate: 16000
+
+# Hydra configuration
+version_base: "1.3"
+hydra:
+  job:
+    chdir: True # change working directory to the job directory
+  run:
+    dir: "run_outputs/bwe/${now:%Y-%m-%d_%H-%M-%S}"
+
+
+# Composing configs
+defaults:
+  - lightning_datamodule: bwe
+  - lightning_module: eben
+  - trainer: ddp
+  - callbacks: #dict of callbacks
+      - checkpoint
+      - rich_model_summary
+  - logging: tensorboard
+  - metrics:
+    - noresqa_mos
+    - pytorch_stoi
+    - stoi
+    - si_sdr
+  - _self_ # priority is given to train.yaml for overrides

@@ -1,0 +1,9 @@
+_target_: vibravox.lightning_modules.eben.EBENLightningModule
+
+sample_rate: ${sample_rate}
+
+defaults:
+  - torch_nn_module@generator: eben_generator
+  - torch_nn_module@discriminator: eben_discriminator
+  - optimizer@generator_optimizer: adam
+  - optimizer@discriminator_optimizer: adam

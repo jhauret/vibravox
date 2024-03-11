@@ -21,39 +21,40 @@ from torchmetrics import MetricCollection
     config_name="train_bwe.yaml",
     version_base="1.3",
 )
-def instantiate(
-    cfg: DictConfig,
-) -> Tuple[Trainer, LightningModule, LightningDataModule]:
+def main(cfg: DictConfig):
     """
     Instantiate all necessary modules for training
 
     Args:
-        cfg (DictConfig): Hydra configuration object
-    Returns
-        Tuple[Trainer, LightningModule, LightningDataModule]: Trainer, LightningModule, LightningDataModule
+        cfg (DictConfig): Hydra configuration object, passed in by the @hydra.main decorator
     """
-    # Instantiate LightningDataModule
-    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.lightning_datamodule)
 
-    # Instantiate Metrics
-    metrics: MetricCollection = MetricCollection(
-        dict(hydra.utils.instantiate(cfg.metrics))
+    # Instantiate LightningDataModule
+    lightning_datamodule: LightningDataModule = hydra.utils.instantiate(
+        cfg.lightning_datamodule
     )
 
     # Instantiate LightningModule
+    metrics: MetricCollection = MetricCollection(
+        dict(hydra.utils.instantiate(cfg.metrics))
+    )
     lightning_module: LightningModule = hydra.utils.instantiate(
         cfg.lightning_module,
         metrics=metrics,
     )
 
-    # Instantiate all modules relative to the Trainer
+    # Instantiate Trainer
     callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
     logger: TensorBoardLogger = hydra.utils.instantiate(cfg.logging.logger)
     trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
 
-    return trainer, lightning_module, datamodule
+    # Train the model ⚡
+    trainer.fit(lightning_module, datamodule=lightning_datamodule)
+
+    # Test the model
+    trainer.test(ckpt_path="best")
 
 
 def setup_environment():
@@ -76,14 +77,6 @@ def setup_environment():
 
 
 if __name__ == "__main__":
-    # Setup environment
+
     setup_environment()
-
-    # Instantiate three main modules
-    trainer, lightning_module, datamodule = instantiate()
-
-    # Train the model ⚡
-    trainer.fit(lightning_module, datamodule=datamodule)
-
-    # Test the model
-    trainer.test(ckpt_path="best")
+    main()

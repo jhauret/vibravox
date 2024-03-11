@@ -1,7 +1,7 @@
-_target_: src.data.lightning_datamodule.asr.BWELightningDataModule
+_target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 
-dataset_name: "Cnam-LMSSC/vibravox",
-config_name: "BWE_In-ear_Comply_Foam_microphone"
+config_name: "bwe_in-ear_rigid_earpiece_microphone"
+streaming: False
 sample_rate: 16000
-batch_size: 32
+batch_size: 16
 num_workers: 4

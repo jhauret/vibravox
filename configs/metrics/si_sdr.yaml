@@ -1,0 +1,2 @@
+  si_sdr:
+    _target_: torchmetrics.audio.ScaleInvariantSignalDistortionRatio

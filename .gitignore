@@ -1,22 +1,11 @@
 # IntelliJ project files
-.idea/
-.idea_modules/
+.idea
 *.iml
 out
 gen
 
-# PyCharm temporary files
-*.pyre
-*.pyi
-__pycache__/
-
 # Pyenv
 .python-version
-.venv/
-venv/
 
-# Misc files
-*.DS_Store
-
-# Generated documentation
-docs/
+# run outputs
+run_outputs

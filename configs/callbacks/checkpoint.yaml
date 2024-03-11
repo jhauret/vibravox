@@ -1,0 +1,11 @@
+checkpoint:
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  monitor: "validation/metrics/pytorch_stoi" # name of the logged metric which determines when model is improving
+  mode: "max" # "max" means higher metric value is better, can be also "min"
+  save_top_k: 2 # save k best model (determined by above metric)
+  save_last: True # additionally, always save model from last epoch
+  verbose: False
+  dirpath: "checkpoints/"
+  filename: "epoch_{epoch:03d}"
+  auto_insert_metric_name: False
+  save_weights_only: False
