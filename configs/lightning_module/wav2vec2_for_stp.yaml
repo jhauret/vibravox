@@ -1,0 +1,23 @@
+_target_: vibravox.lightning_modules.wav2vec2_for_stp.Wav2Vec2ForSTPLightningModule
+
+sample_rate: ${sample_rate}
+
+wav2vec2_for_ctc:
+  _target_: transformers.Wav2Vec2ForCTC.from_pretrained
+  pretrained_model_name_or_path: 'facebook/wav2vec2-base-fr-voxpopuli-v2' #'facebook/wav2vec2-base'
+  apply_spec_augment: True
+  ctc_loss_reduction: "mean"
+  attention_dropout: 0.1
+  hidden_dropout: 0.1
+  feat_proj_dropout: 0.1
+  final_dropout: 0
+  mask_time_prob: 0.5 #0.05 for {100, 960} hours, 0.075 for 10 min and 1 hour, 0.065 for 10 hours
+  layerdrop: 0.05 #0.05 for Base and 0.1 for Large during fine-tuning
+  mask_feature_prob: 0.1024 #=0.0016*64
+  mask_feature_length: 64
+
+defaults:
+  - optimizer: adam
+
+
+
