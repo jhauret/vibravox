@@ -50,7 +50,7 @@ class EBENLightningModule(LightningModule):
 
         self.automatic_optimization = False
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         """
         Lightning training step
 
