@@ -1,3 +1,0 @@
-torchmetrics_stoi:
-  _target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
-  fs: ${sample_rate}
