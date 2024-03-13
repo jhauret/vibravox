@@ -1,15 +1,17 @@
+import numpy as np
 import torch
 
 from vibravox.lightning_datamodules.asr import ASRLightningDataModule
 
 
 class TestASRLightningDataModule:
-    def test_dataset_returns_torch_tensor(self, asr_lightning_datamodule_instance):
+    def test_dataset_return_type(self, asr_lightning_datamodule_instance):
         asr_lightning_datamodule_instance.setup()
         train_dataset = asr_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
 
-        assert isinstance(dataset_sample["audio"]["array"], torch.Tensor)
+        assert isinstance(dataset_sample["audio"]["array"], np.ndarray)
+        assert isinstance(dataset_sample["phonemes"], str)
 
     def test_dataloader_returns_format(self, asr_lightning_datamodule_instance):
         asr_lightning_datamodule_instance.setup()

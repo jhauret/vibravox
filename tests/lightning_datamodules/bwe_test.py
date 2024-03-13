@@ -19,7 +19,7 @@ class TestBWELightningDataModule:
         assert isinstance(dataloader_sample, list), "Expected a list."
         assert all(
             [isinstance(dataloader_sample[0], torch.Tensor), isinstance(dataloader_sample[1], torch.Tensor)]
-        ), "Expected all elements in the tuple to be torch.Tensor."
+        ), "Expected all elements in the list to be torch.Tensor."
         assert (
             dataloader_sample[0].shape == dataloader_sample[1].shape
         ), "Expected the same number of samples in both tensors."

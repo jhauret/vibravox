@@ -65,7 +65,7 @@ class ASRLightningDataModule(LightningDataModule):
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
 
-        datasets = datasets.with_format("torch")
+        #datasets = datasets.with_format("torch")
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]
@@ -100,9 +100,9 @@ class ASRLightningDataModule(LightningDataModule):
         Custom data collator function to dynamically pad the data.
 
         Args:
-            batch (`Union[pandas.DataFrame, Dataset]`): The dataset.
+            batch
         Returns:
-            `Union[pandas.DataFrame, Dataset]`: batch with padding
+            processed_batch
         """
 
         audios = [sample["audio"]["array"] for sample in batch]
@@ -114,12 +114,12 @@ class ASRLightningDataModule(LightningDataModule):
             return_tensors="pt",
             sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
             pad_to_multiple_of=128,  # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
-        )
+        ).input_values
 
         with self.processor.as_target_processor():
             phonemes_processed = self.processor(
                 text=phonemes,
-                padding='do_not_pad',
+                padding='longest',
                 return_tensors="pt",
                 pad_to_multiple_of=128,  # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
             )
@@ -128,9 +128,10 @@ class ASRLightningDataModule(LightningDataModule):
             phonemes_processed.attention_mask.ne(1), -100
         )
 
-        batch = {
-            "audio": audios_processed,
-            "phonemes": phonemes_processed,
-        }
+        return [audios_processed, phonemes_processed]
 
-        return batch
+        # batch = {
+        #     "audio": audios_processed,
+        #     "phonemes": phonemes_processed,
+        # }
+        # return batch
