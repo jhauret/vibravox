@@ -100,6 +100,9 @@ class BWELightningDataModule(LightningDataModule):
 
     @staticmethod
     def data_collator(batch):
+
+        # Note: not really necessary as set_audio_duration is applied in the setup
+
         body_conducted_batch = [item["body_conducted"] for item in batch]
         air_conducted_batch = [item["air_conducted"] for item in batch]
 
