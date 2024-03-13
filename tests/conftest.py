@@ -4,6 +4,7 @@ import hydra
 import lightning
 import torch
 
+from vibravox.lightning_datamodules.asr import ASRLightningDataModule
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 from vibravox.torch_modules.losses.feature_loss import (
@@ -38,28 +39,35 @@ def sample(batch_size, time_len) -> torch.Tensor:
     """
     return torch.randn(batch_size, 1, time_len)
 
-
-@pytest.fixture(params=os.listdir("./configs/lightning_datamodule"))
-def datamodule_name(request) -> str:
-    return request.param
-
-
 @pytest.fixture
-def bwe_lightning_datamodule_instance_from_hydra(
-    datamodule_name,
-) -> lightning.LightningDataModule:
+def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
     with hydra.initialize(
         version_base="1.3", config_path="../configs/lightning_datamodule"
     ):
-        cfg = hydra.compose(config_name=datamodule_name)
+        cfg = hydra.compose(config_name="bwe")
+        return hydra.utils.instantiate(cfg)
+
+@pytest.fixture
+def asr_lightning_datamodule_instance_from_hydra() -> ASRLightningDataModule:
+    with hydra.initialize(
+        version_base="1.3", config_path="../configs/lightning_datamodule"
+    ):
+        cfg = hydra.compose(config_name="asr")
         return hydra.utils.instantiate(cfg)
 
 
 @pytest.fixture(
     params=["bwe_in-ear_rigid_earpiece_microphone"]
 )  # , "bwe_throat_piezoelectric_sensor"
-def subset_name(request) -> str:
+def bwe_subset_name(request) -> str:
     return request.param
+
+@pytest.fixture(
+    params=["asr_in-ear_rigid_earpiece_microphone"]
+)  # , "bwe_throat_piezoelectric_sensor"
+def asr_subset_name(request) -> str:
+    return request.param
+
 
 
 @pytest.fixture(params=[True, False])
@@ -69,14 +77,24 @@ def streaming(request) -> bool:
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance(
-    subset_name, streaming, sample_rate, batch_size
+    sample_rate, bwe_subset_name, streaming, batch_size
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
-    datamodule = BWELightningDataModule(sample_rate, subset_name, streaming, batch_size)
+    datamodule = BWELightningDataModule(sample_rate, bwe_subset_name, streaming, batch_size)
 
     return datamodule
 
+
+@pytest.fixture
+def asr_lightning_datamodule_instance(
+    sample_rate, asr_subset_name, streaming, batch_size
+) -> ASRLightningDataModule:
+    """ASRLightningDataModule instance."""
+
+    datamodule = ASRLightningDataModule(sample_rate, asr_subset_name, streaming, batch_size)
+
+    return datamodule
 
 @pytest.fixture
 def discriminator_melgan_multiscales_instance(

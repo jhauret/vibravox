@@ -1,0 +1,9 @@
+_target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
+
+subset_name: "bwe_in-ear_rigid_earpiece_microphone"
+streaming: False
+sample_rate: 16000
+batch_size: 16
+num_workers: 4
+processor:
+  _target_: transformers.Wav2Vec2Processor.from_pretrained

@@ -48,6 +48,8 @@ class BWELightningDataModule(LightningDataModule):
         )
 
         datasets = datasets.select_columns(["audio"])
+
+        # Resample the audio to the right sample rate
         datasets = datasets.cast_column(
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
