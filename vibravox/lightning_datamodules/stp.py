@@ -1,14 +1,10 @@
-from typing import Dict, Union
-import hydra
-import pandas
-import torch
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from transformers import Wav2Vec2Processor
 
 
-class ASRLightningDataModule(LightningDataModule):
+class STPLightningDataModule(LightningDataModule):
 
     DATASET_NAME = "Cnam-LMSSC/vibravox"
     LANGUAGE = "fr"
@@ -25,7 +21,7 @@ class ASRLightningDataModule(LightningDataModule):
     ):
 
         """
-        LightningDataModule for Automatic Speech Recognition (ASR).
+        LightningDataModule for Speech-to-Phoneme (STP).
 
         Args:
             sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
@@ -129,9 +125,3 @@ class ASRLightningDataModule(LightningDataModule):
         )
 
         return [audios_processed, phonemes_processed]
-
-        # batch = {
-        #     "audio": audios_processed,
-        #     "phonemes": phonemes_processed,
-        # }
-        # return batch

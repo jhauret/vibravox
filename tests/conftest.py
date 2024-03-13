@@ -1,10 +1,8 @@
 import pytest
-import os
 import hydra
-import lightning
 import torch
 
-from vibravox.lightning_datamodules.asr import ASRLightningDataModule
+from vibravox.lightning_datamodules.stp import STPLightningDataModule
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 from vibravox.torch_modules.losses.feature_loss import (
@@ -48,11 +46,11 @@ def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
         return hydra.utils.instantiate(cfg)
 
 @pytest.fixture
-def asr_lightning_datamodule_instance_from_hydra() -> ASRLightningDataModule:
+def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
     with hydra.initialize(
         version_base="1.3", config_path="../configs/lightning_datamodule"
     ):
-        cfg = hydra.compose(config_name="asr")
+        cfg = hydra.compose(config_name="stp")
         return hydra.utils.instantiate(cfg)
 
 
@@ -87,12 +85,12 @@ def bwe_lightning_datamodule_instance(
 
 
 @pytest.fixture
-def asr_lightning_datamodule_instance(
+def stp_lightning_datamodule_instance(
     sample_rate, asr_subset_name, streaming, batch_size
-) -> ASRLightningDataModule:
-    """ASRLightningDataModule instance."""
+) -> STPLightningDataModule:
+    """STPLightningDataModule instance."""
 
-    datamodule = ASRLightningDataModule(sample_rate, asr_subset_name, streaming, batch_size)
+    datamodule = STPLightningDataModule(sample_rate, asr_subset_name, streaming, batch_size)
 
     return datamodule
 
