@@ -4,6 +4,7 @@ sample_rate: ${sample_rate}
 
 wav2vec2_for_ctc:
   _target_: transformers.Wav2Vec2ForCTC.from_pretrained
+  _partial_: true
   pretrained_model_name_or_path: 'facebook/wav2vec2-base-fr-voxpopuli-v2' #'facebook/wav2vec2-base'
   apply_spec_augment: True
   ctc_loss_reduction: "mean"

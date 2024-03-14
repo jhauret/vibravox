@@ -26,7 +26,12 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         super().__init__()
 
         self.sample_rate: int = sample_rate
-        self.wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC = wav2vec2_for_ctc
+        self.wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC = wav2vec2_for_ctc(
+            pad_token_id=35,  #self.trainer.datamodule.tokenizer.pad_token_id,
+            bos_token_id=36,  #self.trainer.datamodule.tokenizer.bos_token_id,
+            eos_token_id=37,  #self.trainer.datamodule.eos_token_id,
+            vocab_size=36,  #len(self.trainer.datamodule.tokenizer),
+        )
         self.optimizer: torch.optim.Optimizer = optimizer(
             params=self.wav2vec2_for_ctc.parameters()
         )
@@ -55,10 +60,14 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         predicted_ids = torch.flatten(predicted_ids)
         reference_ids = torch.flatten(target_ids)
 
-        reference_ids[reference_ids == -100] = self.trainer.datamodule.tokenizer.pad_token_id
+        reference_ids[
+            reference_ids == -100
+        ] = self.trainer.datamodule.tokenizer.pad_token_id
 
         predicted_phonemes = self.trainer.datamodule.tokenizer.decode(predicted_ids)
-        target_phonemes = self.trainer.datamodule.tokenizer.decode(reference_ids, group_tokens=False)
+        target_phonemes = self.trainer.datamodule.tokenizer.decode(
+            reference_ids, group_tokens=False
+        )
 
         return loss
 
@@ -78,13 +87,17 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         predicted_ids = torch.flatten(predicted_ids)
         reference_ids = torch.flatten(target_ids)
 
-        reference_ids[reference_ids == -100] = self.trainer.datamodule.tokenizer.pad_token_id
+        reference_ids[
+            reference_ids == -100
+        ] = self.trainer.datamodule.tokenizer.pad_token_id
 
         predicted_phonemes = self.trainer.datamodule.tokenizer.decode(predicted_ids)
-        target_phonemes = self.trainer.datamodule.tokenizer.decode(reference_ids, group_tokens=False)
+        target_phonemes = self.trainer.datamodule.tokenizer.decode(
+            reference_ids, group_tokens=False
+        )
 
         self.log_dict(
-            dictionary=self.metrics(predicted_phonemes,target_phonemes),
+            dictionary=self.metrics(predicted_phonemes, target_phonemes),
             sync_dist=True,
             prog_bar=True,
         )
@@ -106,4 +119,3 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         """
 
         return self.optimizer
-
