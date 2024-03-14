@@ -9,17 +9,17 @@ hydra:
   job:
     chdir: True # change working directory to the job directory
   run:
-    dir: "run_outputs/bwe/${now:%Y-%m-%d_%H-%M-%S}"
+    dir: "run_outputs/${hydra:runtime.choices.lightning_datamodule}/${now:%Y-%m-%d_%H-%M-%S}"
 
 
 # Composing configs
 defaults:
-  - lightning_datamodule: bwe
-  - lightning_module: eben
+  - lightning_datamodule: # # NEEDS TO BE OVERRIDDEN, will also determinate the metrics and the run directory
+  - lightning_module: # NEEDS TO BE OVERRIDDEN
   - trainer: ddp
-  - callbacks: #dict of callbacks
+  - callbacks: # Dict of callbacks
       - checkpoint
       - rich_model_summary
   - logging: tensorboard
-  - metrics: bwe
+  - metrics: ${lightning_datamodule}
   - _self_ # priority is given to train.yaml for overrides

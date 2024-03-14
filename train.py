@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple
+from typing import List
 
 import hydra
 import torch
@@ -18,7 +18,7 @@ from torchmetrics import MetricCollection
 
 @hydra.main(
     config_path="configs",
-    config_name="train_bwe.yaml",
+    config_name="train.yaml",
     version_base="1.3",
 )
 def main(cfg: DictConfig):
