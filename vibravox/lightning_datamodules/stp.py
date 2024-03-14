@@ -1,7 +1,7 @@
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
-from transformers import Wav2Vec2Processor
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
 
 
 class STPLightningDataModule(LightningDataModule):
@@ -44,7 +44,9 @@ class STPLightningDataModule(LightningDataModule):
         self.min_duration = min_duration
         self.max_duration = max_duration
 
-        self.processor = Wav2Vec2Processor.from_pretrained("Cnam-LMSSC/wav2vec2-french-phonemizer")
+        self.audio_processor = Wav2Vec2FeatureExtractor()
+        self.tokenizer = Wav2Vec2CTCTokenizer(vocab_file='/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json')
+        #self.processor = Wav2Vec2Processor.from_pretrained("Cnam-LMSSC/wav2vec2-french-phonemizer")
         # Note: do we really want to normalize the audio? (
         # Cnam-LMSSC/wav2vec2-french-phonemizer/wav2vec2-french-phonemizer/preprocessor_config.json -> "normalize": True
 
@@ -104,17 +106,25 @@ class STPLightningDataModule(LightningDataModule):
         audios = [sample["audio"]["array"] for sample in batch]
         phonemes = [sample["phonemes"] for sample in batch]
 
-        audios_processed = self.processor(
-            audio=audios,
+        audios_processed = self.audio_processor(
+            raw_speech=audios,
             padding='longest',
             return_tensors="pt",
             sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
             pad_to_multiple_of=128,  # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
         ).input_values
 
-        phonemes_processed = self.processor(
+        # phonemes_processed_bis = self.processor(
+        #     text=phonemes,
+        #     padding=True,
+        #     return_tensors="pt",
+        #     pad_to_multiple_of=128,
+        #     # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
+        # )
+
+        phonemes_processed = self.tokenizer(
             text=phonemes,
-            padding='longest',
+            padding=True,
             return_tensors="pt",
             pad_to_multiple_of=128,
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution

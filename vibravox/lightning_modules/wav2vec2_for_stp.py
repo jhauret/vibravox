@@ -69,6 +69,10 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             reference_ids, group_tokens=False
         )
 
+        self.logger.experiment.add_text("training/predicted_phonemes", str(predicted_phonemes))
+        self.logger.experiment.add_text("training/target_phonemes", str(target_phonemes))
+        self.log("training/ctc_loss", loss)
+
         return loss
 
     def validation_step(self, batch):
@@ -102,7 +106,9 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             prog_bar=True,
         )
 
-        self.logger.experiment.add_text("comparison", str(predicted_phonemes))
+        self.logger.experiment.add_text("validation/predicted_phonemes", str(predicted_phonemes))
+        self.logger.experiment.add_text("validation/target_phonemes", str(target_phonemes))
+        self.log("validation/ctc_loss", loss)
 
         return loss
 
