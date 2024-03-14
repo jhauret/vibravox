@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Any, Dict
 
 import torch
 import transformers
@@ -13,7 +12,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         sample_rate: int,
         wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC,
         optimizer: partial[torch.optim.Optimizer],
-        # metrics: MetricCollection,
+        metrics: MetricCollection,
     ):
         """
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
@@ -32,7 +31,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             params=self.wav2vec2_for_ctc.parameters()
         )
 
-        #self.metrics: MetricCollection = metrics
+        self.metrics: MetricCollection = metrics
 
     def training_step(self, batch):
         """
@@ -46,7 +45,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         speech, target_ids = batch
 
         # Forward pass
-        forward_result = self.model(input_values=speech, labels=target_ids)
+        forward_result = self.wav2vec2_for_ctc(input_values=speech, labels=target_ids)
 
         loss = forward_result.loss
 
@@ -64,7 +63,35 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         return loss
 
     def validation_step(self, batch):
-        pass
+
+        # Get speeches
+        speech, target_ids = batch
+
+        # Forward pass
+        forward_result = self.wav2vec2_for_ctc(input_values=speech, labels=target_ids)
+
+        loss = forward_result.loss
+
+        # For logging
+        logits = forward_result.logits
+        predicted_ids = torch.argmax(logits, dim=2)
+        predicted_ids = torch.flatten(predicted_ids)
+        reference_ids = torch.flatten(target_ids)
+
+        reference_ids[reference_ids == -100] = self.trainer.datamodule.tokenizer.pad_token_id
+
+        predicted_phonemes = self.trainer.datamodule.tokenizer.decode(predicted_ids)
+        target_phonemes = self.trainer.datamodule.tokenizer.decode(reference_ids, group_tokens=False)
+
+        self.log_dict(
+            dictionary=self.metrics(predicted_phonemes,target_phonemes),
+            sync_dist=True,
+            prog_bar=True,
+        )
+
+        self.logger.experiment.add_text("comparison", str(predicted_phonemes))
+
+        return loss
 
     def test_step(self, batch, batch_idx):
         pass
@@ -79,3 +106,4 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         """
 
         return self.optimizer
+
