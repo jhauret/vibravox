@@ -1,25 +1,23 @@
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer, Wav2Vec2Processor
 
 
 class STPLightningDataModule(LightningDataModule):
-
     DATASET_NAME = "Cnam-LMSSC/vibravox"
     LANGUAGE = "fr"
 
     def __init__(
-        self,
-        sample_rate: int = 16000,
-        subset_name: str = "bwe_in-ear_rigid_earpiece_microphone",
-        streaming: bool = False,
-        batch_size: int = 32,
-        num_workers: int = 4,
-        min_duration: float = 0.0,
-        max_duration: float = -1.0,
+            self,
+            sample_rate: int = 16000,
+            subset_name: str = "bwe_in-ear_rigid_earpiece_microphone",
+            streaming: bool = False,
+            batch_size: int = 32,
+            num_workers: int = 4,
+            min_duration: float = 0.0,
+            max_duration: float = -1.0,
     ):
-
         """
         LightningDataModule for Speech-to-Phoneme (STP).
 
@@ -44,14 +42,16 @@ class STPLightningDataModule(LightningDataModule):
         self.min_duration = min_duration
         self.max_duration = max_duration
 
-        self.audio_processor = Wav2Vec2FeatureExtractor()
-        self.tokenizer = Wav2Vec2CTCTokenizer(vocab_file='/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json')
-        #self.processor = Wav2Vec2Processor.from_pretrained("Cnam-LMSSC/wav2vec2-french-phonemizer")
-        # Note: do we really want to normalize the audio? (
-        # Cnam-LMSSC/wav2vec2-french-phonemizer/wav2vec2-french-phonemizer/preprocessor_config.json -> "normalize": True
+        # Note: do we really want to normalize the audio?
+        feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000,
+                                                     padding_value=0.0, do_normalize=True,
+                                                     return_attention_mask=False)
+        tokenizer = Wav2Vec2CTCTokenizer(
+            vocab_file="/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json"
+        )
+        self.processor = Wav2Vec2Processor(feature_extractor=feature_extractor, tokenizer=tokenizer)
 
     def setup(self, stage=None):
-
         datasets = load_dataset(
             self.DATASET_NAME, self.subset_name, streaming=self.streaming
         )
@@ -63,7 +63,7 @@ class STPLightningDataModule(LightningDataModule):
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
 
-        #datasets = datasets.with_format("torch")
+        # datasets = datasets.with_format("torch")
 
         self.train_dataset = datasets["train"]
         self.val_dataset = datasets["validation"]
@@ -106,33 +106,14 @@ class STPLightningDataModule(LightningDataModule):
         audios = [sample["audio"]["array"] for sample in batch]
         phonemes = [sample["phonemes"] for sample in batch]
 
-        audios_processed = self.audio_processor(
-            raw_speech=audios,
+        processed = self.processor(
+            audio=audios,
+            text=phonemes,
             padding='longest',
             return_tensors="pt",
             sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
-            pad_to_multiple_of=128,  # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
-        ).input_values
-
-        # phonemes_processed_bis = self.processor(
-        #     text=phonemes,
-        #     padding=True,
-        #     return_tensors="pt",
-        #     pad_to_multiple_of=128,
-        #     # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
-        # )
-
-        phonemes_processed = self.tokenizer(
-            text=phonemes,
-            padding=True,
-            return_tensors="pt",
             pad_to_multiple_of=128,
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
         )
 
-        # Replace padding with -100 to ignore loss correctly
-        phonemes_processed = phonemes_processed["input_ids"].masked_fill(
-            phonemes_processed.attention_mask.ne(1), -100
-        )
-
-        return [audios_processed, phonemes_processed]
+        return {"audio": processed.input_values, "phonemes_ids": processed.labels}
