@@ -1,8 +1,10 @@
 from functools import partial
+from typing import Any
 
 import torch
 import transformers
 from lightning import LightningModule
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
 
@@ -29,9 +31,17 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self.wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC = wav2vec2_for_ctc(
             pad_token_id=35,  #self.trainer.datamodule.tokenizer.pad_token_id,
             bos_token_id=36,  #self.trainer.datamodule.tokenizer.bos_token_id,
-            eos_token_id=37,  #self.trainer.datamodule.eos_token_id,
-            vocab_size=36,  #len(self.trainer.datamodule.tokenizer),
+            eos_token_id=37,  #self.trainer.datamodule.tokenizer.eos_token_id,
+            vocab_size=38,  #len(self.trainer.datamodule.tokenizer),
         )
+
+        # pad_token_id = self.tokenizer.pad_token_id,
+        # bos_token_id = self.tokenizer.bos_token_id,
+        # eos_token_id = self.tokenizer.eos_token_id,
+        # vocab_size = len(self.tokenizer),
+
+
+        #self.wav2vec2_for_ctc.freeze_feature_extractor()
         self.optimizer: torch.optim.Optimizer = optimizer(
             params=self.wav2vec2_for_ctc.parameters()
         )
@@ -46,59 +56,44 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             batch (Tuple[torch.Tensor, torch.Tensor]): Tuple of speech and phonemes
         """
 
-        # Get speeches
-        speech, target_ids = batch
+        # Get tensors
+        speech = batch["audio"]
+        target_ids = batch["phonemes_ids"]
 
         # Forward pass
         forward_result = self.wav2vec2_for_ctc(input_values=speech, labels=target_ids)
 
-        loss = forward_result.loss
+        self.log("training/ctc_loss", forward_result.loss)
 
-        # For logging
-        logits = forward_result.logits
-        predicted_ids = torch.argmax(logits, dim=2)
-        predicted_ids = torch.flatten(predicted_ids)
-        reference_ids = torch.flatten(target_ids)
-
-        reference_ids[
-            reference_ids == -100
-        ] = self.trainer.datamodule.tokenizer.pad_token_id
-
-        predicted_phonemes = self.trainer.datamodule.tokenizer.decode(predicted_ids)
-        target_phonemes = self.trainer.datamodule.tokenizer.decode(
-            reference_ids, group_tokens=False
-        )
-
-        self.logger.experiment.add_text("training/predicted_phonemes", str(predicted_phonemes))
-        self.logger.experiment.add_text("training/target_phonemes", str(target_phonemes))
-        self.log("training/ctc_loss", loss)
-
-        return loss
+        return forward_result.loss
 
     def validation_step(self, batch):
 
-        # Get speeches
-        speech, target_ids = batch
+        # Get tensors
+        speech = batch["audio"]
+        target_ids = batch["phonemes_ids"]
 
         # Forward pass
         forward_result = self.wav2vec2_for_ctc(input_values=speech, labels=target_ids)
 
-        loss = forward_result.loss
+        return forward_result
 
-        # For logging
-        logits = forward_result.logits
-        predicted_ids = torch.argmax(logits, dim=2)
-        predicted_ids = torch.flatten(predicted_ids)
-        reference_ids = torch.flatten(target_ids)
+    def test_step(self, batch, batch_idx):
+        pass
 
-        reference_ids[
-            reference_ids == -100
-        ] = self.trainer.datamodule.tokenizer.pad_token_id
+    def on_validation_batch_end(
+        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
 
-        predicted_phonemes = self.trainer.datamodule.tokenizer.decode(predicted_ids)
-        target_phonemes = self.trainer.datamodule.tokenizer.decode(
-            reference_ids, group_tokens=False
-        )
+        predicted_ids = torch.argmax(outputs.logits, dim=2)
+        target_ids = batch["phonemes_ids"]
+
+        target_ids[
+            target_ids == -100
+        ] = self.trainer.datamodule.processor.tokenizer.pad_token_id
+
+        predicted_phonemes = self.trainer.datamodule.processor.tokenizer.decode(torch.flatten(predicted_ids))
+        target_phonemes = self.trainer.datamodule.processor.tokenizer.decode(torch.flatten(target_ids))
 
         self.log_dict(
             dictionary=self.metrics(predicted_phonemes, target_phonemes),
@@ -106,14 +101,13 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             prog_bar=True,
         )
 
-        self.logger.experiment.add_text("validation/predicted_phonemes", str(predicted_phonemes))
-        self.logger.experiment.add_text("validation/target_phonemes", str(target_phonemes))
-        self.log("validation/ctc_loss", loss)
-
-        return loss
-
-    def test_step(self, batch, batch_idx):
-        pass
+        self.logger.experiment.add_text(tag="validation/predicted_phonemes",
+                                        text_string=str(predicted_phonemes),
+                                        global_step=self.trainer.global_step + batch_idx)
+        self.logger.experiment.add_text(tag="validation/target_phonemes",
+                                        text_string=str(target_phonemes),
+                                        global_step=self.trainer.global_step + batch_idx)
+        self.log("validation/ctc_loss", outputs.loss)
 
     def configure_optimizers(self):
         """
