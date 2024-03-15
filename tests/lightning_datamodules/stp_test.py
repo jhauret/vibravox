@@ -23,6 +23,16 @@ class TestSTPLightningDataModule:
             [isinstance(dataloader_sample[0], torch.Tensor), isinstance(dataloader_sample[1], torch.Tensor)]
         ), "Expected all elements in the tuple to be torch.Tensor."
 
+    def test_tokenize_detokenize_is_bijection(self, stp_lightning_datamodule_instance):
+        stp_lightning_datamodule_instance.setup()
+        train_dataset = stp_lightning_datamodule_instance.train_dataset
+        dataset_sample = next(iter(train_dataset))
+        phonemes = dataset_sample["phonemes"]
+        tokenized_phonemes = stp_lightning_datamodule_instance.tokenizer(phonemes)
+        detokenized_phonemes = stp_lightning_datamodule_instance.tokenizer.decode(token_ids=tokenized_phonemes.input_ids)
+
+        assert phonemes == detokenized_phonemes
+
     def test_hydra_instantiation(self, stp_lightning_datamodule_instance_from_hydra):
 
         assert isinstance(
