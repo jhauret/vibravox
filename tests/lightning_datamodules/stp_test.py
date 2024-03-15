@@ -6,7 +6,6 @@ from vibravox.lightning_datamodules.stp import STPLightningDataModule
 
 class TestSTPLightningDataModule:
     def test_dataset_return_type(self, stp_lightning_datamodule_instance):
-        stp_lightning_datamodule_instance.setup()
         train_dataset = stp_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
 
@@ -14,7 +13,6 @@ class TestSTPLightningDataModule:
         assert isinstance(dataset_sample["phonemes"], str)
 
     def test_dataloader_returns_format(self, stp_lightning_datamodule_instance):
-        stp_lightning_datamodule_instance.setup()
         train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
@@ -24,7 +22,6 @@ class TestSTPLightningDataModule:
         ), "Expected all elements in the tuple to be torch.Tensor."
 
     def test_tokenize_detokenize_is_bijection(self, stp_lightning_datamodule_instance):
-        stp_lightning_datamodule_instance.setup()
         train_dataset = stp_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
         phonemes = dataset_sample["phonemes"]

@@ -80,6 +80,7 @@ def bwe_lightning_datamodule_instance(
     """BWELightningDataModule instance."""
 
     datamodule = BWELightningDataModule(sample_rate, bwe_subset_name, streaming, batch_size)
+    datamodule.setup()
 
     return datamodule
 
@@ -91,6 +92,7 @@ def stp_lightning_datamodule_instance(
     """STPLightningDataModule instance."""
 
     datamodule = STPLightningDataModule(sample_rate, asr_subset_name, streaming, batch_size)
+    datamodule.setup()
 
     return datamodule
 

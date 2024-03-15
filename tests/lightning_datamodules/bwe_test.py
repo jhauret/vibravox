@@ -5,14 +5,12 @@ from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 
 class TestBWELightningDataModule:
     def test_dataset_returns_torch_tensor(self, bwe_lightning_datamodule_instance):
-        bwe_lightning_datamodule_instance.setup()
         train_dataset = bwe_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
 
         assert isinstance(dataset_sample["audio"]["array"], torch.Tensor)
 
     def test_dataloader_returns_format(self, bwe_lightning_datamodule_instance):
-        bwe_lightning_datamodule_instance.setup()
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
@@ -26,7 +24,6 @@ class TestBWELightningDataModule:
         assert dataloader_sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
 
     def test_no_offset_between_audio_samples(self, bwe_lightning_datamodule_instance):
-        bwe_lightning_datamodule_instance.setup()
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
