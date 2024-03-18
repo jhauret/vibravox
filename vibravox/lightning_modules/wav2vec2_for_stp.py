@@ -32,7 +32,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             pad_token_id=35,  #self.trainer.datamodule.tokenizer.pad_token_id,
             bos_token_id=36,  #self.trainer.datamodule.tokenizer.bos_token_id,
             eos_token_id=37,  #self.trainer.datamodule.tokenizer.eos_token_id,
-            vocab_size=38,  #len(self.trainer.datamodule.tokenizer),
+            vocab_size=36,  #len(self.trainer.datamodule.tokenizer),
         )
 
         # pad_token_id = self.tokenizer.pad_token_id,
@@ -40,8 +40,15 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         # eos_token_id = self.tokenizer.eos_token_id,
         # vocab_size = len(self.tokenizer),
 
+        self.wav2vec2_for_ctc.freeze_feature_encoder()
 
-        #self.wav2vec2_for_ctc.freeze_feature_extractor()
+        # for param in self.wav2vec2_for_ctc.feature_extractor.parameters():
+        #     param.requires_grad = False
+        # for param in self.wav2vec2_for_ctc.feature_projection.parameters():
+        #     param.requires_grad = False
+        # for param in self.wav2vec2_for_ctc.encoder.parameters():
+        #     param.requires_grad = False
+
         self.optimizer: torch.optim.Optimizer = optimizer(
             params=self.wav2vec2_for_ctc.parameters()
         )

@@ -18,7 +18,7 @@ wav2vec2_for_ctc:
   mask_feature_length: 64
 
 defaults:
-  - optimizer: sgd
+  - optimizer: adam
 
 
 

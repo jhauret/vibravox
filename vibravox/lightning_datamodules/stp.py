@@ -106,9 +106,8 @@ class STPLightningDataModule(LightningDataModule):
         audios = [sample["audio"]["array"] for sample in batch]
         phonemes = [sample["phonemes"] for sample in batch]
 
-        processed = self.processor(
+        audio_processed = self.processor(
             audio=audios,
-            text=phonemes,
             padding='longest',
             return_tensors="pt",
             sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
@@ -116,4 +115,16 @@ class STPLightningDataModule(LightningDataModule):
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
         )
 
-        return {"audio": processed.input_values, "phonemes_ids": processed.labels}
+        labels_processed = self.processor(
+            text=phonemes,
+            padding='longest',
+            return_tensors="pt",
+            sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
+            pad_to_multiple_of=128,
+            return_attention_mask=True,
+            # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
+        )
+
+        labels = labels_processed.input_ids.masked_fill(labels_processed.attention_mask.ne(1), -100)
+
+        return {"audio": audio_processed.input_values, "phonemes_ids": labels}
