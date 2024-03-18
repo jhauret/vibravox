@@ -33,8 +33,6 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             vocab_size=36,  #len(self.trainer.datamodule.tokenizer),
         )
 
-        self.wav2vec2_for_ctc.freeze_feature_encoder()
-
         self.optimizer: torch.optim.Optimizer = optimizer(
             params=self.wav2vec2_for_ctc.parameters()
         )
