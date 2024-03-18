@@ -1,0 +1,3 @@
+_target_: torch.optim.SGD
+_partial_: true
+lr: 1e-3

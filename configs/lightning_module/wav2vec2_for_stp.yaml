@@ -12,13 +12,13 @@ wav2vec2_for_ctc:
   hidden_dropout: 0.1
   feat_proj_dropout: 0.1
   final_dropout: 0
-  mask_time_prob: 0.5 #0.05 for {100, 960} hours, 0.075 for 10 min and 1 hour, 0.065 for 10 hours
+  mask_time_prob: 0.05 #0.05 for {100, 960} hours, 0.075 for 10 min and 1 hour, 0.065 for 10 hours
   layerdrop: 0.05 #0.05 for Base and 0.1 for Large during fine-tuning
   mask_feature_prob: 0.1024 #=0.0016*64
   mask_feature_length: 64
 
 defaults:
-  - optimizer: adam
+  - optimizer: sgd
 
 
 
