@@ -16,9 +16,9 @@ class TestSTPLightningDataModule:
         train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
-        assert isinstance(dataloader_sample, list), "Expected a list."
+        assert isinstance(dataloader_sample, dict), "Expected a list."
         assert all(
-            [isinstance(dataloader_sample[0], torch.Tensor), isinstance(dataloader_sample[1], torch.Tensor)]
+            [isinstance(dataloader_sample['audio'], torch.Tensor), isinstance(dataloader_sample['phonemes_ids'], torch.Tensor)]
         ), "Expected all elements in the tuple to be torch.Tensor."
 
     def test_tokenize_detokenize_is_bijection_from_dataset(self, stp_lightning_datamodule_instance):
@@ -34,10 +34,10 @@ class TestSTPLightningDataModule:
         train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
         phonemes_ids = dataloader_sample["phonemes_ids"][0, :]  # First sample in the batch
-        phonemes = stp_lightning_datamodule_instance.processor.tokenizer.decode(token_ids=phonemes_ids)
-        phonemes_ids_bis = stp_lightning_datamodule_instance.processor.tokenizer(phonemes,  add_special_tokens=True)
+        phonemes = stp_lightning_datamodule_instance.tokenizer.decode(token_ids=phonemes_ids)
+        phonemes_ids_bis = stp_lightning_datamodule_instance.tokenizer(phonemes,  add_special_tokens=True)
         phonemes_ids_bis = torch.Tensor(phonemes_ids_bis.input_ids)
-        phonemes_bis = stp_lightning_datamodule_instance.processor.tokenizer.decode(token_ids=phonemes_ids_bis)
+        phonemes_bis = stp_lightning_datamodule_instance.tokenizer.decode(token_ids=phonemes_ids_bis)
 
         assert phonemes == phonemes_bis
 

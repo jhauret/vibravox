@@ -1,7 +1,7 @@
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer, Wav2Vec2Processor
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
 
 
 class STPLightningDataModule(LightningDataModule):
@@ -43,13 +43,12 @@ class STPLightningDataModule(LightningDataModule):
         self.max_duration = max_duration
 
         # Note: do we really want to normalize the audio?
-        feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000,
+        self.feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000,
                                                      padding_value=0.0, do_normalize=True,
                                                      return_attention_mask=False)
-        tokenizer = Wav2Vec2CTCTokenizer(
+        self.tokenizer = Wav2Vec2CTCTokenizer(
             vocab_file="/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json"
         )
-        self.processor = Wav2Vec2Processor(feature_extractor=feature_extractor, tokenizer=tokenizer)
 
     def setup(self, stage=None):
         datasets = load_dataset(
@@ -106,8 +105,8 @@ class STPLightningDataModule(LightningDataModule):
         audios = [sample["audio"]["array"] for sample in batch]
         phonemes = [sample["phonemes"] for sample in batch]
 
-        audio_processed = self.processor(
-            audio=audios,
+        audio_processed = self.feature_extractor(
+            raw_speech=audios,
             padding='longest',
             return_tensors="pt",
             sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
@@ -115,11 +114,10 @@ class STPLightningDataModule(LightningDataModule):
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
         )
 
-        labels_processed = self.processor(
+        labels_processed = self.tokenizer(
             text=phonemes,
             padding='longest',
             return_tensors="pt",
-            sampling_rate=self.sample_rate,  # Do not resample anything, simple verification
             pad_to_multiple_of=128,
             return_attention_mask=True,
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution

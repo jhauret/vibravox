@@ -97,10 +97,10 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         target_ids[
             target_ids == -100
-        ] = self.trainer.datamodule.processor.tokenizer.pad_token_id
+        ] = self.trainer.datamodule.tokenizer.pad_token_id
 
-        predicted_phonemes = self.trainer.datamodule.processor.tokenizer.decode(torch.flatten(predicted_ids))
-        target_phonemes = self.trainer.datamodule.processor.tokenizer.decode(torch.flatten(target_ids))
+        predicted_phonemes = self.trainer.datamodule.tokenizer.decode(torch.flatten(predicted_ids))
+        target_phonemes = self.trainer.datamodule.tokenizer.decode(torch.flatten(target_ids))
 
         self.log_dict(
             dictionary=self.metrics(predicted_phonemes, target_phonemes),
