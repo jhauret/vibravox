@@ -115,7 +115,7 @@ class STPLightningDataModule(LightningDataModule):
             collate_fn=self.data_collator,
         )
 
-    def data_collator(self, batch: Dict[str, Any])-> Dict[str, Any]:
+    def data_collator(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         """
         Custom data collator function to dynamically pad the data.
 
