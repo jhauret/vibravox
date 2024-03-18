@@ -44,8 +44,8 @@ class STPLightningDataModule(LightningDataModule):
 
         # Note: do we really want to normalize the audio?
         self.feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000,
-                                                     padding_value=0.0, do_normalize=True,
-                                                     return_attention_mask=False)
+                                                          padding_value=0.0, do_normalize=True,
+                                                          return_attention_mask=False)
         self.tokenizer = Wav2Vec2CTCTokenizer(
             vocab_file="/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json"
         )
@@ -125,4 +125,4 @@ class STPLightningDataModule(LightningDataModule):
 
         labels = labels_processed.input_ids.masked_fill(labels_processed.attention_mask.ne(1), -100)
 
-        return {"audio": audio_processed.input_values, "phonemes_ids": labels}
+        return {"audio": audio_processed.input_values, "phonemes_ids": labels, "phonemes_str": phonemes}
