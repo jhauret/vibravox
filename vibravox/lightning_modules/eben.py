@@ -175,27 +175,15 @@ class EBENLightningModule(LightningModule):
 
         assert "audio" in outputs, "audio key must be in outputs"
 
+        metrics_to_log = self.metrics(outputs["audio"]["enhanced"],  outputs["audio"]["reference"])
+        metrics_to_log = {f"validation/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
-            prefix="validation/metrics/",
-            dictionary=self.metrics(outputs["audio"]["enhanced"], outputs["audio"]["reference"]),
+            dictionary=metrics_to_log,
             sync_dist=True,
             prog_bar=True,
         )
 
         self.log_audio(prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx)
-
-    def log_dict(self, *args, **kwargs):
-        """
-        Logging passed dictionary and adding prefix on logging name if defined
-        """
-
-        if "dictionary" in kwargs and "prefix" in kwargs:
-            dictionary = kwargs["dictionary"]
-            prefix = kwargs.pop("prefix")
-            kwargs["dictionary"] = {f"{prefix}{k}": v for k, v in dictionary.items()}
-            return super().log_dict(*args, **kwargs)
-        else:
-            return super().log_dict(*args, **kwargs)
 
     @staticmethod
     def ready_to_log(audio_tensor):
