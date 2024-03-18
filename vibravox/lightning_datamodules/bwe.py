@@ -38,10 +38,17 @@ class BWELightningDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-    def hash(self):
-        return hash((self.sample_rate, self.subset_name, self.streaming, self.batch_size, self.num_workers))
-
     def setup(self, stage=None):
+        """
+        Set up the datasets.
+
+        Args:
+            stage (str): Pipeline stage among ['fit', 'validate', 'test', 'predict']. Defaults to None.
+
+        Notes:
+            This function runs on every accelerator in distributed mode.
+            That is why it is necessary to define attributes here rather than in __init__.
+        """
 
         datasets = load_dataset(
             self.DATASET_NAME, self.subset_name, streaming=self.streaming
@@ -77,6 +84,13 @@ class BWELightningDataModule(LightningDataModule):
         self.test_dataset = datasets["test"]
 
     def train_dataloader(self):
+        """
+        Train dataloader.
+
+        Returns:
+            DataLoader
+        """
+
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -85,6 +99,13 @@ class BWELightningDataModule(LightningDataModule):
         )
 
     def val_dataloader(self):
+        """
+        Validation dataloader.
+
+        Returns:
+            DataLoader
+        """
+
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -93,6 +114,13 @@ class BWELightningDataModule(LightningDataModule):
         )
 
     def test_dataloader(self):
+        """
+        Test dataloader.
+
+        Returns:
+            DataLoader
+        """
+
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
