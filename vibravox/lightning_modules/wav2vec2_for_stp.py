@@ -29,8 +29,8 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         self.sample_rate: int = sample_rate
         self.wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC = wav2vec2_for_ctc(
-            pad_token_id=35,  #self.trainer.datamodule.tokenizer.pad_token_id,
-            vocab_size=36,  #len(self.trainer.datamodule.tokenizer),
+            pad_token_id=35,  # Corresponds to `self.trainer.datamodule.tokenizer.pad_token_id`
+            vocab_size=38,  # Corresponds to `len(self.trainer.datamodule.tokenizer)`
         )
 
         self.optimizer: torch.optim.Optimizer = optimizer(
@@ -80,7 +80,19 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return self.optimizer
 
-    def on_train_batch_end(self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int) -> None:
+    def on_train_start(self) -> None:
+        """
+        Method to be called when the train starts.
+        """
+
+        assert (
+            self.trainer.datamodule.tokenizer.pad_token_id == 35
+        ), "Pad token id must be 35"
+        assert len(self.trainer.datamodule.tokenizer) == 38, "Vocab size must be 38"
+
+    def on_train_batch_end(
+        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int
+    ) -> None:
 
         self.common_logging("train", outputs, batch, batch_idx)
 
@@ -89,6 +101,12 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
     ) -> None:
 
         self.common_logging("validation", outputs, batch, batch_idx)
+
+    def on_test_batch_end(
+            self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
+
+        self.common_logging("test", outputs, batch, batch_idx)
 
     def common_step(self, batch):
 
@@ -103,7 +121,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
     def common_logging(self, stage, outputs, batch, batch_idx):
         # Log loss
-        self.log(f"{stage}/ctc_loss", outputs["loss"])
+        self.log(f"{stage}/ctc_loss", outputs["loss"], sync_dist=True)
 
         # Log metrics
         predicted_phonemes = self.get_phonemes_from_logits(outputs["logits"])
@@ -114,15 +132,20 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
 
         # Log text
-        text_to_log = f"OUT: {predicted_phonemes[0]} \n GT:{target_phonemes[0]}"
-        self.logger.experiment.add_text(tag=f"{stage}/predicted_vs_target__phonemes",
-                                        text_string=text_to_log,
-                                        global_step=self.trainer.global_step + batch_idx)
+        text_to_log = f"OUT: {predicted_phonemes[0]} "+"\n"+f"GT:{target_phonemes[0]} "
+        self.logger.experiment.add_text(
+            tag=f"{stage}/predicted_vs_target__phonemes",
+            text_string=text_to_log,
+            global_step=self.trainer.global_step + batch_idx,
+        )
 
     def get_phonemes_from_logits(self, model_logits):
 
         # Get predicted phonemes
         predicted_ids = torch.argmax(model_logits, dim=2)
-        predicted_phonemes = [self.trainer.datamodule.tokenizer.decode(predicted_ids[i, :]) for i in range(predicted_ids.shape[0])]
+        predicted_phonemes = [
+            self.trainer.datamodule.tokenizer.decode(predicted_ids[i, :])
+            for i in range(predicted_ids.shape[0])
+        ]
 
         return predicted_phonemes
