@@ -3,8 +3,8 @@ _target_: vibravox.lightning_datamodules.stp.STPLightningDataModule
 sample_rate: 16000
 subset_name: "asr_in-ear_rigid_earpiece_microphone"
 streaming: False
-batch_size: 2
-num_workers: 4
+batch_size: 8
+num_workers: 16
 
 feature_extractor:
   _target_: transformers.Wav2Vec2FeatureExtractor
