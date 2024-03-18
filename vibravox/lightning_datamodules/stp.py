@@ -17,19 +17,23 @@ class STPLightningDataModule(LightningDataModule):
             num_workers: int = 4,
             min_duration: float = 0.0,
             max_duration: float = -1.0,
+            feature_extractor: Wav2Vec2FeatureExtractor = None,
+            tokenizer: Wav2Vec2CTCTokenizer = None,
     ):
         """
         LightningDataModule for Speech-to-Phoneme (STP).
 
         Args:
             sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
-            subset_name (str, optional): Name of the configuration. Defaults to "BWE_In-ear_Comply_Foam_microphone".
+            subset_name (str, optional): Name of the configuration. Defaults to "bwe_in-ear_rigid_earpiece_microphone".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
             min_duration (float): Minimum duration of the audio files in seconds. Smaller files are removed. Defaults to 0.0.
             max_duration (float): Maximum duration of the audio files in seconds. Longer files are removed. Defaults to -1.0.
                                   -1.0 means that the audios are not filtered.
+            feature_extractor (Wav2Vec2FeatureExtractor): Feature extractor. Defaults to None.
+            tokenizer (Wav2Vec2CTCTokenizer): Tokenizer. Defaults to None.
         """
 
         super().__init__()
@@ -41,14 +45,8 @@ class STPLightningDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.min_duration = min_duration
         self.max_duration = max_duration
-
-        # Note: do we really want to normalize the audio?
-        self.feature_extractor = Wav2Vec2FeatureExtractor(feature_size=1, sampling_rate=16000,
-                                                          padding_value=0.0, do_normalize=True,
-                                                          return_attention_mask=False)
-        self.tokenizer = Wav2Vec2CTCTokenizer(
-            vocab_file="/home/julien/Bureau/github/vibravox/configs/lightning_datamodule/tokenizer_vocab/minimal_vocab.json"
-        )
+        self.feature_extractor = feature_extractor
+        self.tokenizer = tokenizer
 
     def setup(self, stage=None):
         datasets = load_dataset(
