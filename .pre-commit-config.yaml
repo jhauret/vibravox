@@ -13,7 +13,3 @@ repos:
         args:
         - --config=pyproject.toml
         types: [python]
-  - repo: https://github.com/lovesegfault/beautysh
-    rev: v6.2.1
-    hooks:
-      - id: beautysh
