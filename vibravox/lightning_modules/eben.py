@@ -136,11 +136,11 @@ class EBENLightningModule(LightningModule):
         )
 
         # Log scalars
-        self.log("train/adv_loss_gen", adv_loss_gen)
-        self.log("train/feature_matching_loss", feature_matching_loss)
-        self.log("train/reconstructive_loss_temp", reconstructive_loss_temp)
-        self.log("train/reconstructive_loss_freq", reconstructive_loss_freq)
-        self.log("train/total_loss", backprop_loss_gen)
+        self.log("train/generator/adv_loss", adv_loss_gen)
+        self.log("train/generator/feature_matching_loss", feature_matching_loss)
+        self.log("train/generator/reconstructive_loss_temp", reconstructive_loss_temp)
+        self.log("train/generator/reconstructive_loss_freq", reconstructive_loss_freq)
+        self.log("train/generator/total_loss", backprop_loss_gen)
 
         self.manual_backward(backprop_loss_gen)
         generator_optimizer.step()
@@ -159,11 +159,14 @@ class EBENLightningModule(LightningModule):
         )
 
         # Compute adversarial_loss
-        real_loss = self.adversarial_loss(embeddings=reference_embeddings, target=1)
-        fake_loss = self.adversarial_loss(embeddings=enhanced_embeddings, target=-1)
+        real_loss = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
+        fake_loss = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
 
         # Compute and log total loss
         backprop_loss_dis = real_loss + fake_loss
+
+        # Log scalars
+        self.log("train/discriminator/total_loss", real_loss)
 
         self.manual_backward(backprop_loss_dis)
         discriminator_optimizer.step()
