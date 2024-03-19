@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Any, Dict
 
+import auraloss
 import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
@@ -9,7 +10,9 @@ from torchmetrics import MetricCollection
 from vibravox.torch_modules.losses.feature_loss import (
     FeatureLossForDiscriminatorMelganMultiScales,
 )
-from vibravox.torch_modules.losses.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
+from vibravox.torch_modules.losses.hinge_loss import (
+    HingeLossForDiscriminatorMelganMultiScales,
+)
 
 
 class EBENLightningModule(LightningModule):
@@ -44,8 +47,19 @@ class EBENLightningModule(LightningModule):
         self.discriminator_optimizer: torch.optim.Optimizer = discriminator_optimizer(
             params=self.discriminator.parameters()
         )
-        self.feature_matching_loss = FeatureLossForDiscriminatorMelganMultiScales()
-        self.adversarial_loss = HingeLossForDiscriminatorMelganMultiScales()
+        self.feature_matching_loss_fn = FeatureLossForDiscriminatorMelganMultiScales()
+        self.adversarial_loss_fn = HingeLossForDiscriminatorMelganMultiScales()
+        self.reconstructive_loss_temp_fn = torch.nn.L1Loss()
+        self.reconstructive_loss_freq_fn = auraloss.freq.MultiResolutionSTFTLoss(
+            fft_sizes=[1024, 2048, 8192],
+            hop_sizes=[256, 512, 2048],
+            win_lengths=[1024, 2048, 8192],
+            scale="mel",
+            n_bins=128,
+            sample_rate=self.sample_rate,
+            perceptual_weighting=True,
+        )
+
         self.metrics: MetricCollection = metrics
 
         self.automatic_optimization = False
@@ -86,19 +100,47 @@ class EBENLightningModule(LightningModule):
             "scalars_to_log": dict(),
         }
 
-        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech, audio=enhanced_speech)
-        reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
+        enhanced_embeddings = self.discriminator(
+            bands=decomposed_enhanced_speech, audio=enhanced_speech
+        )
+        reference_embeddings = self.discriminator(
+            bands=decomposed_reference_speech, audio=reference_speech
+        )
 
         # Compute adversarial_loss
-        adv_loss_gen = self.adversarial_loss(embeddings=enhanced_embeddings, target=1)
+        adv_loss_gen = self.adversarial_loss_fn(
+            embeddings=enhanced_embeddings, target=1
+        )
 
         # Compute feature_matching_loss
-        feature_matching_loss = self.feature_matching_loss(
+        feature_matching_loss = self.feature_matching_loss_fn(
             enhanced_embeddings, reference_embeddings
         )
 
+        # Compute reconstructive_loss_temp
+        reconstructive_loss_temp = self.reconstructive_loss_temp_fn(
+            enhanced_speech, reference_speech
+        )
+
+        # Compute reconstructive_loss_freq
+        reconstructive_loss_freq = self.reconstructive_loss_freq_fn(
+            enhanced_speech, reference_speech
+        )
+
         # Compute loss to backprop on
-        backprop_loss_gen = adv_loss_gen + feature_matching_loss
+        backprop_loss_gen = (
+            adv_loss_gen
+            + feature_matching_loss
+            + reconstructive_loss_temp
+            + reconstructive_loss_freq
+        )
+
+        # Log scalars
+        self.log("train/adv_loss_gen", adv_loss_gen)
+        self.log("train/feature_matching_loss", feature_matching_loss)
+        self.log("train/reconstructive_loss_temp", reconstructive_loss_temp)
+        self.log("train/reconstructive_loss_freq", reconstructive_loss_freq)
+        self.log("train/total_loss", backprop_loss_gen)
 
         self.manual_backward(backprop_loss_gen)
         generator_optimizer.step()
@@ -109,8 +151,12 @@ class EBENLightningModule(LightningModule):
         self.toggle_optimizer(discriminator_optimizer)
 
         # Compute forwards again is necessary because we haven't retain_graph
-        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach())
-        reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
+        enhanced_embeddings = self.discriminator(
+            bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
+        )
+        reference_embeddings = self.discriminator(
+            bands=decomposed_reference_speech, audio=reference_speech
+        )
 
         # Compute adversarial_loss
         real_loss = self.adversarial_loss(embeddings=reference_embeddings, target=1)
@@ -175,7 +221,9 @@ class EBENLightningModule(LightningModule):
 
         assert "audio" in outputs, "audio key must be in outputs"
 
-        metrics_to_log = self.metrics(outputs["audio"]["enhanced"],  outputs["audio"]["reference"])
+        metrics_to_log = self.metrics(
+            outputs["audio"]["enhanced"], outputs["audio"]["reference"]
+        )
         metrics_to_log = {f"validation/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
@@ -183,14 +231,18 @@ class EBENLightningModule(LightningModule):
             prog_bar=True,
         )
 
-        self.log_audio(prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx)
+        self.log_audio(
+            prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx
+        )
 
     @staticmethod
     def ready_to_log(audio_tensor):
         audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
         return audio_tensor
 
-    def log_audio(self, speech_dict: Dict[str, torch.Tensor], prefix: str, batch_idx: int = 0):
+    def log_audio(
+        self, speech_dict: Dict[str, torch.Tensor], prefix: str, batch_idx: int = 0
+    ):
         """
         Log the first audio of the batch of every speech_dict values to tensorboard.
 
