@@ -167,4 +167,3 @@ class DiscriminatorMelGAN(nn.Module):
         for module in self.discriminator:
             embeddings.append(module(embeddings[-1]))
         return embeddings
-

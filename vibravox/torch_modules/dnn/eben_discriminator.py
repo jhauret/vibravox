@@ -44,7 +44,7 @@ class DiscriminatorEBENMultiScales(nn.Module):
         embeddings = []
 
         for dis in self.pqmf_discriminators:
-            embeddings.append(dis(bands[:, -self.q:, :]))
+            embeddings.append(dis(bands[:, -self.q :, :]))
 
         embeddings.append(self.melgan_discriminator(audio))
 

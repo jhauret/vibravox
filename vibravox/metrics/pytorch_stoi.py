@@ -2,6 +2,7 @@ import torch
 from torch_stoi import NegSTOILoss
 from torchmetrics import Metric
 
+
 class PytorchSTOI(Metric):
     """A wrapper for the pytorch_stoi package https://github.com/mpariente/pytorch_stoi
 

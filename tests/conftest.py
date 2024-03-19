@@ -8,8 +8,12 @@ from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 from vibravox.torch_modules.losses.feature_loss import (
     FeatureLossForDiscriminatorMelganMultiScales,
 )
-from vibravox.torch_modules.losses.hinge_loss import HingeLossForDiscriminatorMelganMultiScales
-from vibravox.torch_modules.dnn.melgan_discriminator import MelganMultiScalesDiscriminator
+from vibravox.torch_modules.losses.hinge_loss import (
+    HingeLossForDiscriminatorMelganMultiScales,
+)
+from vibravox.torch_modules.dnn.melgan_discriminator import (
+    MelganMultiScalesDiscriminator,
+)
 
 
 @pytest.fixture(params=[16000])
@@ -37,6 +41,7 @@ def sample(batch_size, time_len) -> torch.Tensor:
     """
     return torch.randn(batch_size, 1, time_len)
 
+
 @pytest.fixture
 def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
     with hydra.initialize(
@@ -44,6 +49,7 @@ def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
     ):
         cfg = hydra.compose(config_name="bwe")
         return hydra.utils.instantiate(cfg)
+
 
 @pytest.fixture
 def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
@@ -60,12 +66,12 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
 def bwe_subset_name(request) -> str:
     return request.param
 
+
 @pytest.fixture(
     params=["asr_in-ear_rigid_earpiece_microphone"]
 )  # , "bwe_throat_piezoelectric_sensor"
 def asr_subset_name(request) -> str:
     return request.param
-
 
 
 @pytest.fixture(params=[True, False])
@@ -79,7 +85,9 @@ def bwe_lightning_datamodule_instance(
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
-    datamodule = BWELightningDataModule(sample_rate, bwe_subset_name, streaming, batch_size)
+    datamodule = BWELightningDataModule(
+        sample_rate, bwe_subset_name, streaming, batch_size
+    )
     datamodule.setup()
 
     return datamodule
@@ -91,10 +99,13 @@ def stp_lightning_datamodule_instance(
 ) -> STPLightningDataModule:
     """STPLightningDataModule instance."""
 
-    datamodule = STPLightningDataModule(sample_rate, asr_subset_name, streaming, batch_size)
+    datamodule = STPLightningDataModule(
+        sample_rate, asr_subset_name, streaming, batch_size
+    )
     datamodule.setup()
 
     return datamodule
+
 
 @pytest.fixture
 def discriminator_melgan_multiscales_instance(

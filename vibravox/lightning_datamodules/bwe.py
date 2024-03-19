@@ -74,7 +74,9 @@ class BWELightningDataModule(LightningDataModule):
                 sample (dict): sample from the dataset
             """
             waveform = sample["audio"]["array"]
-            waveform = set_audio_duration(audio=waveform, desired_time_len=desired_time_len, deterministic=False)
+            waveform = set_audio_duration(
+                audio=waveform, desired_time_len=desired_time_len, deterministic=False
+            )
             return {"body_conducted": waveform[0, :], "air_conducted": waveform[1, :]}
 
         datasets = datasets.map(process_sample)

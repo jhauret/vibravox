@@ -103,7 +103,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self.common_logging("validation", outputs, batch, batch_idx)
 
     def on_test_batch_end(
-            self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
 
         self.common_logging("test", outputs, batch, batch_idx)
@@ -132,7 +132,9 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
 
         # Log text
-        text_to_log = f"OUT: {predicted_phonemes[0]}"+"  \n"+f"GT:{target_phonemes[0]} "
+        text_to_log = (
+            f"OUT: {predicted_phonemes[0]}" + "  \n" + f"GT:{target_phonemes[0]} "
+        )
         self.logger.experiment.add_text(
             tag=f"{stage}/predicted_vs_target__phonemes",
             text_string=text_to_log,

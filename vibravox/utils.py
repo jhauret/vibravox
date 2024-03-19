@@ -5,7 +5,7 @@ from torchaudio.functional import lowpass_biquad
 
 
 def set_audio_duration(
-        audio: torch.Tensor, desired_time_len: int, deterministic: bool = False
+    audio: torch.Tensor, desired_time_len: int, deterministic: bool = False
 ):
     """
     Make the audio signal have the desired duration.
@@ -26,7 +26,7 @@ def set_audio_duration(
             offset_time_len = torch.randint(
                 low=0, high=original_time_len - desired_time_len + 1, size=(1,)
             )
-        audio = audio[..., offset_time_len: offset_time_len + desired_time_len]
+        audio = audio[..., offset_time_len : offset_time_len + desired_time_len]
 
     # If the signal is shorter than the desired duration, pad the signal with zeros
     else:
@@ -44,7 +44,12 @@ def set_audio_duration(
     return audio
 
 
-def remove_hf(waveform: torch.Tensor, sample_rate: int, cutoff_freq: int, padding_length: int = 3000):
+def remove_hf(
+    waveform: torch.Tensor,
+    sample_rate: int,
+    cutoff_freq: int,
+    padding_length: int = 3000,
+):
     """
     Low-pass filter of the fourth order with zero-phase shift.
 
@@ -61,9 +66,7 @@ def remove_hf(waveform: torch.Tensor, sample_rate: int, cutoff_freq: int, paddin
     # filt-filt trick for 0-phase shift
 
     def lowpass_filter(x):
-        return lowpass_biquad(
-            x, sample_rate=sample_rate, cutoff_freq=cutoff_freq
-        )
+        return lowpass_biquad(x, sample_rate=sample_rate, cutoff_freq=cutoff_freq)
 
     def reverse(x):
         return torch.flip(input=x, dims=[-1])
@@ -71,6 +74,6 @@ def remove_hf(waveform: torch.Tensor, sample_rate: int, cutoff_freq: int, paddin
     waveform = reverse(lowpass_filter(reverse(lowpass_filter(waveform))))
 
     # un-pad
-    waveform = waveform[..., padding_length: -padding_length]
+    waveform = waveform[..., padding_length:-padding_length]
 
     return waveform
