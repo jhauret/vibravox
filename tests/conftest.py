@@ -1,6 +1,7 @@
 import pytest
 import hydra
 import torch
+import transformers
 
 from vibravox.lightning_datamodules.stp import STPLightningDataModule
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
@@ -99,9 +100,19 @@ def stp_lightning_datamodule_instance(
 ) -> STPLightningDataModule:
     """STPLightningDataModule instance."""
 
+    feature_extractor = transformers.Wav2Vec2FeatureExtractor()
+    tokenizer = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
+
     datamodule = STPLightningDataModule(
-        sample_rate, asr_subset_name, streaming, batch_size
+        sample_rate=sample_rate,
+        subset_name=asr_subset_name,
+        streaming=streaming,
+        batch_size=batch_size,
+        num_workers=4,
+        feature_extractor=feature_extractor,
+        tokenizer=tokenizer
     )
+
     datamodule.setup()
 
     return datamodule
