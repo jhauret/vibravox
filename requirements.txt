@@ -11,3 +11,4 @@ transformers>=4.38.2
 phonemizer==3.2.1
 pytest>=7.4.3
 torch_stoi==0.2.1
+pre-commit>=3.6.2
