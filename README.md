@@ -11,5 +11,5 @@ Speech to Phoneme, Bandwidth Extension and Speaker Identification using the Vibr
 
 
 - Train wav2vec2 for Speech to Phoneme  
-```python train.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp```
+```python train.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5```
 
