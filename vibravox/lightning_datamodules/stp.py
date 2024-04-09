@@ -12,7 +12,7 @@ class STPLightningDataModule(LightningDataModule):
     def __init__(
         self,
         sample_rate: int = 16000,
-        sensor: str = "bwe_in-ear_rigid_earpiece_microphone",
+        sensor: str = "airborne.mouth_headworn.reference_microphone",
         subset: str = "speech_clean",
         streaming: bool = False,
         batch_size: int = 32,
