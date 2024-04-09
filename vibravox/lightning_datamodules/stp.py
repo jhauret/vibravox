@@ -12,8 +12,8 @@ class STPLightningDataModule(LightningDataModule):
     def __init__(
         self,
         sample_rate: int = 16000,
-        sensor: Tuple[str] = ("bwe_in-ear_rigid_earpiece_microphone",),
-        subset: Tuple[str] = ("speech_clean",),
+        sensor: str = "bwe_in-ear_rigid_earpiece_microphone",
+        subset: str = "speech_clean",
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -25,8 +25,8 @@ class STPLightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            sensor (Tuple[str], optional): Sensor. Defaults to ("bwe_in-ear_rigid_earpiece_microphone",).
-            subset (Tuple[str], optional): Subset. Defaults to ("speech_clean",).
+            sensor (str, optional): Sensor. Defaults to ("bwe_in-ear_rigid_earpiece_microphone",).
+            subset (str, optional): Subset. Defaults to ("speech_clean",).
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -36,10 +36,6 @@ class STPLightningDataModule(LightningDataModule):
 
         super().__init__()
 
-        if len(sensor) != 1:
-            raise NotImplementedError("Only one sensor is supported for now.")
-        if len(subset) != 1:
-            raise NotImplementedError("Only one subset is supported for now.")
 
         self.sample_rate = sample_rate
         self.sensor = sensor
@@ -63,10 +59,10 @@ class STPLightningDataModule(LightningDataModule):
         """
 
         dataset_dict = load_dataset(
-            self.DATASET_NAME, self.subset[0], streaming=self.streaming
+            self.DATASET_NAME, self.subset, streaming=self.streaming
         )
 
-        dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor[0]}", "audio")
+        dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor}", "audio")
 
         dataset_dict = dataset_dict.select_columns(["audio", "phonemized_text"])
 
