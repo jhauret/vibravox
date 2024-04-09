@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
@@ -8,12 +8,12 @@ from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
 
 class STPLightningDataModule(LightningDataModule):
     DATASET_NAME = "Cnam-LMSSC/vibravox"
-    LANGUAGE = "fr"
 
     def __init__(
         self,
         sample_rate: int = 16000,
-        subset_name: str = "bwe_in-ear_rigid_earpiece_microphone",
+        sensor: Tuple[str] = ("bwe_in-ear_rigid_earpiece_microphone",),
+        subset: Tuple[str] = ("speech_clean",),
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -24,8 +24,9 @@ class STPLightningDataModule(LightningDataModule):
         LightningDataModule for Speech-to-Phoneme (STP).
 
         Args:
-            sample_rate (int, optional): Sample rate of the audio files. Defaults to 16000.
-            subset_name (str, optional): Name of the configuration. Defaults to "bwe_in-ear_rigid_earpiece_microphone".
+            sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
+            sensor (Tuple[str], optional): Sensor. Defaults to ("bwe_in-ear_rigid_earpiece_microphone",).
+            subset (Tuple[str], optional): Subset. Defaults to ("speech_clean",).
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -35,8 +36,14 @@ class STPLightningDataModule(LightningDataModule):
 
         super().__init__()
 
+        if len(sensor) != 1:
+            raise NotImplementedError("Only one sensor is supported for now.")
+        if len(subset) != 1:
+            raise NotImplementedError("Only one subset is supported for now.")
+
         self.sample_rate = sample_rate
-        self.subset_name = subset_name
+        self.sensor = sensor
+        self.subset = subset
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -55,20 +62,22 @@ class STPLightningDataModule(LightningDataModule):
             That is why it is necessary to define attributes here rather than in __init__.
         """
 
-        datasets = load_dataset(
-            self.DATASET_NAME, self.subset_name, streaming=self.streaming
+        dataset_dict = load_dataset(
+            self.DATASET_NAME, self.subset[0], streaming=self.streaming
         )
 
-        datasets = datasets.select_columns(["audio", "phonemes"])
+        dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor[0]}", "audio")
+
+        dataset_dict = dataset_dict.select_columns(["audio", "phonemized_text"])
 
         # Resample the audio to the right sample rate
-        datasets = datasets.cast_column(
+        dataset_dict = dataset_dict.cast_column(
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
 
-        self.train_dataset = datasets["train"]
-        self.val_dataset = datasets["validation"]
-        self.test_dataset = datasets["test"]
+        self.train_dataset = dataset_dict["train"]
+        self.val_dataset = dataset_dict["validation"]
+        self.test_dataset = dataset_dict["test"]
 
     def train_dataloader(self):
         """
@@ -126,7 +135,7 @@ class STPLightningDataModule(LightningDataModule):
         """
 
         audios = [sample["audio"]["array"] for sample in batch]
-        phonemes = [sample["phonemes"] for sample in batch]
+        phonemes = [sample["phonemized_text"] for sample in batch]
 
         audio_processed = self.feature_extractor(
             raw_speech=audios,
