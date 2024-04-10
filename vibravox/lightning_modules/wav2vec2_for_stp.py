@@ -115,7 +115,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         """
         Method to be called when the test ends.
         """
-        if self.push_to_hub_after_training:
+        if self.push_to_hub_after_testing:
             self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/{self.trainer.lightning_module.sensor}",
                                               commit_message=f"Upload wav2vec2_for_stp after {self.trainer.current_epoch} epochs")
 
