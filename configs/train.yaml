@@ -14,7 +14,7 @@ hydra:
 
 # Composing configs
 defaults:
-  - lightning_datamodule: # # NEEDS TO BE OVERRIDDEN, will also determinate the metrics and the run directory
+  - lightning_datamodule: # NEEDS TO BE OVERRIDDEN, will also determinate the metrics and the run directory
   - lightning_module: # NEEDS TO BE OVERRIDDEN
   - trainer: ddp
   - callbacks: # Dict of callbacks
