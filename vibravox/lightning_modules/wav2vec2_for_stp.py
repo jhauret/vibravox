@@ -6,6 +6,7 @@ import transformers
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
+from transformers import Wav2Vec2Processor
 
 
 class Wav2Vec2ForSTPLightningModule(LightningModule):
@@ -116,8 +117,13 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         Method to be called when the test ends.
         """
         if self.push_to_hub_after_testing:
-            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/{self.trainer.lightning_datamodule.sensor}",
-                                              commit_message=f"Upload wav2vec2_for_stp after {self.trainer.current_epoch} epochs")
+            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/{self.trainer.datamodule.sensor}",
+                                              commit_message=f"Upload Wav2Vec2ForCTC after {self.trainer.current_epoch} epochs")
+            processor = Wav2Vec2Processor(feature_extractor=self.trainer.datamodule.feature_extractor,
+                                          tokenizer=self.trainer.datamodule.tokenizer)
+            processor.push_to_hub(f"Cnam-LMSSC/{self.trainer.datamodule.sensor}",
+                                  commit_message=f"Upload Wav2Vec2Processor after {self.trainer.current_epoch} epochs")
+
 
     def common_step(self, batch):
 
