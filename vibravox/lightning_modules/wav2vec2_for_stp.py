@@ -117,11 +117,11 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         Method to be called when the test ends.
         """
         if self.push_to_hub_after_testing:
-            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/{self.trainer.datamodule.sensor}",
+            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
                                               commit_message=f"Upload Wav2Vec2ForCTC after {self.trainer.current_epoch} epochs")
             processor = Wav2Vec2Processor(feature_extractor=self.trainer.datamodule.feature_extractor,
                                           tokenizer=self.trainer.datamodule.tokenizer)
-            processor.push_to_hub(f"Cnam-LMSSC/{self.trainer.datamodule.sensor}",
+            processor.push_to_hub(f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
                                   commit_message=f"Upload Wav2Vec2Processor after {self.trainer.current_epoch} epochs")
 
 
