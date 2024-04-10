@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
     trainer.fit(lightning_module, datamodule=lightning_datamodule)
 
     # Test the model
-    trainer.test(ckpt_path="best")
+    trainer.test(ckpt_path="best", datamodule=lightning_datamodule)
 
 
 def setup_environment():
