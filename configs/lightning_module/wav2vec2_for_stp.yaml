@@ -1,6 +1,7 @@
 _target_: vibravox.lightning_modules.wav2vec2_for_stp.Wav2Vec2ForSTPLightningModule
 
 sample_rate: ${sample_rate}
+push_to_hub_after_testing: True
 
 wav2vec2_for_ctc:
   _target_: transformers.Wav2Vec2ForCTC.from_pretrained

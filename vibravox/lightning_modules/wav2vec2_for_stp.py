@@ -15,6 +15,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC,
         optimizer: partial[torch.optim.Optimizer],
         metrics: MetricCollection,
+        push_to_hub_after_testing: bool = False,
     ):
         """
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
@@ -24,6 +25,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             wav2vec2_for_ctc (torch.nn.Module): Neural network to enhance the speech
             optimizer (partial[torch.optim.Optimizer]): Optimizer
             metrics (MetricCollection): Metrics to be computed.
+            push_to_hub_after_testing (bool): If True, the model is pushed to the Hugging Face hub after testing. Defaults to False.
         """
         super().__init__()
 
@@ -38,6 +40,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         )
 
         self.metrics: MetricCollection = metrics
+        self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
     def training_step(self, batch):
         """
@@ -107,6 +110,14 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
     ) -> None:
 
         self.common_logging("test", outputs, batch, batch_idx)
+
+    def on_test_end(self) -> None:
+        """
+        Method to be called when the test ends.
+        """
+        if self.push_to_hub_after_training:
+            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/{self.trainer.lightning_module.sensor}",
+                                              commit_message=f"Upload wav2vec2_for_stp after {self.trainer.current_epoch} epochs")
 
     def common_step(self, batch):
 
