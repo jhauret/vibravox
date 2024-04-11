@@ -62,16 +62,21 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
 
 
 @pytest.fixture(
-    params=["bwe_in-ear_rigid_earpiece_microphone"]
+    params=["body_conducted.temple.contact_microphone",
+            "body_conducted.throat.piezoelectric_sensor",
+            "body_conducted.in_ear.rigid_earpiece_microphone",
+            "body_conducted.in_ear.comply_foam_microphone",
+            "body_conducted.forehead.miniature_accelerometer",
+            "airborne.mouth_headworn.reference_microphone"]
 )  # , "bwe_throat_piezoelectric_sensor"
-def bwe_subset_name(request) -> str:
+def sensor_name(request) -> str:
     return request.param
 
 
 @pytest.fixture(
-    params=["asr_in-ear_rigid_earpiece_microphone"]
+    params=["speech_clean", "speech_noisy"]
 )  # , "bwe_throat_piezoelectric_sensor"
-def asr_subset_name(request) -> str:
+def subset_name(request) -> str:
     return request.param
 
 
@@ -82,12 +87,16 @@ def streaming(request) -> bool:
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance(
-    sample_rate, bwe_subset_name, streaming, batch_size
+    sample_rate, sensor_name, subset_name, streaming, batch_size
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
     datamodule = BWELightningDataModule(
-        sample_rate, bwe_subset_name, streaming, batch_size
+        sample_rate=sample_rate,
+        sensor=sensor_name,
+        subset=subset_name,
+        streaming=streaming,
+        batch_size=batch_size,
     )
     datamodule.setup()
 
@@ -96,7 +105,7 @@ def bwe_lightning_datamodule_instance(
 
 @pytest.fixture
 def stp_lightning_datamodule_instance(
-    sample_rate, asr_subset_name, streaming, batch_size
+    sample_rate, sensor_name, subset_name, streaming, batch_size
 ) -> STPLightningDataModule:
     """STPLightningDataModule instance."""
 
@@ -105,10 +114,10 @@ def stp_lightning_datamodule_instance(
 
     datamodule = STPLightningDataModule(
         sample_rate=sample_rate,
-        subset_name=asr_subset_name,
+        sensor=sensor_name,
+        subset=subset_name,
         streaming=streaming,
         batch_size=batch_size,
-        num_workers=4,
         feature_extractor=feature_extractor,
         tokenizer=tokenizer
     )
