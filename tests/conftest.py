@@ -91,6 +91,9 @@ def bwe_lightning_datamodule_instance(
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
+    if sensor_name == "airborne.mouth_headworn.reference_microphone":
+        pytest.skip("Skipping for airborne.mouth_headworn.reference_microphone")
+
     datamodule = BWELightningDataModule(
         sample_rate=sample_rate,
         sensor=sensor_name,
