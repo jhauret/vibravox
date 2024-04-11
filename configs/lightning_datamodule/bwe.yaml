@@ -1,7 +1,8 @@
 _target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 
 sample_rate: 16000
-subset_name: "bwe_in-ear_rigid_earpiece_microphone"
+subset: "speech_clean"
+sensor: "body_conducted.in_ear.rigid_earpiece_microphone"
 streaming: False
-batch_size: 16
-num_workers: 4
+batch_size: 8
+num_workers: 16

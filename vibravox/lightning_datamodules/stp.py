@@ -36,7 +36,6 @@ class STPLightningDataModule(LightningDataModule):
 
         super().__init__()
 
-
         self.sample_rate = sample_rate
         self.sensor = sensor
         self.subset = subset
