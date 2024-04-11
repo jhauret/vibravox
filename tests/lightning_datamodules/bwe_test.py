@@ -8,7 +8,8 @@ class TestBWELightningDataModule:
         train_dataset = bwe_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
 
-        assert isinstance(dataset_sample["audio"]["array"], torch.Tensor)
+        assert isinstance(dataset_sample["audio_body_conducted"]["array"], torch.Tensor)
+        assert isinstance(dataset_sample["audio_airborne"]["array"], torch.Tensor)
 
     def test_dataloader_returns_format(self, bwe_lightning_datamodule_instance):
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()

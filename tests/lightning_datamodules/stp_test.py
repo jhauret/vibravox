@@ -10,7 +10,7 @@ class TestSTPLightningDataModule:
         dataset_sample = next(iter(train_dataset))
 
         assert isinstance(dataset_sample["audio"]["array"], np.ndarray)
-        assert isinstance(dataset_sample["phonemes"], str)
+        assert isinstance(dataset_sample["phonemized_text"], str)
 
     def test_dataloader_returns_format(self, stp_lightning_datamodule_instance):
         train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
@@ -29,7 +29,7 @@ class TestSTPLightningDataModule:
     ):
         train_dataset = stp_lightning_datamodule_instance.train_dataset
         dataset_sample = next(iter(train_dataset))
-        phonemes = dataset_sample["phonemes"]
+        phonemes = dataset_sample["phonemized_text"]
         tokenized_phonemes = stp_lightning_datamodule_instance.tokenizer(
             phonemes, add_special_tokens=True
         )
