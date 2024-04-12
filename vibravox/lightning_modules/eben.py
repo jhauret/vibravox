@@ -69,12 +69,13 @@ class EBENLightningModule(LightningModule):
         Lightning training step
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor]): Tuple of corrupted and reference speech
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
+                                                and values of shape (batch_size, channels, samples)
         """
 
-        # Get speeches
-        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
-        corrupted_speech, reference_speech = cut_batch
+        # Get tensors
+        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
 
         # Get optimizers
         generator_optimizer, discriminator_optimizer = self.optimizers(
@@ -85,9 +86,7 @@ class EBENLightningModule(LightningModule):
         self.toggle_optimizer(generator_optimizer)
 
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
-        decomposed_reference_speech = self.generator.pqmf.forward(
-            reference_speech, "analysis"
-        )
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
         # Initialize step_output
         step_output = {
@@ -100,32 +99,20 @@ class EBENLightningModule(LightningModule):
             "scalars_to_log": dict(),
         }
 
-        enhanced_embeddings = self.discriminator(
-            bands=decomposed_enhanced_speech, audio=enhanced_speech
-        )
-        reference_embeddings = self.discriminator(
-            bands=decomposed_reference_speech, audio=reference_speech
-        )
+        enhanced_embeddings = self.discriminator(bands=decomposed_enhanced_speech, audio=enhanced_speech)
+        reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
 
         # Compute adversarial_loss
-        adv_loss_gen = self.adversarial_loss_fn(
-            embeddings=enhanced_embeddings, target=1
-        )
+        adv_loss_gen = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
 
         # Compute feature_matching_loss
-        feature_matching_loss = self.feature_matching_loss_fn(
-            enhanced_embeddings, reference_embeddings
-        )
+        feature_matching_loss = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
 
         # Compute reconstructive_loss_temp
-        reconstructive_loss_temp = self.reconstructive_loss_temp_fn(
-            enhanced_speech, reference_speech
-        )
+        reconstructive_loss_temp = self.reconstructive_loss_temp_fn(enhanced_speech, reference_speech)
 
         # Compute reconstructive_loss_freq
-        reconstructive_loss_freq = self.reconstructive_loss_freq_fn(
-            enhanced_speech, reference_speech
-        )
+        reconstructive_loss_freq = self.reconstructive_loss_freq_fn(enhanced_speech, reference_speech)
 
         # Compute loss to backprop on
         backprop_loss_gen = (
@@ -176,14 +163,24 @@ class EBENLightningModule(LightningModule):
         return step_output
 
     def validation_step(self, batch, batch_idx):
+        """
+        Lightning validation step
+
+        Args:
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
+                                                and values of shape (batch_size, channels, samples)
+            batch_idx (int): Index of the batch
+        """
         return self.common_eval_step(batch, batch_idx)
 
     def test_step(self, batch, batch_idx):
         """
-        Lightning test step
+        Lightning validation step
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor]):
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
+                                                and values of shape (batch_size, channels, samples)
+            batch_idx (int): Index of the batch
         """
         return self.common_eval_step(batch, batch_idx)
 
@@ -202,13 +199,13 @@ class EBENLightningModule(LightningModule):
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
 
-        self.common_eval_logging("validation", outputs, batch, batch_idx)
+        self.common_eval_logging("validation", outputs, batch_idx)
 
     def on_test_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
 
-        self.common_eval_logging("test", outputs, batch, batch_idx)
+        self.common_eval_logging("test", outputs, batch_idx)
 
     def common_eval_step(self, batch, batch_idx):
         cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
@@ -226,7 +223,7 @@ class EBENLightningModule(LightningModule):
 
         return step_output
 
-    def common_eval_logging(self, stage, outputs, batch, batch_idx):
+    def common_eval_logging(self, stage, outputs, batch_idx):
 
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "audio" in outputs, "audio key must be in outputs"
