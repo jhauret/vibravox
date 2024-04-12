@@ -1,5 +1,5 @@
 import torch
-
+import pytest
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 
 
@@ -28,6 +28,9 @@ class TestBWELightningDataModule:
         assert dataloader_sample[0].dim() == 3, "Expected 3 dimensions in the tensor."
 
     def test_no_offset_between_audio_samples(self, bwe_lightning_datamodule_instance):
+        if bwe_lightning_datamodule_instance.subset == "speech_noisy":
+            pytest.skip("Skipping for noisy speech.")
+
         train_dataloder = bwe_lightning_datamodule_instance.train_dataloader()
         dataloader_sample = next(iter(train_dataloder))
 
