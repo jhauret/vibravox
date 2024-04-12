@@ -169,6 +169,8 @@ class BWELightningDataModule(LightningDataModule):
                 )
                 body_conducted_padded_batch.append(body_conducted_padded.unsqueeze(0))
                 air_conducted_padded_batch.append(air_conducted_padded.unsqueeze(0))
+            body_conducted_padded_batch = torch.stack(body_conducted_padded_batch, dim=0)
+            air_conducted_padded_batch = torch.stack(air_conducted_padded_batch, dim=0)
 
         return {
             "audio_body_conducted": body_conducted_padded_batch,
