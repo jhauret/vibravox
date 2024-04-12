@@ -2,13 +2,6 @@ noresqa_mos:
   _target_: vibravox.metrics.noresqa_mos.NoresqaMOS
   sample_rate: ${sample_rate}
 
-pytorch_stoi:
-  _target_: vibravox.metrics.pytorch_stoi.PytorchSTOI
-  sample_rate: ${sample_rate}
-  use_vad: True
-  extended: True
-  do_resample: True
-
 si_sdr:
   _target_: torchmetrics.audio.ScaleInvariantSignalDistortionRatio
 
