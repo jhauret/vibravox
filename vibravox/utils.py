@@ -4,44 +4,83 @@ import torch
 from torchaudio.functional import lowpass_biquad
 
 
+from typing import Optional
+
+def pad_audio(audio: torch.Tensor, desired_time_len: int) -> torch.Tensor:
+    """
+    Pad the audio tensor to the desired length. The padding is done symmetrically.
+
+    Args:
+        audio (torch.Tensor): input signal. Shape: (..., time_len)
+        desired_time_len (int): desired duration of the signal in number of time steps
+
+    Returns:
+        torch.Tensor: Padded audio tensor.
+    """
+
+    assert audio.shape[-1] <= desired_time_len, "The audio signal is longer than the desired duration. Use set_audio_duration instead."
+
+    original_time_len = audio.shape[-1]
+    num_zeros_left = desired_time_len - original_time_len // 2
+    return torch.nn.functional.pad(
+        audio,
+        pad=(
+            num_zeros_left,
+            desired_time_len - original_time_len - num_zeros_left,
+        ),
+        mode="constant",
+        value=0,
+    )
+
+def slice_audio(audio: torch.Tensor, desired_time_len: int, offset_time_len: int) -> torch.Tensor:
+    """
+    Slice the audio tensor to the desired length.
+
+    Args:
+        audio (torch.Tensor): input signal. Shape: (..., time_len)
+        desired_time_len (int): desired duration of the signal in number of time steps
+        offset_time_len (int): offset for slicing the audio tensor
+
+    Returns:
+        torch.Tensor: Sliced audio tensor.
+    """
+
+    assert audio.shape[-1] >= desired_time_len, "The audio signal is shorter than the desired duration. Use pad_audio instead."
+
+    return audio[..., offset_time_len: offset_time_len + desired_time_len]
+
 def set_audio_duration(
-    audio: torch.Tensor, desired_time_len: int, deterministic: bool = False
-):
+    audio: torch.Tensor, desired_time_len: int, audio_bis: Optional[torch.Tensor] = None, deterministic: bool = False
+) -> torch.Tensor:
     """
     Make the audio signal have the desired duration.
 
     Args:
         audio (torch.Tensor): input signal. Shape: (..., time_len)
         desired_time_len (int): duration of selected signal in number of time steps
+        audio_bis (torch.Tensor, optional): second input signal with the same shape: (..., time_len)
         deterministic (bool): if True, always select the same part of the signal
 
+    Returns:
+        torch.Tensor: Audio tensor with the desired duration.
     """
     original_time_len = audio.shape[-1]
 
-    # If the signal is longer than the desired duration, select a random part of the signal
+    assert audio_bis is None or audio.shape == audio_bis.shape, "The two audio signals must have the same shape."
+
     if original_time_len >= desired_time_len:
-        if deterministic:
-            offset_time_len = original_time_len - desired_time_len // 2
-        else:
-            offset_time_len = torch.randint(
-                low=0, high=original_time_len - desired_time_len + 1, size=(1,)
-            )
-        audio = audio[..., offset_time_len : offset_time_len + desired_time_len]
-
-    # If the signal is shorter than the desired duration, pad the signal with zeros
-    else:
-        num_zeros_left = desired_time_len - original_time_len // 2
-        audio = torch.nn.functional.pad(
-            audio,
-            pad=(
-                num_zeros_left,
-                desired_time_len - original_time_len - num_zeros_left,
-            ),
-            mode="constant",
-            value=0,
+        offset_time_len = original_time_len - desired_time_len // 2 if deterministic else torch.randint(
+            low=0, high=original_time_len - desired_time_len + 1, size=(1,)
         )
+        audio = slice_audio(audio, desired_time_len, offset_time_len)
+        if audio_bis is not None:
+            audio_bis = slice_audio(audio_bis, desired_time_len, offset_time_len)
+    else:
+        audio = pad_audio(audio, desired_time_len)
+        if audio_bis is not None:
+            audio_bis = pad_audio(audio_bis, desired_time_len)
 
-    return audio
+    return (audio, audio_bis) if audio_bis is not None else audio
 
 
 def remove_hf(
