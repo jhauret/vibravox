@@ -176,36 +176,16 @@ class EBENLightningModule(LightningModule):
         return step_output
 
     def validation_step(self, batch, batch_idx):
-        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
-        corrupted_speech, reference_speech = cut_batch
-        enhanced_speech, _ = self.generator(corrupted_speech)
-
-        step_output = {
-            "audio": {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-                f"reference": reference_speech,
-            },
-            "scalars_to_log": dict(),
-        }
-
-        return step_output
+        return self.common_eval_step(batch, batch_idx)
 
     def test_step(self, batch, batch_idx):
-        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
-        corrupted_speech, reference_speech = cut_batch
-        enhanced_speech, _ = self.generator(corrupted_speech)
+        """
+        Lightning test step
 
-        step_output = {
-            "audio": {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-                f"reference": reference_speech,
-            },
-            "scalars_to_log": dict(),
-        }
-
-        return step_output
+        Args:
+            batch (Tuple[torch.Tensor, torch.Tensor]):
+        """
+        return self.common_eval_step(batch, batch_idx)
 
     def configure_optimizers(self):
         """
@@ -222,8 +202,36 @@ class EBENLightningModule(LightningModule):
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
 
+        self.common_eval_logging("validation", outputs, batch, batch_idx)
+
+    def on_test_batch_end(
+        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
+
+        self.common_eval_logging("test", outputs, batch, batch_idx)
+
+    def common_eval_step(self, batch, batch_idx):
+        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
+        corrupted_speech, reference_speech = cut_batch
+        enhanced_speech, _ = self.generator(corrupted_speech)
+
+        step_output = {
+            "audio": {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            },
+            "scalars_to_log": dict(),
+        }
+
+        return step_output
+
+    def common_eval_logging(self, stage, outputs, batch, batch_idx):
+
+        assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "audio" in outputs, "audio key must be in outputs"
 
+        # Log metrics
         metrics_to_log = self.metrics(
             outputs["audio"]["enhanced"], outputs["audio"]["reference"]
         )
@@ -234,6 +242,7 @@ class EBENLightningModule(LightningModule):
             prog_bar=True,
         )
 
+        # Log audio
         self.log_audio(
             prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx
         )
