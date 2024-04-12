@@ -85,9 +85,14 @@ def streaming(request) -> bool:
     return request.param
 
 
+@pytest.fixture(params=["pad", "constant_length-3000-ms"])
+def collate_strategy(request) -> str:
+    return request.param
+
+
 @pytest.fixture
 def bwe_lightning_datamodule_instance(
-    sample_rate, sensor_name, subset_name, streaming, batch_size
+    sample_rate, sensor_name, subset_name, collate_strategy, streaming, batch_size
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
@@ -98,6 +103,7 @@ def bwe_lightning_datamodule_instance(
         sample_rate=sample_rate,
         sensor=sensor_name,
         subset=subset_name,
+        collate_strategy=collate_strategy,
         streaming=streaming,
         batch_size=batch_size,
     )
