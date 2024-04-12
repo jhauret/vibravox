@@ -46,8 +46,8 @@ class TestBWELightningDataModule:
         shift = torch.argmax(correlation) - corrupted_audio.shape[-1] + 1
 
         assert shift in range(
-            -12, 12
-        ), "Expected minimal offset between audio samples. [-12,12] corresponds to a spacing of 21cm between the microphones."
+            -24, 24
+        ), "Expected minimal offset between audio samples. [-24,24] corresponds to a spacing of 42cm between the microphones."
 
     def test_hydra_instantiation(self, bwe_lightning_datamodule_instance_from_hydra):
 
