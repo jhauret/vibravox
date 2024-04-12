@@ -235,7 +235,7 @@ class EBENLightningModule(LightningModule):
         metrics_to_log = self.metrics(
             outputs["audio"]["enhanced"], outputs["audio"]["reference"]
         )
-        metrics_to_log = {f"validation/{k}": v for k, v in metrics_to_log.items()}
+        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
@@ -244,7 +244,7 @@ class EBENLightningModule(LightningModule):
 
         # Log audio
         self.log_audio(
-            prefix="validation/", speech_dict=outputs["audio"], batch_idx=batch_idx
+            prefix=f"{stage}/", speech_dict=outputs["audio"], batch_idx=batch_idx
         )
 
     @staticmethod
