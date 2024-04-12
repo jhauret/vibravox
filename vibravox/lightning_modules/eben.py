@@ -103,10 +103,10 @@ class EBENLightningModule(LightningModule):
         reference_embeddings = self.discriminator(bands=decomposed_reference_speech, audio=reference_speech)
 
         # Compute adversarial_loss
-        adv_loss_gen = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
+        #adv_loss_gen = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
 
         # Compute feature_matching_loss
-        feature_matching_loss = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
+        #feature_matching_loss = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
 
         # Compute reconstructive_loss_temp
         reconstructive_loss_temp = self.reconstructive_loss_temp_fn(enhanced_speech, reference_speech)
@@ -116,15 +116,15 @@ class EBENLightningModule(LightningModule):
 
         # Compute loss to backprop on
         backprop_loss_gen = (
-            adv_loss_gen
-            + feature_matching_loss
-            + reconstructive_loss_temp
+            #adv_loss_gen
+            #+ feature_matching_loss
+            reconstructive_loss_temp
             + reconstructive_loss_freq
         )
 
         # Log scalars
-        self.log("train/generator/adv_loss", adv_loss_gen)
-        self.log("train/generator/feature_matching_loss", feature_matching_loss)
+        #self.log("train/generator/adv_loss", adv_loss_gen)
+        #self.log("train/generator/feature_matching_loss", feature_matching_loss)
         self.log("train/generator/reconstructive_loss_temp", reconstructive_loss_temp)
         self.log("train/generator/reconstructive_loss_freq", reconstructive_loss_freq)
         self.log("train/generator/total_loss", backprop_loss_gen)
@@ -135,30 +135,30 @@ class EBENLightningModule(LightningModule):
         self.untoggle_optimizer(generator_optimizer)
 
         ######################## Train Discriminator ########################
-        self.toggle_optimizer(discriminator_optimizer)
-
-        # Compute forwards again is necessary because we haven't retain_graph
-        enhanced_embeddings = self.discriminator(
-            bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
-        )
-        reference_embeddings = self.discriminator(
-            bands=decomposed_reference_speech, audio=reference_speech
-        )
-
-        # Compute adversarial_loss
-        real_loss = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
-        fake_loss = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
-
-        # Compute and log total loss
-        backprop_loss_dis = real_loss + fake_loss
-
-        # Log scalars
-        self.log("train/discriminator/total_loss", real_loss)
-
-        self.manual_backward(backprop_loss_dis)
-        discriminator_optimizer.step()
-        discriminator_optimizer.zero_grad()
-        self.untoggle_optimizer(discriminator_optimizer)
+        # self.toggle_optimizer(discriminator_optimizer)
+        #
+        # # Compute forwards again is necessary because we haven't retain_graph
+        # enhanced_embeddings = self.discriminator(
+        #     bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
+        # )
+        # reference_embeddings = self.discriminator(
+        #     bands=decomposed_reference_speech, audio=reference_speech
+        # )
+        #
+        # # Compute adversarial_loss
+        # real_loss = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
+        # fake_loss = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
+        #
+        # # Compute and log total loss
+        # backprop_loss_dis = real_loss + fake_loss
+        #
+        # # Log scalars
+        # self.log("train/discriminator/total_loss", real_loss)
+        #
+        # self.manual_backward(backprop_loss_dis)
+        # discriminator_optimizer.step()
+        # discriminator_optimizer.zero_grad()
+        # self.untoggle_optimizer(discriminator_optimizer)
 
         return step_output
 
@@ -241,10 +241,11 @@ class EBENLightningModule(LightningModule):
             prog_bar=True,
         )
 
-        # Log audio
-        self.log_audio(
-            prefix=f"{stage}/", speech_dict=outputs["audio"], batch_idx=batch_idx
-        )
+        if self.trainer.global_step % 10 == 0:
+            # Log audio
+            self.log_audio(
+                prefix=f"{stage}/", speech_dict=outputs["audio"], batch_idx=batch_idx
+            )
 
     @staticmethod
     def ready_to_log(audio_tensor):
