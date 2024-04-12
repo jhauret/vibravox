@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any
+from typing import Any, Dict
 
 import torch
 import transformers
@@ -43,32 +43,32 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self.metrics: MetricCollection = metrics
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
-    def training_step(self, batch):
+    def training_step(self, batch: Dict[str, torch.Tensor]):
         """
         Lightning training step
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor]): Tuple of speech and phonemes
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
         """
 
         return self.common_step(batch)
 
-    def validation_step(self, batch):
+    def validation_step(self, batch: Dict[str, torch.Tensor]):
         """
         Lightning validation step
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor]): Tuple of speech and phonemes
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
         """
 
         return self.common_step(batch)
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx):
         """
         Lightning test step
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor]): Tuple of speech and phonemes
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
         """
 
         return self.common_step(batch)
@@ -97,19 +97,42 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
     def on_train_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int
     ) -> None:
+        """
+        Method automatically called when the train batch ends.
+
+        Args:
+            outputs (STEP_OUTPUT): Output of the training_step method
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+        """
 
         self.common_logging("train", outputs, batch, batch_idx)
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
+        """
+        Method automatically called when the validation batch ends.
+
+        Args:
+            outputs (STEP_OUTPUT): Output of the validation_step method
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+        """
 
         self.common_logging("validation", outputs, batch, batch_idx)
 
     def on_test_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
+        """
+        Method automatically called when the test batch ends.
 
+        Args:
+            outputs (STEP_OUTPUT): Output of the test_step method
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+        """
         self.common_logging("test", outputs, batch, batch_idx)
 
     def on_test_end(self) -> None:
@@ -124,8 +147,16 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             processor.push_to_hub(f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
                                   commit_message=f"Upload Wav2Vec2Processor after {self.trainer.current_epoch} epochs")
 
+    def common_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """
+        Common step for training, validation and test steps.
 
-    def common_step(self, batch):
+        Args:
+             batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
+
+        Returns:
+            Dict[str, torch.Tensor]: Dict with keys "loss", "logits"
+        """
 
         # Get tensors
         speech = batch["audio"]
@@ -136,7 +167,18 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return forward_result
 
-    def common_logging(self, stage, outputs, batch, batch_idx):
+    def common_logging(self, stage: str, outputs: STEP_OUTPUT, batch: Any, batch_idx: int)-> None:
+        """
+        Common logging for training, validation and test steps.
+
+        Args:
+            stage(str): Stage of the training
+            outputs(STEP_OUTPUT): Output of the {train,validation,test}_step method
+            batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
+            batch_idx(int): Index of the batch
+
+        """
+
         # Log loss
         self.log(f"{stage}/ctc_loss", outputs["loss"], sync_dist=True)
 
@@ -159,6 +201,15 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         )
 
     def get_phonemes_from_logits(self, model_logits):
+        """
+        Get phonemes from model logits
+
+        Args:
+            model_logits(torch.Tensor): Model logits
+
+        Returns:
+            List[str]: List of predicted phonemes
+        """
 
         # Get predicted phonemes
         predicted_ids = torch.argmax(model_logits, dim=2)
