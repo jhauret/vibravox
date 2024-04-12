@@ -208,8 +208,10 @@ class EBENLightningModule(LightningModule):
         self.common_eval_logging("test", outputs, batch_idx)
 
     def common_eval_step(self, batch, batch_idx):
-        cut_batch = [self.generator.cut_to_valid_length(speech) for speech in batch]
-        corrupted_speech, reference_speech = cut_batch
+
+        # Get tensors
+        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, _ = self.generator(corrupted_speech)
 
         step_output = {
