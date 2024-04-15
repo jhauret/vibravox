@@ -28,7 +28,7 @@ class EBENGenerator(nn.Module):
         self.nl = nn.LeakyReLU(negative_slope=0.01)
 
         self.first_conv = nn.Conv1d(
-            in_channels=1,
+            in_channels=self.p,
             out_channels=32,
             kernel_size=3,
             padding="same",
