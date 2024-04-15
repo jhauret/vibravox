@@ -65,9 +65,9 @@ class EBENLightningModule(LightningModule):
         if self.learning_strategy in {'all', 'rec_only'}:
             self.reconstructive_loss_temp_fn = torch.nn.L1Loss()
             self.reconstructive_loss_freq_fn = auraloss.freq.MultiResolutionSTFTLoss(
-                fft_sizes=[512, 1024, 2048],
-                hop_sizes=[256, 512, 1024],
-                win_lengths=[512, 1024, 2048],
+                fft_sizes=[256, 512, 1024, 2048],
+                hop_sizes=[128, 256, 512, 1024],
+                win_lengths=[256, 512, 1024, 2048],
                 scale="mel",
                 n_bins=128,
                 sample_rate=self.sample_rate,
