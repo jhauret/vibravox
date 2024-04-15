@@ -331,3 +331,26 @@ class EBENLightningModule(LightningModule):
                 ]
 
         return lambdas
+
+    def dynamically_balance_losses(self, atomic_losses: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """Adapt the weights of the losses according to their gradients
+
+        Args:
+            atomic_losses (Dict[str, torch.Tensor]): List of atomic losses
+        Returns:
+            (Dict[str, torch.Tensor]): List of balanced atomic losses.
+        """
+
+        lambdas = self.compute_lambdas(atomic_losses, self.get_loss_adjustment_layer())
+        for key, lambda_ in zip(atomic_losses.keys(), lambdas):
+            atomic_losses[key] = lambda_ * atomic_losses[key]
+
+        return atomic_losses
+
+    def get_loss_adjustment_layer(self):
+        """Get the layer where the gradients are computed to adapt the lambdas
+
+        Returns:
+            torch.Tensor: Layer where the gradients are computed
+        """
+        return self.generator.last_conv.weight
