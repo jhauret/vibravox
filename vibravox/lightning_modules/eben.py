@@ -108,7 +108,7 @@ class EBENLightningModule(LightningModule):
                 f"reference": reference_speech,
             }
 
-        atomic_losses_gen = self.compute_atomic_losses(
+        atomic_losses_generator = self.compute_atomic_losses(
             network="generator",
             enhanced_speech=enhanced_speech,
             reference_speech=reference_speech,
@@ -116,16 +116,16 @@ class EBENLightningModule(LightningModule):
             decomposed_reference_speech=decomposed_reference_speech,
         )
 
-        for key, value in atomic_losses_gen.items():
+        for key, value in atomic_losses_generator.items():
             self.log(f"train/generator/{key}", value)
 
         if self.dynamic_loss_balancing is not None:
-            atomic_losses_gen = self.dynamically_balance_losses(atomic_losses_gen)
+            atomic_losses_generator = self.dynamically_balance_losses(atomic_losses_generator)
 
-        backprop_loss_gen = sum(atomic_losses_gen.values())
-        self.log("train/generator/backprop_loss", backprop_loss_gen)
+        backprop_loss_generator = sum(atomic_losses_generator.values())
+        self.log("train/generator/backprop_loss", backprop_loss_generator)
 
-        self.manual_backward(backprop_loss_gen)
+        self.manual_backward(backprop_loss_generator)
         generator_optimizer.step()
         generator_optimizer.zero_grad()
         self.untoggle_optimizer(generator_optimizer)
@@ -140,7 +140,7 @@ class EBENLightningModule(LightningModule):
             decomposed_reference_speech=decomposed_reference_speech,
         )
 
-        for key, value in atomic_losses_gen.items():
+        for key, value in atomic_losses_discriminator.items():
             self.log(f"train/discriminator/{key}", value)
 
         if "real_loss" in atomic_losses_discriminator and "fake_loss" in atomic_losses_discriminator:
@@ -165,7 +165,7 @@ class EBENLightningModule(LightningModule):
                                                 and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
         """
-        return self.common_eval_step(batch, batch_idx)
+        return self.common_eval_step(batch, batch_idx, "validation")
 
     def test_step(self, batch, batch_idx):
         """
@@ -176,7 +176,7 @@ class EBENLightningModule(LightningModule):
                                                 and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
         """
-        return self.common_eval_step(batch, batch_idx)
+        return self.common_eval_step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
         """
@@ -201,18 +201,43 @@ class EBENLightningModule(LightningModule):
 
         self.common_eval_logging("test", outputs, batch_idx)
 
-    def common_eval_step(self, batch, batch_idx):
+    def common_eval_step(self, batch, batch_idx, stage):
+
+        assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
         reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-        enhanced_speech, _ = self.generator(corrupted_speech)
+        enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
         outputs = {
                 f"corrupted": corrupted_speech,
                 f"enhanced": enhanced_speech,
                 f"reference": reference_speech,
             }
+
+        atomic_losses_generator = self.compute_atomic_losses(
+            network="generator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
+
+        for key, value in atomic_losses_generator.items():
+            self.log(f"{stage}/generator/{key}", value)
+
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
+
+        for key, value in atomic_losses_discriminator.items():
+            self.log(f"train/discriminator/{key}", value)
 
         return outputs
 
