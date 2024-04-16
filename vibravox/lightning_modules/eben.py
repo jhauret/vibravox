@@ -7,13 +7,6 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
-from vibravox.torch_modules.losses.feature_loss import (
-    FeatureLossForDiscriminatorMelganMultiScales,
-)
-from vibravox.torch_modules.losses.hinge_loss import (
-    HingeLossForDiscriminatorMelganMultiScales,
-)
-
 
 class EBENLightningModule(LightningModule):
     def __init__(
@@ -24,8 +17,10 @@ class EBENLightningModule(LightningModule):
         generator_optimizer: partial[torch.optim.Optimizer],
         discriminator_optimizer: partial[torch.optim.Optimizer],
         metrics: MetricCollection,
-        reconstructive_loss_freq_fn: torch.nn.Module,
-        learning_strategy: str = "all",
+        reconstructive_loss_freq_fn: torch.nn.Module = None,
+        reconstructive_loss_time_fn: torch.nn.Module = None,
+        feature_matching_loss_fn: torch.nn.Module = None,
+        adversarial_loss_fn: torch.nn.Module = None,
         dynamic_loss_balancing: str = None,
     ):
         """
@@ -39,10 +34,9 @@ class EBENLightningModule(LightningModule):
             discriminator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the discriminator
             metrics (MetricCollection): Metrics to be computed.
             reconstructive_loss_freq_fn (torch.nn.Module): Function to compute the frequency reconstructive loss (forward call on temporal domain)
-            learning_strategy (str): Strategy to train the model. Default is "all". Options are:
-             - "all": Train both generator and discriminator with all losses
-             - "rec_only": Train only the generator with reconstructive losses
-             - "adv_only": Train both generator and discriminator with adversarial and feature matching losses
+            reconstructive_loss_time_fn (torch.nn.Module): Function to compute the temporal reconstructive loss (forward call on temporal domain)
+            feature_matching_loss_fn (torch.nn.Module): Function to compute the feature matching loss
+            adversarial_loss_fn (torch.nn.Module): Function to compute the adversarial loss
             dynamic_loss_balancing (str): Whether to automatically balance the losses w.r.t. their gradients. One of:
              - None: Do not balance the losses
              - "simple": Balance the losses by dividing them by the gradient norm
@@ -52,8 +46,10 @@ class EBENLightningModule(LightningModule):
         super().__init__()
 
         self.sample_rate: int = sample_rate
+
         self.generator: torch.nn.Module = generator
         self.discriminator: torch.nn.Module = discriminator
+
         self.generator_optimizer: torch.optim.Optimizer = generator_optimizer(
             params=self.generator.parameters()
         )
@@ -61,15 +57,10 @@ class EBENLightningModule(LightningModule):
             params=self.discriminator.parameters()
         )
 
-        assert learning_strategy in {'all', 'rec_only', 'adv_only'}, "learning_strategy must be in {'all', 'rec_only', 'adv_only'}"
-        self.learning_strategy = learning_strategy
-
-        if self.learning_strategy in {'all', 'rec_only'}:
-            self.reconstructive_loss_temp_fn = torch.nn.L1Loss()
-            self.reconstructive_loss_freq_fn: torch.nn.Module = reconstructive_loss_freq_fn
-        if self.learning_strategy in {'all', 'adv_only'}:
-            self.feature_matching_loss_fn = FeatureLossForDiscriminatorMelganMultiScales()
-            self.adversarial_loss_fn = HingeLossForDiscriminatorMelganMultiScales()
+        self.reconstructive_loss_temp_fn: torch.nn.Module = reconstructive_loss_time_fn
+        self.reconstructive_loss_freq_fn: torch.nn.Module = reconstructive_loss_freq_fn
+        self.feature_matching_loss_fn: torch.nn.Module = feature_matching_loss_fn
+        self.adversarial_loss_fn: torch.nn.Module = adversarial_loss_fn
 
         assert dynamic_loss_balancing in {None, "simple", "ema"}, "dynamic_loss_balancing must be in {None, 'simple', 'ema'}"
         self.dynamic_loss_balancing = dynamic_loss_balancing
@@ -117,13 +108,13 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_generator.items():
-            self.log(f"train/generator/{key}", value)
+            self.log(f"train/generator/{key}", value, sync_dist=True)
 
         if self.dynamic_loss_balancing is not None:
             atomic_losses_generator = self.dynamically_balance_losses(atomic_losses_generator)
 
         backprop_loss_generator = sum(atomic_losses_generator.values())
-        self.log("train/generator/backprop_loss", backprop_loss_generator)
+        self.log("train/generator/backprop_loss", backprop_loss_generator, sync_dist=True)
 
         self.manual_backward(backprop_loss_generator)
         generator_optimizer.step()
@@ -140,13 +131,12 @@ class EBENLightningModule(LightningModule):
             decomposed_reference_speech=decomposed_reference_speech,
         )
 
-        for key, value in atomic_losses_discriminator.items():
-            self.log(f"train/discriminator/{key}", value)
-
-        if "real_loss" in atomic_losses_discriminator and "fake_loss" in atomic_losses_discriminator:
+        if atomic_losses_discriminator:
+            for key, value in atomic_losses_discriminator.items():
+                self.log(f"train/discriminator/{key}", value, sync_dist=True)
 
             backprop_loss_discriminator = atomic_losses_discriminator["real_loss"] + atomic_losses_discriminator["fake_loss"]
-            self.log("train/discriminator/backprop_loss", backprop_loss_discriminator)
+            self.log("train/discriminator/backprop_loss", backprop_loss_discriminator, sync_dist=True)
 
             self.manual_backward(backprop_loss_discriminator)
             discriminator_optimizer.step()
@@ -226,7 +216,7 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_generator.items():
-            self.log(f"{stage}/generator/{key}", value)
+            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
 
         atomic_losses_discriminator = self.compute_atomic_losses(
             network="discriminator",
@@ -237,7 +227,7 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_discriminator.items():
-            self.log(f"train/discriminator/{key}", value)
+            self.log(f"train/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
@@ -317,38 +307,37 @@ class EBENLightningModule(LightningModule):
 
         if network == "generator":
             # Compute losses that are using the discriminator
-            if self.learning_strategy in {"all", "adv_only"}:
+            if self.reconstructive_loss_freq_fn is not None:
+                atomic_losses["reconstructive_loss_freq"] = self.reconstructive_loss_freq_fn(
+                    enhanced_speech, reference_speech)
+            if self.reconstructive_loss_temp_fn is not None:
+                atomic_losses["reconstructive_loss_temp"] = self.reconstructive_loss_temp_fn(
+                    enhanced_speech, reference_speech)
+            if self.feature_matching_loss_fn is not None or self.adversarial_loss_fn is not None:
                 enhanced_embeddings = self.discriminator(
                     bands=decomposed_enhanced_speech, audio=enhanced_speech
                 )
-                reference_embeddings = self.discriminator(
-                    bands=decomposed_reference_speech, audio=reference_speech
-                )
+                if self.feature_matching_loss_fn is not None:
+                    reference_embeddings = self.discriminator(
+                        bands=decomposed_reference_speech, audio=reference_speech
+                    )
+                    atomic_losses["feature_matching_loss"] = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
 
-                atomic_losses["adv_loss_gen"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
-                atomic_losses["feature_matching_loss"] = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
-
-            # Compute reconstructive losses
-            if self.learning_strategy in {"all", "rec_only"}:
-
-                atomic_losses["reconstructive_loss_temp"] = self.reconstructive_loss_temp_fn(enhanced_speech, reference_speech)
-                atomic_losses["reconstructive_loss_freq"] = self.reconstructive_loss_freq_fn(enhanced_speech, reference_speech)
-
-            return atomic_losses
+                if self.adversarial_loss_fn is not None:
+                    atomic_losses["adv_loss_gen"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
 
         else:
-            if self.learning_strategy in {"all", "adv_only"}:
-                enhanced_embeddings = self.discriminator(
-                    bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
-                )
-                reference_embeddings = self.discriminator(
-                    bands=decomposed_reference_speech, audio=reference_speech
-                )
+            enhanced_embeddings = self.discriminator(
+                bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
+            )
+            reference_embeddings = self.discriminator(
+                bands=decomposed_reference_speech, audio=reference_speech
+            )
 
-                atomic_losses["real_loss"] = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
-                atomic_losses["fake_loss"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
+            atomic_losses["real_loss"] = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
+            atomic_losses["fake_loss"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
 
-            return atomic_losses
+        return atomic_losses
 
     def compute_lambdas(
         self,
