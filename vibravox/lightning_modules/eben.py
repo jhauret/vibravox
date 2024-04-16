@@ -93,9 +93,7 @@ class EBENLightningModule(LightningModule):
         reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
 
         # Get optimizers
-        generator_optimizer, discriminator_optimizer = self.optimizers(
-            use_pl_optimizer=True
-        )
+        generator_optimizer, discriminator_optimizer = self.optimizers(use_pl_optimizer=True)
 
         ######################## Train Generator ########################
         self.toggle_optimizer(generator_optimizer)
@@ -110,72 +108,51 @@ class EBENLightningModule(LightningModule):
                 f"reference": reference_speech,
             }
 
-        atomic_losses = dict()
+        atomic_losses_gen = self.compute_atomic_losses(
+            network="generator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-        # Compute losses that are using the discriminator
-        if self.learning_strategy in {"all", "adv_only"}:
-            enhanced_embeddings = self.discriminator(
-                bands=decomposed_enhanced_speech, audio=enhanced_speech
-            )
-            reference_embeddings = self.discriminator(
-                bands=decomposed_reference_speech, audio=reference_speech
-            )
+        for key, value in atomic_losses_gen.items():
+            self.log(f"train/generator/{key}", value)
 
-            atomic_losses["adv_loss_gen"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
-            atomic_losses["feature_matching_loss"] = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
-
-            self.log("train/generator/adv_loss", atomic_losses["adv_loss_gen"])
-            self.log("train/generator/feature_matching_loss", atomic_losses["feature_matching_loss"])
-
-        # Compute reconstructive losses
-        if self.learning_strategy in {"all", "rec_only"}:
-
-            atomic_losses["reconstructive_loss_temp"] = self.reconstructive_loss_temp_fn(enhanced_speech, reference_speech)
-            atomic_losses["reconstructive_loss_freq"] = self.reconstructive_loss_freq_fn(enhanced_speech, reference_speech)
-
-            self.log("train/generator/reconstructive_loss_temp", atomic_losses["reconstructive_loss_temp"])
-            self.log("train/generator/reconstructive_loss_freq", atomic_losses["reconstructive_loss_freq"])
-
-        # Dynamically balance losses
         if self.dynamic_loss_balancing is not None:
-            atomic_losses = self.dynamically_balance_losses(atomic_losses)
+            atomic_losses_gen = self.dynamically_balance_losses(atomic_losses_gen)
 
-        # noinspection PyTypeChecker
-        backprop_loss_gen = sum(atomic_losses.values())
+        backprop_loss_gen = sum(atomic_losses_gen.values())
         self.log("train/generator/backprop_loss", backprop_loss_gen)
 
-        # noinspection PyTypeChecker
         self.manual_backward(backprop_loss_gen)
         generator_optimizer.step()
         generator_optimizer.zero_grad()
         self.untoggle_optimizer(generator_optimizer)
 
         ######################## Train Discriminator ########################
-        if self.learning_strategy in {"all", "adv_only"}:
-            self.toggle_optimizer(discriminator_optimizer)
+        self.toggle_optimizer(discriminator_optimizer)
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-            # Compute forwards again is necessary because we haven't retain_graph
-            enhanced_embeddings = self.discriminator(
-                bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
-            )
-            reference_embeddings = self.discriminator(
-                bands=decomposed_reference_speech, audio=reference_speech
-            )
+        for key, value in atomic_losses_gen.items():
+            self.log(f"train/discriminator/{key}", value)
 
-            real_loss = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
-            fake_loss = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
+        if "real_loss" in atomic_losses_discriminator and "fake_loss" in atomic_losses_discriminator:
 
-            backprop_loss_dis = real_loss + fake_loss
+            backprop_loss_discriminator = atomic_losses_discriminator["real_loss"] + atomic_losses_discriminator["fake_loss"]
+            self.log("train/discriminator/backprop_loss", backprop_loss_discriminator)
 
-            # Log scalars
-            self.log("train/discriminator/real_loss", real_loss)
-            self.log("train/discriminator/fake_loss", fake_loss)
-            self.log("train/discriminator/backprop_loss", backprop_loss_dis)
-
-            self.manual_backward(backprop_loss_dis)
+            self.manual_backward(backprop_loss_discriminator)
             discriminator_optimizer.step()
             discriminator_optimizer.zero_grad()
-            self.untoggle_optimizer(discriminator_optimizer)
+
+        self.untoggle_optimizer(discriminator_optimizer)
 
         return outputs
 
@@ -257,11 +234,10 @@ class EBENLightningModule(LightningModule):
             prog_bar=True,
         )
 
-        if self.trainer.global_step % 10 == 0:
-            # Log audio
-            self.log_audio(
-                prefix=f"{stage}/", speech_dict=outputs, batch_idx=batch_idx
-            )
+        # Log audio
+        self.log_audio(
+            prefix=f"{stage}/", speech_dict=outputs, batch_idx=batch_idx
+        )
 
     @staticmethod
     def ready_to_log(audio_tensor):
@@ -289,6 +265,65 @@ class EBENLightningModule(LightningModule):
                     global_step=self.trainer.global_step + batch_idx,
                     sample_rate=self.sample_rate,
                 )
+
+    def compute_atomic_losses(self,
+                              network: str,
+                              enhanced_speech: torch.Tensor,
+                              reference_speech: torch.Tensor,
+                              decomposed_enhanced_speech: torch.Tensor,
+                              decomposed_reference_speech: torch.Tensor) -> Dict[str, torch.Tensor]:
+        """
+        Compute the atomic losses for the generator or the discriminator
+
+        Args:
+            network (str): Network to compute the losses for. One of {"generator", "discriminator"}
+            enhanced_speech (torch.Tensor): Enhanced speech of shape (batch_size, 1, samples)
+            reference_speech (torch.Tensor): Reference speech of shape (batch_size, 1, samples)
+            decomposed_enhanced_speech (torch.Tensor): Decomposed enhanced speech of shape (batch_size, generator.m, samples)
+            decomposed_reference_speech (torch.Tensor): Decomposed reference speech (batch_size, generator.m, samples)
+
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary with the atomic losses
+        """
+
+        atomic_losses = dict()
+
+        assert network in {"generator", "discriminator"}, "network must be in {'generator', 'discriminator'}"
+
+        if network == "generator":
+            # Compute losses that are using the discriminator
+            if self.learning_strategy in {"all", "adv_only"}:
+                enhanced_embeddings = self.discriminator(
+                    bands=decomposed_enhanced_speech, audio=enhanced_speech
+                )
+                reference_embeddings = self.discriminator(
+                    bands=decomposed_reference_speech, audio=reference_speech
+                )
+
+                atomic_losses["adv_loss_gen"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
+                atomic_losses["feature_matching_loss"] = self.feature_matching_loss_fn(enhanced_embeddings, reference_embeddings)
+
+            # Compute reconstructive losses
+            if self.learning_strategy in {"all", "rec_only"}:
+
+                atomic_losses["reconstructive_loss_temp"] = self.reconstructive_loss_temp_fn(enhanced_speech, reference_speech)
+                atomic_losses["reconstructive_loss_freq"] = self.reconstructive_loss_freq_fn(enhanced_speech, reference_speech)
+
+            return atomic_losses
+
+        else:
+            if self.learning_strategy in {"all", "adv_only"}:
+                enhanced_embeddings = self.discriminator(
+                    bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
+                )
+                reference_embeddings = self.discriminator(
+                    bands=decomposed_reference_speech, audio=reference_speech
+                )
+
+                atomic_losses["real_loss"] = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
+                atomic_losses["fake_loss"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
+
+            return atomic_losses
 
     def compute_lambdas(
         self,
