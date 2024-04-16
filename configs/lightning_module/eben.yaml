@@ -1,14 +1,15 @@
 _target_: vibravox.lightning_modules.eben.EBENLightningModule
 
 sample_rate: ${sample_rate}
-dynamic_loss_balancing: "simple"
+#dynamic_loss_balancing: "simple"
+description: ${description}
 
 defaults:
   - dnn_module@generator: eben_generator
   - dnn_module@discriminator: eben_discriminator
   - optimizer@generator_optimizer: adam
   - optimizer@discriminator_optimizer: adam
-  - loss_module@reconstructive_loss_freq_fn: multi_stft
+#  - loss_module@reconstructive_loss_freq_fn: multi_stft
   - loss_module@reconstructive_loss_time_fn: l1
-  - loss_module@feature_matching_loss_fn: feature_loss_for_melgan_multiscales
-  - loss_module@adversarial_loss_fn: hinge_loss_for_melgan_multiscales
+#  - loss_module@feature_matching_loss_fn: feature_loss_for_melgan_multiscales
+#  - loss_module@adversarial_loss_fn: hinge_loss_for_melgan_multiscales

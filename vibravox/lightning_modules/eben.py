@@ -21,6 +21,7 @@ class EBENLightningModule(LightningModule):
         feature_matching_loss_fn: torch.nn.Module = None,
         adversarial_loss_fn: torch.nn.Module = None,
         dynamic_loss_balancing: str = None,
+        description: str = None,
     ):
         """
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
@@ -41,6 +42,7 @@ class EBENLightningModule(LightningModule):
              - "simple": Balance the losses by dividing them by the gradient norm
              - "ema": Balance the losses by dividing them by the exponential moving average of the gradient norm
              Default: None
+            description (str): Description to log in tensorboard
         """
         super().__init__()
 
@@ -66,6 +68,7 @@ class EBENLightningModule(LightningModule):
         self.lambdas_past = None  # For dynamic loss balancing
 
         self.metrics: MetricCollection = metrics
+        self.description: str = description
 
         self.automatic_optimization = False
 
@@ -177,6 +180,9 @@ class EBENLightningModule(LightningModule):
         """
 
         return [self.generator_optimizer, self.discriminator_optimizer]
+
+    def on_train_start(self) -> None:
+        self.logger.experiment.add_text(tag='description', text_string=self.description)
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
@@ -326,15 +332,16 @@ class EBENLightningModule(LightningModule):
                     atomic_losses["adv_loss_gen"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=1)
 
         else:
-            enhanced_embeddings = self.discriminator(
-                bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
-            )
-            reference_embeddings = self.discriminator(
-                bands=decomposed_reference_speech, audio=reference_speech
-            )
+            if self.adversarial_loss_fn is not None:
+                enhanced_embeddings = self.discriminator(
+                    bands=decomposed_enhanced_speech.detach(), audio=enhanced_speech.detach()
+                )
+                reference_embeddings = self.discriminator(
+                    bands=decomposed_reference_speech, audio=reference_speech
+                )
 
-            atomic_losses["real_loss"] = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
-            atomic_losses["fake_loss"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
+                atomic_losses["real_loss"] = self.adversarial_loss_fn(embeddings=reference_embeddings, target=1)
+                atomic_losses["fake_loss"] = self.adversarial_loss_fn(embeddings=enhanced_embeddings, target=-1)
 
         return atomic_losses
 
