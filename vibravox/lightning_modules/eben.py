@@ -1,7 +1,6 @@
 from functools import partial
 from typing import Any, Dict, List
 
-import auraloss
 import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
@@ -343,7 +342,7 @@ class EBENLightningModule(LightningModule):
         self,
         atomic_losses: Dict[str, torch.Tensor],
         loss_adjustment_layer: torch.Tensor,
-        beta: float = 0.999,
+        beta: float = 0.9,
     ):
         """
         Compute the adaptive lambdas to balance the losses
@@ -351,7 +350,7 @@ class EBENLightningModule(LightningModule):
         Args:
             atomic_losses (Dict[torch.Tensor]): List of atomic losses
             loss_adjustment_layer (torch.Tensor): Parameters of nn.Module where gradients are computed to adapt lambdas
-            beta (float): Beta parameter for the exponential moving average. Only used if ema=True. Default: 0.99
+            beta (float): Beta parameter for the exponential moving average. Only used if ema=True. Default: 0.9
 
         Returns:
             List[torch.Tensor]: List of lambdas
