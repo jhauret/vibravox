@@ -7,10 +7,12 @@ class WaveformDataAugmentation(torch.nn.Module):
     def __init__(
         self,
         sample_rate,
+        apply_data_augmentation=True,
     ):
         super().__init__()
 
         self.sample_rate = sample_rate
+        self.apply_data_augmentation = apply_data_augmentation
 
         self.pitch_shift = T.PitchShift(sample_rate, n_steps=4)
         self.time_masking = TimeMaskingBlockWaveform(masking_percentage=5)
@@ -21,11 +23,14 @@ class WaveformDataAugmentation(torch.nn.Module):
 
         """
         Args:
-            waveform:  input waveform tensor of shape (batch_size, num_channels, num_samples)
+            waveform:  input waveform tensor of shape (..., time)
 
         Returns:
-            torch.Tensor: augmented waveform tensor of shape (batch_size, num_channels, num_samples)
+            torch.Tensor: augmented waveform tensor of shape (..., time)
         """
+
+        if not self.apply_data_augmentation:
+            return waveform
 
         if torch.rand(1) < 0.3:
             waveform = self.pitch_shift(waveform)

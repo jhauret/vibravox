@@ -18,10 +18,10 @@ class TimeMaskingBlockWaveform(torch.nn.Module):
         """
 
         Args:
-            x(torch.Tensor): input waveform tensor of shape (batch_size, num_channels, num_samples)
+            x(torch.Tensor): input waveform tensor of shape (..., time)
 
         Returns:
-            torch.Tensor: masked tensor of shape (batch_size, num_channels, num_samples)
+            torch.Tensor: masked tensor of shape (..., time)
 
         """
 

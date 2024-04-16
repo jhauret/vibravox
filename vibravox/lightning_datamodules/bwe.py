@@ -7,6 +7,7 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
+from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.utils import set_audio_duration
 
 
@@ -20,6 +21,7 @@ class BWELightningDataModule(LightningDataModule):
         sensor: str = "airborne.mouth_headworn.reference_microphone",
         subset: str = "speech_clean",
         collate_strategy: str = "constant_length-3000-ms",
+        data_augmentation: bool = False,
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -35,6 +37,7 @@ class BWELightningDataModule(LightningDataModule):
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
             Defaults to "constant_length-3000-ms".
+            data_augmentation (bool, optional): If True, apply data augmentation. Defaults to False.
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -49,6 +52,9 @@ class BWELightningDataModule(LightningDataModule):
             "collate_strategy must be 'pad' or match the pattern 'constant_length-XXX-ms'"
 
         self.collate_strategy = collate_strategy
+        if data_augmentation:
+            raise NotImplementedError("Data augmentation is not the same on reference and corrupted yet.")
+        self.data_augmentation_fn: torch.nn.Module = WaveformDataAugmentation(sample_rate, apply_data_augmentation=data_augmentation)
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
