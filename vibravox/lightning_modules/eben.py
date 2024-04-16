@@ -24,6 +24,7 @@ class EBENLightningModule(LightningModule):
         generator_optimizer: partial[torch.optim.Optimizer],
         discriminator_optimizer: partial[torch.optim.Optimizer],
         metrics: MetricCollection,
+        reconstructive_loss_freq_fn: torch.nn.Module,
         learning_strategy: str = "all",
         dynamic_loss_balancing: str = None,
     ):
@@ -37,6 +38,7 @@ class EBENLightningModule(LightningModule):
             generator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the generator
             discriminator_optimizer (partial[torch.optim.Optimizer]): Optimizer for the discriminator
             metrics (MetricCollection): Metrics to be computed.
+            reconstructive_loss_freq_fn (torch.nn.Module): Function to compute the frequency reconstructive loss (forward call on temporal domain)
             learning_strategy (str): Strategy to train the model. Default is "all". Options are:
              - "all": Train both generator and discriminator with all losses
              - "rec_only": Train only the generator with reconstructive losses
@@ -64,15 +66,7 @@ class EBENLightningModule(LightningModule):
 
         if self.learning_strategy in {'all', 'rec_only'}:
             self.reconstructive_loss_temp_fn = torch.nn.L1Loss()
-            self.reconstructive_loss_freq_fn = auraloss.freq.MultiResolutionSTFTLoss(
-                fft_sizes=[512, 1024, 2048],
-                hop_sizes=[50, 120, 240],
-                win_lengths=[240, 600, 1200],
-                scale="mel",
-                n_bins=128,
-                sample_rate=self.sample_rate,
-                perceptual_weighting=True,
-            )
+            self.reconstructive_loss_freq_fn: torch.nn.Module = reconstructive_loss_freq_fn
         if self.learning_strategy in {'all', 'adv_only'}:
             self.feature_matching_loss_fn = FeatureLossForDiscriminatorMelganMultiScales()
             self.adversarial_loss_fn = HingeLossForDiscriminatorMelganMultiScales()
@@ -109,8 +103,8 @@ class EBENLightningModule(LightningModule):
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
         decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        # Initialize step_output
-        step_output = {
+        # Initialize outputs
+        outputs = {
                 f"corrupted": corrupted_speech,
                 f"enhanced": enhanced_speech,
                 f"reference": reference_speech,
@@ -146,9 +140,11 @@ class EBENLightningModule(LightningModule):
         if self.dynamic_loss_balancing is not None:
             atomic_losses = self.dynamically_balance_losses(atomic_losses)
 
+        # noinspection PyTypeChecker
         backprop_loss_gen = sum(atomic_losses.values())
         self.log("train/generator/backprop_loss", backprop_loss_gen)
 
+        # noinspection PyTypeChecker
         self.manual_backward(backprop_loss_gen)
         generator_optimizer.step()
         generator_optimizer.zero_grad()
@@ -181,7 +177,7 @@ class EBENLightningModule(LightningModule):
             discriminator_optimizer.zero_grad()
             self.untoggle_optimizer(discriminator_optimizer)
 
-        return step_output
+        return outputs
 
     def validation_step(self, batch, batch_idx):
         """
@@ -235,13 +231,13 @@ class EBENLightningModule(LightningModule):
         reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, _ = self.generator(corrupted_speech)
 
-        step_output = {
+        outputs = {
                 f"corrupted": corrupted_speech,
                 f"enhanced": enhanced_speech,
                 f"reference": reference_speech,
             }
 
-        return step_output
+        return outputs
 
     def common_eval_logging(self, stage, outputs, batch_idx):
 

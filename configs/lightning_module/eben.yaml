@@ -5,7 +5,8 @@ learning_strategy: "rec_only"
 dynamic_loss_balancing: "simple"
 
 defaults:
-  - torch_nn_module@generator: eben_generator
-  - torch_nn_module@discriminator: eben_discriminator
+  - dnn_module@generator: eben_generator
+  - dnn_module@discriminator: eben_discriminator
   - optimizer@generator_optimizer: adam
   - optimizer@discriminator_optimizer: adam
+  - loss_module@reconstructive_loss_freq_fn: multi_stft

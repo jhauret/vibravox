@@ -1,0 +1,18 @@
+_target_: auraloss.freq.MultiResolutionSTFTLoss
+
+fft_sizes:
+  _target_: builtins.tuple
+  _args_:
+   - [512, 1024, 2048]
+hop_sizes:
+  _target_: builtins.tuple
+  _args_:
+   - [50, 120, 240]
+win_lengths:
+  _target_: builtins.tuple
+  _args_:
+   - [240, 600, 1200]
+scale: "mel"
+n_bins: 128
+sample_rate: ${sample_rate}
+perceptual_weighting: False
