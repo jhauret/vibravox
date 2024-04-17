@@ -8,13 +8,3 @@ torchmetrics_si_sdr:
 torchmetrics_stoi:
   _target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
   fs: ${sample_rate}
-
-torchmetrics_pesq:
-  _target_: torchmetrics.audio.PerceptualEvaluationSpeechQuality
-  fs: ${sample_rate}
-  mode: "wb"
-
-
-
-
-
