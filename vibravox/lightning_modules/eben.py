@@ -21,6 +21,7 @@ class EBENLightningModule(LightningModule):
         feature_matching_loss_fn: torch.nn.Module = None,
         adversarial_loss_fn: torch.nn.Module = None,
         dynamic_loss_balancing: str = None,
+        beta_ema: float = 0.9,
         description: str = None,
     ):
         """
@@ -42,6 +43,7 @@ class EBENLightningModule(LightningModule):
              - "simple": Balance the losses by dividing them by the gradient norm
              - "ema": Balance the losses by dividing them by the exponential moving average of the gradient norm
              Default: None
+            beta_ema (float): Beta parameter for the exponential moving average. Only used if dynamic_loss_balancing="ema". Default: 0.9
             description (str): Description to log in tensorboard
         """
         super().__init__()
@@ -66,6 +68,7 @@ class EBENLightningModule(LightningModule):
         assert dynamic_loss_balancing in {None, "simple", "ema"}, "dynamic_loss_balancing must be in {None, 'simple', 'ema'}"
         self.dynamic_loss_balancing = dynamic_loss_balancing
         self.lambdas_past = None  # For dynamic loss balancing
+        self.beta_ema = beta_ema
 
         self.metrics: MetricCollection = metrics
         self.description: str = description
@@ -349,7 +352,7 @@ class EBENLightningModule(LightningModule):
         self,
         atomic_losses: Dict[str, torch.Tensor],
         loss_adjustment_layer: torch.Tensor,
-        beta: float = 0.9,
+        beta: float,
     ):
         """
         Compute the adaptive lambdas to balance the losses
@@ -357,7 +360,7 @@ class EBENLightningModule(LightningModule):
         Args:
             atomic_losses (Dict[torch.Tensor]): List of atomic losses
             loss_adjustment_layer (torch.Tensor): Parameters of nn.Module where gradients are computed to adapt lambdas
-            beta (float): Beta parameter for the exponential moving average. Only used if ema=True. Default: 0.9
+            beta (float): Beta parameter for the exponential moving average. Only used if ema=True.
 
         Returns:
             List[torch.Tensor]: List of lambdas
@@ -392,7 +395,7 @@ class EBENLightningModule(LightningModule):
             (Dict[str, torch.Tensor]): List of balanced atomic losses.
         """
 
-        lambdas = self.compute_lambdas(atomic_losses, self.get_loss_adjustment_layer())
+        lambdas = self.compute_lambdas(atomic_losses, self.get_loss_adjustment_layer(), self.beta_ema)
         for key, lambda_ in zip(atomic_losses.keys(), lambdas):
             atomic_losses[key] = lambda_ * atomic_losses[key]
 
