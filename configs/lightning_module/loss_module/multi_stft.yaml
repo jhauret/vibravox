@@ -12,7 +12,7 @@ win_lengths:
   _target_: builtins.tuple
   _args_:
    - [240, 600, 1200]
-scale: "mel"
-n_bins: 128
+#scale: "mel"
+#n_bins: 128
 sample_rate: ${sample_rate}
-perceptual_weighting: False
+perceptual_weighting: True
