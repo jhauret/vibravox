@@ -11,6 +11,6 @@ defaults:
   - optimizer@generator_optimizer: adam
   - optimizer@discriminator_optimizer: adam
   - loss_module@reconstructive_loss_freq_fn: multi_stft
-#  - loss_module@reconstructive_loss_time_fn: l1
+  - loss_module@reconstructive_loss_time_fn: l1
   - loss_module@feature_matching_loss_fn: feature_loss_for_melgan_multiscales
   - loss_module@adversarial_loss_fn: hinge_loss_for_melgan_multiscales
