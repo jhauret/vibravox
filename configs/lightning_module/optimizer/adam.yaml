@@ -1,6 +1,6 @@
 _target_: torch.optim.Adam
 _partial_: true
-lr: 3e-4
+lr: 2e-4
 amsgrad: false
 betas:
   _target_: builtins.tuple

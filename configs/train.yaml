@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "ALL losses & ema loss balancing beta=0.99"
+description: "rec_freq+adv+feature_matching & simple loss balancing & lr=2e-4"
 
 # Hydra configuration
 version_base: "1.3"
