@@ -18,7 +18,7 @@ conda deactivate                                      # desactiver les environne
 
 module load pytorch-gpu/py3/2.2.0                     # charger les modules
 
-export HF_DATATSETS_CACHE=$WORK/huggingface_cache/datasets
+export HF_DATASETS_CACHE=$WORK/huggingface_cache/datasets
 export HF_DATASETS_OFFLINE=1
 
 set -x                                                # activer l'echo des commandes
