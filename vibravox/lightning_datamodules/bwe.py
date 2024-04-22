@@ -133,23 +133,26 @@ class BWELightningDataModule(LightningDataModule):
 
         return DataLoader(
             self.test_dataset,
-            batch_size=self.batch_size,
+            batch_size=4,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True),
+            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy="pad"),
         )
 
-    def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool) -> Dict[str, torch.Tensor]:
+    def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
         """
         Custom data collator function to dynamically pad the data.
 
         Args:
-            batch(List[Dict[str, Audio]]): Dict from the dataset with the keys "audio_body_conducted" and "audio_airborne"
-            deterministic: If True, always select the same part of the signal
+            batch (List[Dict[str, Audio]]): Dict from the dataset with the keys "audio_body_conducted" and "audio_airborne"
+            deterministic (bool): If True, always select the same part of the signal
+            collate_strategy (str, optional): What strategy to use to collate the data. One of:
+                - "pad": Pad the audio signals to the length of the longest signal in the batch.
+                - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
         Returns:
             Dict[str, torch.Tensor]
         """
 
-        if self.collate_strategy == "pad":
+        if collate_strategy == "pad":
             body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
             air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
 
@@ -171,7 +174,7 @@ class BWELightningDataModule(LightningDataModule):
                     audio=item["audio_body_conducted"]["array"],
                     desired_samples=samples,
                     audio_bis=item["audio_airborne"]["array"],
-                    deterministic=False,
+                    deterministic=deterministic,
                 )
                 body_conducted_padded_batch.append(body_conducted_padded.unsqueeze(0))
                 air_conducted_padded_batch.append(air_conducted_padded.unsqueeze(0))
