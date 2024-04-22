@@ -105,7 +105,7 @@ class BWELightningDataModule(LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=False),
+            collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy)
         )
 
     def val_dataloader(self):
@@ -120,7 +120,7 @@ class BWELightningDataModule(LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True),
+            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
         )
 
     def test_dataloader(self):
