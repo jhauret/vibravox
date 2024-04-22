@@ -12,7 +12,7 @@ max_epochs: 600
 #limit_train_batches: 20
 #limit_val_batches: 10
 #limit_test_batches: 0.05
-#check_val_every_n_epoch: 2
+check_val_every_n_epoch: 15
 
 # Logging
 log_every_n_steps: ${logging.log_every_n_steps}

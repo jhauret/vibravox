@@ -3,7 +3,7 @@ _target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 sample_rate: 16000
 subset: "speech_clean"
 sensor: "body_conducted.in_ear.rigid_earpiece_microphone"
-collate_strategy: "constant_length-5000-ms"
+collate_strategy: "constant_length-2800-ms"
 streaming: False
-batch_size: 16
+batch_size: 32
 num_workers: 16
