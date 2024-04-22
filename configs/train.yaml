@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "Baseline bs=32, samples_duration=2.8s"
+description: "Baseline + ema beta=0.9,  bs=32, samples_duration=2.8s"
 
 # Hydra configuration
 version_base: "1.3"
