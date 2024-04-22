@@ -120,7 +120,7 @@ class BWELightningDataModule(LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
+            collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy),
         )
 
     def test_dataloader(self):
@@ -135,7 +135,7 @@ class BWELightningDataModule(LightningDataModule):
             self.test_dataset,
             batch_size=4,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy="pad"),
+            collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy="pad"),
         )
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
