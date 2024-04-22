@@ -67,7 +67,7 @@ class EBENLightningModule(LightningModule):
 
         assert dynamic_loss_balancing in {None, "simple", "ema"}, "dynamic_loss_balancing must be in {None, 'simple', 'ema'}"
         self.dynamic_loss_balancing = dynamic_loss_balancing
-        self.lambdas_past = None  # For dynamic loss balancing
+        self.atomic_norms_old = None  # For dynamic loss balancing
         self.beta_ema = beta_ema
 
         self.metrics: MetricCollection = metrics
@@ -353,36 +353,41 @@ class EBENLightningModule(LightningModule):
         atomic_losses: Dict[str, torch.Tensor],
         loss_adjustment_layer: torch.Tensor,
         beta: float,
+        epsilon: float = 1e-4,
     ):
         """
         Compute the adaptive lambdas to balance the losses
 
         Args:
-            atomic_losses (Dict[torch.Tensor]): List of atomic losses
+            atomic_losses (Dict[torch.Tensor]): Dict of atomic losses
             loss_adjustment_layer (torch.Tensor): Parameters of nn.Module where gradients are computed to adapt lambdas
             beta (float): Beta parameter for the exponential moving average. Only used if ema=True.
+            epsilon (float): Small value to avoid division by zero. Default: 1e-4
+
 
         Returns:
             List[torch.Tensor]: List of lambdas
         """
 
-        lambdas = []
+        atomic_norms = []
 
         for atomic_loss in atomic_losses.values():
             atomic_grad = torch.autograd.grad(
                 outputs=atomic_loss, inputs=loss_adjustment_layer, retain_graph=True
             )[0]
-            lambda_adaptive = 1 / (torch.norm(atomic_grad) + 1e-4)
-            lambdas.append(torch.clamp(lambda_adaptive, 0.0, 1e4).detach())
+            atomic_norm = torch.clamp(torch.norm(atomic_grad) + epsilon, 0.0, 1e4)
+            atomic_norms.append(atomic_norm.detach())
 
         if self.dynamic_loss_balancing == "ema":
-            if self.lambdas_past is None:
-                self.lambdas_past = lambdas
+            if self.atomic_norms_old is None:
+                self.atomic_norms_old = atomic_norms
             else:
-                lambdas = [
+                self.atomic_norms_old = [
                     beta * lambda_past + (1 - beta) * lambda_
-                    for lambda_past, lambda_ in zip(self.lambdas_past, lambdas)
+                    for lambda_past, lambda_ in zip(self.atomic_norms_old, atomic_norms)
                 ]
+
+        lambdas = [1 / atomic_norm for atomic_norm in self.atomic_norms_old]
 
         return lambdas
 
