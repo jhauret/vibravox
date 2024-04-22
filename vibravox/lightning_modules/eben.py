@@ -378,14 +378,14 @@ class EBENLightningModule(LightningModule):
             atomic_norm = torch.clamp(torch.norm(atomic_grad) + epsilon, 0.0, 1e4)
             atomic_norms.append(atomic_norm.detach())
 
+        if self.atomic_norms_old is None:
+            self.atomic_norms_old = atomic_norms
+
         if self.dynamic_loss_balancing == "ema":
-            if self.atomic_norms_old is None:
-                self.atomic_norms_old = atomic_norms
-            else:
-                self.atomic_norms_old = [
-                    beta * lambda_past + (1 - beta) * lambda_
-                    for lambda_past, lambda_ in zip(self.atomic_norms_old, atomic_norms)
-                ]
+            self.atomic_norms_old = [
+                beta * lambda_past + (1 - beta) * lambda_
+                for lambda_past, lambda_ in zip(self.atomic_norms_old, atomic_norms)
+            ]
 
         lambdas = [1 / atomic_norm for atomic_norm in self.atomic_norms_old]
 
