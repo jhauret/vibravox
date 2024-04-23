@@ -1,8 +1,8 @@
 _target_: vibravox.lightning_modules.eben.EBENLightningModule
 
 sample_rate: ${sample_rate}
-dynamic_loss_balancing: "simple"
-beta_ema: 0.9
+dynamic_loss_balancing: "ema"
+beta_ema: 0.8
 description: ${description}
 
 defaults:
