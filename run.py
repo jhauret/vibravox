@@ -1,6 +1,6 @@
 import os
 from typing import List
-
+import warnings
 import hydra
 import torch
 from lightning import (
@@ -61,6 +61,8 @@ def setup_environment():
     """
     Setup environment for training
     """
+
+    warnings.filterwarnings("ignore")
 
     # Set environment variables for full trace of errors
     os.environ["HYDRA_FULL_ERROR"] = "1"
