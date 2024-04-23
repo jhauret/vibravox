@@ -7,6 +7,7 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
+import vibravox.torch_modules.dsp.data_augmentation
 from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.utils import set_audio_duration
 
@@ -20,8 +21,8 @@ class BWELightningDataModule(LightningDataModule):
         sample_rate: int = 16000,
         sensor: str = "airborne.mouth_headworn.reference_microphone",
         subset: str = "speech_clean",
-        collate_strategy: str = "constant_length-3000-ms",
-        data_augmentation: bool = False,
+        collate_strategy: str = "constant_length-2500-ms",
+        data_augmentation: torch.nn.Module = None,
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -37,7 +38,7 @@ class BWELightningDataModule(LightningDataModule):
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
             Defaults to "constant_length-3000-ms".
-            data_augmentation (bool, optional): If True, apply data augmentation. Defaults to False.
+            data_augmentation (nn.Module, optional): Data augmentation module. Defaults to None.
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -52,9 +53,12 @@ class BWELightningDataModule(LightningDataModule):
             "collate_strategy must be 'pad' or match the pattern 'constant_length-XXX-ms'"
 
         self.collate_strategy = collate_strategy
-        if data_augmentation:
-            raise NotImplementedError("Data augmentation is not the same on reference and corrupted yet.")
-        self.data_augmentation_fn: torch.nn.Module = WaveformDataAugmentation(sample_rate, apply_data_augmentation=data_augmentation)
+
+        if data_augmentation is None:
+            data_augmentation = vibravox.torch_modules.dsp.data_augmentation.WaveformDataAugmentation(sample_rate)
+        assert isinstance(data_augmentation, vibravox.torch_modules.dsp.data_augmentation.WaveformDataAugmentation), "data_augmentation must be a WaveformDataAugmentation"
+        self.data_augmentation = data_augmentation
+
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -152,9 +156,16 @@ class BWELightningDataModule(LightningDataModule):
             Dict[str, torch.Tensor]
         """
 
+        body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
+        air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
+
+        # Apply data augmentation
+        if deterministic is False:
+            body_conducted_batch, air_conducted_batch = zip(
+                *[self.data_augmentation(waveform_1, waveform_2) for waveform_1, waveform_2 in
+                  zip(body_conducted_batch, air_conducted_batch)])
+
         if collate_strategy == "pad":
-            body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
-            air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
 
             body_conducted_padded_batch = pad_sequence(
                 body_conducted_batch, batch_first=True, padding_value=0.0
@@ -169,11 +180,11 @@ class BWELightningDataModule(LightningDataModule):
 
             body_conducted_padded_batch = []
             air_conducted_padded_batch = []
-            for item in batch:
+            for body_conducted, air_conducted in zip(body_conducted_batch, air_conducted_batch):
                 body_conducted_padded, air_conducted_padded = set_audio_duration(
-                    audio=item["audio_body_conducted"]["array"],
+                    audio=body_conducted,
                     desired_samples=samples,
-                    audio_bis=item["audio_airborne"]["array"],
+                    audio_bis=air_conducted,
                     deterministic=deterministic,
                 )
                 body_conducted_padded_batch.append(body_conducted_padded.unsqueeze(0))
