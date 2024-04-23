@@ -22,4 +22,4 @@ export HF_DATASETS_CACHE=$WORK/huggingface_cache/datasets
 export HF_DATASETS_OFFLINE=1
 
 set -x                                                # activer l'echo des commandes
-srun python -u train.py lightning_datamodule=bwe lightning_module=eben ++trainer.check_val_every_n_epoch=15
+srun python -u run.py lightning_datamodule=bwe lightning_module=eben ++trainer.check_val_every_n_epoch=15
