@@ -23,7 +23,7 @@ from torchmetrics import MetricCollection
 )
 def main(cfg: DictConfig):
     """
-    Instantiate all necessary modules for training
+    Instantiate all necessary modules, train and test the model.
 
     Args:
         cfg (DictConfig): Hydra configuration object, passed in by the @hydra.main decorator
@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
     trainer.fit(lightning_module, datamodule=lightning_datamodule)
 
     # Test the model
-    trainer.test(datamodule=lightning_datamodule)
+    trainer.test(ckpt_path=None, datamodule=lightning_datamodule)  # As ckpt_path=None, use the current weights of the model
 
 
 def setup_environment():
