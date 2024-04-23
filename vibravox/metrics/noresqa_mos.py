@@ -46,9 +46,10 @@ class NoresqaMOS(Metric):
             preds (torch.Tensor): Predictions from model
             target (torch.Tensor): non-matching reference ( but can also be the true reference)
         """
-        mos_batch = self.compute_mos(preds.squeeze(), target.squeeze()).to(
+        mos_batch = self.compute_mos(preds.squeeze(1), target.squeeze(1)).to(
             self.sum_mos.device
         )
+        # Squeeze channel dimension
 
         self.sum_mos += mos_batch.sum()
         self.total += mos_batch.numel()
