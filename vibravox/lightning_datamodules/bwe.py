@@ -159,12 +159,6 @@ class BWELightningDataModule(LightningDataModule):
         body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
 
-        # Apply data augmentation
-        if deterministic is False:
-            body_conducted_batch, air_conducted_batch = zip(
-                *[self.data_augmentation(waveform_1, waveform_2) for waveform_1, waveform_2 in
-                  zip(body_conducted_batch, air_conducted_batch)])
-
         if collate_strategy == "pad":
 
             body_conducted_padded_batch = pad_sequence(
@@ -191,6 +185,11 @@ class BWELightningDataModule(LightningDataModule):
                 air_conducted_padded_batch.append(air_conducted_padded.unsqueeze(0))
             body_conducted_padded_batch = torch.stack(body_conducted_padded_batch, dim=0)
             air_conducted_padded_batch = torch.stack(air_conducted_padded_batch, dim=0)
+
+        # Apply data augmentation
+        if deterministic is False:
+            with torch.no_grad():
+                body_conducted_padded_batch, air_conducted_padded_batch = self.data_augmentation(body_conducted_padded_batch, air_conducted_padded_batch)
 
         return {
             "audio_body_conducted": body_conducted_padded_batch,
