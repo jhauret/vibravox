@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torchaudio.transforms as T
 from vibravox.torch_modules.dsp.time_masking_waveform import TimeMaskingBlockWaveform
@@ -33,14 +35,15 @@ class WaveformDataAugmentation(torch.nn.Module):
         self.pitch_shift_steps = pitch_shift_steps
         self.time_masking_percentage = time_masking_percentage
 
-    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
+    def forward(self, waveform_1: torch.Tensor, waveform_2: torch.Tensor) -> Tuple[torch.Tensor]:
 
         """
         Args:
-            waveform:  input waveform tensor of shape (..., time)
+            waveform_1:  first input waveform tensor of shape (..., time)
+            waveform_2:  second input waveform tensor of shape (..., time)
 
         Returns:
-            torch.Tensor: augmented waveform tensor of shape (..., time)
+            Tuple[torch.Tensor]: first and second augmented waveform tensor of shape (..., time)
         """
 
         if torch.rand(1) < self.apply_data_augmentation:
@@ -49,16 +52,19 @@ class WaveformDataAugmentation(torch.nn.Module):
                 # Apply speed perturbation
                 speed_perturbation_factor = self.speed_perturbation_factors[torch.randint(len(self.speed_perturbation_factors), size=(1,)).item()]
                 speed_perturbation = T.SpeedPerturbation(orig_freq=self.sample_rate, factors=[speed_perturbation_factor])
-                waveform = speed_perturbation(waveform)
+                waveform_1 = speed_perturbation(waveform_1)
+                waveform_2 = speed_perturbation(waveform_2)
             if torch.rand(1) < self.p_pitch_shift:
                 # Apply pitch shift
                 pitch_shift_step = self.pitch_shift_steps[torch.randint(len(self.pitch_shift_steps), size=(1,)).item()]
                 pitch_shift = T.PitchShift(self.sample_rate, n_steps=pitch_shift_step)
-                waveform = pitch_shift(waveform)
+                waveform_1 = pitch_shift(waveform_1)
+                waveform_2 = pitch_shift(waveform_2)
             if torch.rand(1) < self.p_time_masking:
                 # Apply time masking
                 time_masking_percentage = self.time_masking_percentage[torch.randint(len(self.time_masking_percentage), size=(1,)).item()]
                 time_masking = TimeMaskingBlockWaveform(masking_percentage=time_masking_percentage)
-                waveform = time_masking(waveform)
+                waveform_1 = time_masking(waveform_1)
+                waveform_2 = time_masking(waveform_2)
 
-        return waveform
+        return waveform_1, waveform_2
