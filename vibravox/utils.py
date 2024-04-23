@@ -69,7 +69,7 @@ def set_audio_duration(
     assert audio_bis is None or audio.shape == audio_bis.shape, "The two audio signals must have the same shape."
 
     if initial_samples >= desired_samples:
-        offset_samples = initial_samples - desired_samples // 2 if deterministic else torch.randint(
+        offset_samples = (initial_samples - desired_samples) // 2 if deterministic else torch.randint(
             low=0, high=initial_samples - desired_samples + 1, size=(1,)
         )
         audio = slice_audio(audio, desired_samples, offset_samples)
