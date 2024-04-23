@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
     trainer.fit(lightning_module, datamodule=lightning_datamodule)
 
     # Test the model
-    trainer.test(ckpt_path=None, datamodule=lightning_datamodule)  # As ckpt_path=None, use the current weights of the model
+    trainer.test(ckpt_path='last', datamodule=lightning_datamodule)
 
 
 def setup_environment():
