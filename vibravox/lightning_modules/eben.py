@@ -386,7 +386,7 @@ class EBENLightningModule(LightningModule):
                 for norm_old, norm_new in zip(self.atomic_norms_old, atomic_norms)
             ]
 
-        lambdas = [torch.clamp(1 / atomic_norm + epsilon, min=0.0, max=1e4) for atomic_norm in self.atomic_norms_old]
+        lambdas = [torch.clamp(1 / (atomic_norm + epsilon), min=0.0, max=1e4) for atomic_norm in self.atomic_norms_old]
 
         return lambdas
 
