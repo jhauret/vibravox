@@ -1,0 +1,4 @@
+_target_: vibravox.torch_modules.dsp.data_augmentation.WaveformDataAugmentation
+
+sample_rate: ${sample_rate}
+p_data_augmentation: 0
