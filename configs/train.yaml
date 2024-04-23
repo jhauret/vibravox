@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "Baseline"
+description: "Baseline + ema beta=0.9,  bs=32, samples_duration=2.8s"
 
 # Hydra configuration
 version_base: "1.3"
@@ -10,13 +10,13 @@ hydra:
   job:
     chdir: True # change working directory to the job directory
   run:
-    dir: "run_outputs/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/${now:%Y-%m-%d_%H-%M-%S}"
+    dir: "run_outputs/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/K/${now:%Y-%m-%d_%H-%M-%S}"
 
 
 # Composing configs
 defaults:
-  - lightning_datamodule: # NEEDS TO BE OVERRIDDEN, will also determinate the metrics and the run directory
-  - lightning_module: # NEEDS TO BE OVERRIDDEN
+  - lightning_datamodule: bwe # NEEDS TO BE OVERRIDDEN, will also determinate the metrics and the run directory
+  - lightning_module: eben # NEEDS TO BE OVERRIDDEN
   - trainer: ddp
   - callbacks: # Dict of callbacks
       #- bwe_checkpoint
