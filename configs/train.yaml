@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "Baseline: simple loss balancing, bs=32, samples_duration=2.5s"
+description: "Baseline: EMA loss balancing with beta=0.999, bs=32, samples_duration=2.5s"
 
 # Hydra configuration
 version_base: "1.3"
@@ -10,7 +10,7 @@ hydra:
   job:
     chdir: True # change working directory to the job directory
   run:
-    dir: "run_outputs/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/K/${now:%Y-%m-%d_%H-%M-%S}"
+    dir: "run_outputs/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/M/${now:%Y-%m-%d_%H-%M-%S}"
 
 
 # Composing configs
