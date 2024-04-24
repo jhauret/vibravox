@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "Baseline again: simple LB, no data augmentation but 2:1 update generator:discriminator"
+description: "Baseline again: simple LB, no data augmentation but 2/3 update discriminator"
 
 # Hydra configuration
 version_base: "1.3"
