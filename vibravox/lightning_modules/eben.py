@@ -185,17 +185,39 @@ class EBENLightningModule(LightningModule):
         return [self.generator_optimizer, self.discriminator_optimizer]
 
     def on_train_start(self) -> None:
+        """
+        Called at the beginning of the training loop. Logs the description in tensorboard.
+        """
+
         self.logger.experiment.add_text(tag='description', text_string=self.description)
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
+        """
+        Called at the end of the validation batch. Logs the metrics and audio in tensorboard.
+
+        Args:
+            outputs (STEP_OUTPUT): Output of the validation step
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
+        """
 
         self.common_eval_logging("validation", outputs, batch_idx)
 
     def on_test_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
+        """
+        Called at the end of the test batch. Logs the metrics and audio in tensorboard.
+
+        Args:
+            outputs (STEP_OUTPUT): Output of the validation step
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
+        """
 
         self.common_eval_logging("test", outputs, batch_idx)
 
