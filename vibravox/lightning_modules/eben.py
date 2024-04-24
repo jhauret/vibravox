@@ -232,7 +232,6 @@ class EBENLightningModule(LightningModule):
 
         """
 
-
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
 
         # Get tensors
@@ -460,6 +459,6 @@ class EBENLightningModule(LightningModule):
         """Get the layer where the gradients are computed to adapt the lambdas
 
         Returns:
-            torch.Tensor: Layer where the gradients are computed
+            torch.Tensor: Layer where the gradient norm is computed
         """
         return self.generator.last_conv.weight
