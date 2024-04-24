@@ -222,6 +222,16 @@ class EBENLightningModule(LightningModule):
         self.common_eval_logging("test", outputs, batch_idx)
 
     def common_eval_step(self, batch, batch_idx, stage):
+        """
+        Common evaluation step for validation and test.
+
+        Args:
+            batch (Any): Batch
+            batch_idx (int): Index of the batch
+            stage (str): Stage of the evaluation. One of {"validation", "test"}
+
+        """
+
 
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
 
@@ -262,6 +272,14 @@ class EBENLightningModule(LightningModule):
         return outputs
 
     def common_eval_logging(self, stage, outputs, batch_idx):
+        """
+        Common evaluation logging for validation and test.
+
+        Args:
+            stage (str): Stage of the evaluation. One of {"validation", "test"}
+            outputs (STEP_OUTPUT): Output of the validation step
+            batch_idx (int): Index of the batch
+        """
 
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
@@ -286,6 +304,17 @@ class EBENLightningModule(LightningModule):
 
     @staticmethod
     def ready_to_log(audio_tensor):
+        """
+        Prepare the audio tensor to be logged in tensorboard.
+        Select the first audio of the batch and remove the channel dimension.
+
+        Args:
+            audio_tensor (torch.Tensor): Audio tensor of shape (batch_size, channels, samples)
+
+        Returns:
+            torch.Tensor: Audio tensor of shape (samples)
+
+        """
         audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
         return audio_tensor
 
