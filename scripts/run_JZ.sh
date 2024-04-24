@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=2_3_dis
-#SBATCH --output=2_3_dis%j.out
-#SBATCH --error=2_3_dis%j.err
+#SBATCH --job-name=baseline
+#SBATCH --output=baseline%j.out
+#SBATCH --error=baseline%j.err
 #SBATCH --constraint=v100-16g
 #SBATCH --nodes=1
 #SBATCH --ntasks=1

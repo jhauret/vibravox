@@ -136,7 +136,7 @@ class EBENLightningModule(LightningModule):
             decomposed_reference_speech=decomposed_reference_speech,
         )
 
-        if atomic_losses_discriminator and torch.rand(1) < 2/3:
+        if atomic_losses_discriminator:  # and torch.rand(1) < 2/3:
             for key, value in atomic_losses_discriminator.items():
                 self.log(f"train/discriminator/{key}", value, sync_dist=True)
 
