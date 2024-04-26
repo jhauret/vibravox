@@ -24,7 +24,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 ## Train some models
 
-- Train EBEN for Bandwidth Extension  
+- Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
 ```
 python run.py lightning_datamodule=bwe lightning_module=eben
 ```
