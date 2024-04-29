@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "EBEN(M=4,P=2,Q=3), (light data_aug/lb-beta-ema=0.9/update-ratio=0.666)"
+description: "EBEN(M=4,P=3,Q=3), (light data_aug/lb-beta-ema=0.9/update-ratio=0.666)"
 
 # Hydra configuration
 version_base: "1.3"
