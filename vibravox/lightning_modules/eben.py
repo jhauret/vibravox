@@ -22,6 +22,7 @@ class EBENLightningModule(LightningModule):
         adversarial_loss_fn: torch.nn.Module = None,
         dynamic_loss_balancing: str = None,
         beta_ema: float = 0.9,
+        update_discriminator_ratio: float = 1.0,
         description: str = None,
     ):
         """
@@ -44,6 +45,8 @@ class EBENLightningModule(LightningModule):
              - "ema": Balance the losses by dividing them by the exponential moving average of the gradient norm
              Default: None
             beta_ema (float): Beta parameter for the exponential moving average. Only used if dynamic_loss_balancing="ema". Default: 0.9
+            update_discriminator_ratio (float): Ratio of updates of the discriminator compared to the generator.
+                Must be smaller or equal to 1. Default: 1.0
             description (str): Description to log in tensorboard
         """
         super().__init__()
@@ -69,6 +72,9 @@ class EBENLightningModule(LightningModule):
         self.dynamic_loss_balancing = dynamic_loss_balancing
         self.atomic_norms_old = None  # For dynamic loss balancing
         self.beta_ema = beta_ema
+
+        assert 0 <= update_discriminator_ratio <= 1, "update_discriminator_ratio must be in [0, 1]"
+        self.update_discriminator_ratio = update_discriminator_ratio
 
         self.metrics: MetricCollection = metrics
         self.description: str = description
@@ -136,7 +142,7 @@ class EBENLightningModule(LightningModule):
             decomposed_reference_speech=decomposed_reference_speech,
         )
 
-        if atomic_losses_discriminator:  # and torch.rand(1) < 2/3:
+        if atomic_losses_discriminator and torch.rand(1) < self.update_discriminator_ratio:
             for key, value in atomic_losses_discriminator.items():
                 self.log(f"train/discriminator/{key}", value, sync_dist=True)
 
