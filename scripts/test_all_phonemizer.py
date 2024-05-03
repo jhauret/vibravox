@@ -12,12 +12,13 @@ from tqdm import tqdm
 import Levenshtein
 import pickle
 
-MICROPHONES = ["body_conducted.temple.contact_microphone",
-               "body_conducted.throat.piezoelectric_sensor",
+MICROPHONES = ["airborne.mouth_headworn.reference_microphone",
                "body_conducted.in_ear.rigid_earpiece_microphone",
                "body_conducted.in_ear.comply_foam_microphone",
                "body_conducted.forehead.miniature_accelerometer",
-               "airborne.mouth_headworn.reference_microphone"]
+               "body_conducted.throat.piezoelectric_sensor",
+               "body_conducted.temple.contact_microphone"]
+
 PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 SAMPLE_RATE = 16_000
 SUBSETS = ["speech_clean", "speech_noisy"]
