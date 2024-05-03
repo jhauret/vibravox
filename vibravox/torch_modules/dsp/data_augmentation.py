@@ -52,8 +52,9 @@ class WaveformDataAugmentation(torch.nn.Module):
                 # Apply speed perturbation
                 speed_perturbation_factor = self.speed_perturbation_factors[torch.randint(len(self.speed_perturbation_factors), size=(1,)).item()]
                 speed_perturbation = T.SpeedPerturbation(orig_freq=self.sample_rate, factors=[speed_perturbation_factor])
+                # This is tricky but SpeedPerturbation returns two values even when lengths is None
                 waveform_1, _ = speed_perturbation(waveform_1)
-                waveform_2, _ = speed_perturbation(waveform_2)  # Tricky here but SpeedPerturbation returns two values even when lengths is None
+                waveform_2, _ = speed_perturbation(waveform_2)
             if torch.rand(1) < self.p_pitch_shift:
                 # Apply pitch shift
                 pitch_shift_step = self.pitch_shift_steps[torch.randint(len(self.pitch_shift_steps), size=(1,)).item()]
