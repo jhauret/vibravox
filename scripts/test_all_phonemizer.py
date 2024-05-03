@@ -85,9 +85,9 @@ for subset_idx, subset_name in enumerate(SUBSETS):
             # Save edit operations
             occurrences_dict = Counter(editops)
             occurrences_dict = sorted(occurrences_dict.items(), key=lambda x: x[1], reverse=True)
-            editops_occurrences_results[f"{subset_name}_{microphone}_{phonemizer}"] = occurrences_dict
+            editops_occurrences_results[f"{subset_name}-{microphone}-{phonemizer}"] = occurrences_dict
 
 # Save results
-torch.save(per_results, "./outputs/scripts/phonemizer_per_results.pt")
-with open('./outputs/scripts/.pickle', 'wb') as f:
+torch.save(per_results, "./outputs/scripts/stp_phonemizer_per_results.pt")
+with open('./outputs/scripts/stp_editops_occurrences_results.pickle', 'wb') as f:
     pickle.dump(editops_occurrences_results, f)
