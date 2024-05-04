@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=array_job
-#SBATCH --output=array_job%j.out
-#SBATCH --error=array_job%j.err
+#SBATCH --output=slurm-%A_%a.out
+#SBATCH --error=slurm-%A_%a.err
 #SBATCH --constraint=v100-16g
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
