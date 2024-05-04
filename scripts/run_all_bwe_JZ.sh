@@ -1,59 +1,33 @@
 #!/bin/bash
 
-echo "Submit all BWE trainings to be run in parallel";
+#SBATCH --job-name=array_job
+#SBATCH --output=array_job%j.out
+#SBATCH --error=array_job%j.err
+#SBATCH --constraint=v100-16g
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=10
+#SBATCH --time=00:01:00
+#SBATCH --qos=qos_gpu-dev
+#SBATCH --hint=nomultithread
+#SBATCH --account=lbo@v100
+#SBATCH --array=1-5
 
-SENSORS=(
-    "body_conducted.forehead.miniature_accelerometer"
-    "body_conducted.in_ear.comply_foam_microphone"
-    "body_conducted.in_ear.rigid_earpiece_microphone"
-    "body_conducted.temple.contact_microphone"
-    "body_conducted.throat.piezoelectric_sensor"
-)
+module purge
+conda deactivate
 
-declare -A EBEN_MAPPING_P
-EBEN_MAPPING_P=(
-    ["body_conducted.forehead.miniature_accelerometer"]=4
-    ["body_conducted.in_ear.comply_foam_microphone"]=2
-    ["body_conducted.in_ear.rigid_earpiece_microphone"]=2
-    ["body_conducted.temple.contact_microphone"]=1
-    ["body_conducted.throat.piezoelectric_sensor"]=1
-)
+module load pytorch-gpu/py3/2.2.0
 
-for SENSOR in "${SENSORS[@]}"; do
-    (
+export HF_DATASETS_CACHE=$WORK/huggingface_cache/datasets
+export HF_DATASETS_OFFLINE=1
 
-    #SBATCH --job-name="baseline_$DATA_MODULE"
-    #SBATCH --output="$JOB_NAME.out"
-    #SBATCH --error="$JOB_NAME.err"
-    #SBATCH --constraint=v100-16g
-    #SBATCH --nodes=1
-    #SBATCH --ntasks=1
-    #SBATCH --gres=gpu:1
-    #SBATCH --cpus-per-task=10
-    #SBATCH --time=00:30:00
-    #SBATCH --qos=qos_gpu-dev
-    #SBATCH --hint=nomultithread
-    #SBATCH --account=lbo@v100
+# Specify the path to the config file
+array_config=./configs/slurm_array/bwe.txt
 
-    # Activate required environment
-    module purge
-    conda deactivate
-    module load pytorch-gpu/py3/2.2.0
+# Extract values of the job
+sensor=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $2}' $array_config)
+p=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $3}' $array_config)
 
-    # Set environment variables
-    export HF_DATASETS_CACHE=$WORK/huggingface_cache/datasets
-    export HF_DATASETS_OFFLINE=1
-
-    # Set the corresponding lightning_module based on the lightning_datamodule
-    P=${EBEN_MAPPING_P[SENSOR]}
-
-    # Enable command echoing
-    set -x
-
-    # Execute the job
-    srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$SENSOR" lightning_module=eben lightning_module.generator.p="$P" ++trainer.check_val_every_n_epoch=15
-    ) &
-done
-
-# Wait for all background jobs to finish
-wait
+set -x
+srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$sensor" lightning_module=eben lightning_module.generator.p="$p" ++trainer.check_val_every_n_epoch=15

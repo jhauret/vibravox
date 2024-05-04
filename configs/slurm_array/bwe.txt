@@ -1,0 +1,6 @@
+ArrayTaskID      Sensor                                                  EBEN_P
+1                body_conducted.forehead.miniature_accelerometer          4
+2                body_conducted.in_ear.comply_foam_microphone             2
+3                body_conducted.in_ear.rigid_earpiece_microphone          2
+4                body_conducted.temple.contact_microphone                 1
+5                body_conducted.throat.piezoelectric_sensor               1
