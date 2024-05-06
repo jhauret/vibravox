@@ -27,16 +27,12 @@ tags:
 - **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py)
 - **Language:** French
 - **License:** MIT
-- **Finetuned dataset:** ??? audio of the `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
+- **Finetuned dataset:** Corresponding audio of the model name,`speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
 - **Samplerate for usage:** 16kHz
-
-## Output
-
-Enhanced audio
 
 ## Training procedure
 
-The model has been trained for 800 epochs with a constant learning rate of *3e-4*. To reproduce experiment please visit [jhauret/vibravox](https://github.com/jhauret/vibravox).
+To reproduce experiment please visit [jhauret/vibravox](https://github.com/jhauret/vibravox).
 
 ## Inference script (if you do not want to use the huggingsound library) : 
 
@@ -45,16 +41,11 @@ import torch, torchaudio
 from vibravox import EBENGenerator
 from datasets import load_dataset
 
-
-model = EBENGenerator.from_pretrained(f"Cnam-LMSSC/eben_test")
-test_dataset = load_dataset("Cnam-LMSSC/vibravox", "speech_clean", split="test", streaming=True)
-audio_48kHz = torch.Tensor(next(iter(test_dataset))["audio.body_conducted.throat.piezoelectric_sensor"]["array"])
-audio_16kHz = torchaudio.functional.resample(audio_48kHz, orig_freq=48_000, new_freq=16_000)
+audio_16kHz, _ = torch.load("path_to_audio")
 
 cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz)
 enhanced_audio_16kHz = model(cut_audio_16kHz)
 ```
-
 """
 
 
