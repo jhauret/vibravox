@@ -3,7 +3,7 @@ _target_: lightning.Trainer
 # Hardware
 accelerator: gpu
 num_nodes: 1
-devices: '2,'
+devices: '0,'
 strategy: 'ddp_find_unused_parameters_true'
 
 # Epochs and batch sizes
