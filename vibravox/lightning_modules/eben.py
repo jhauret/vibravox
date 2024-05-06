@@ -24,6 +24,7 @@ class EBENLightningModule(LightningModule):
         beta_ema: float = 0.9,
         update_discriminator_ratio: float = 1.0,
         description: str = None,
+        push_to_hub_after_testing: bool = False,
     ):
         """
         Definition of EBEN and its training pipeline with pytorch lightning paradigm
@@ -48,6 +49,7 @@ class EBENLightningModule(LightningModule):
             update_discriminator_ratio (float): Ratio of updates of the discriminator compared to the generator.
                 Must be smaller or equal to 1. Default: 1.0
             description (str): Description to log in tensorboard
+            push_to_hub_after_testing (bool): If True, the model is pushed to the Hugging Face hub after testing. Defaults to False.
         """
         super().__init__()
 
@@ -78,6 +80,7 @@ class EBENLightningModule(LightningModule):
 
         self.metrics: MetricCollection = metrics
         self.description: str = description
+        self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
         self.automatic_optimization = False
 
@@ -226,6 +229,14 @@ class EBENLightningModule(LightningModule):
         """
 
         self.common_eval_logging("test", outputs, batch_idx)
+
+    def on_test_end(self) -> None:
+        """
+        Method to be called when the test ends.
+        """
+        if self.push_to_hub_after_testing:
+            self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
+                                       commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
 
     def common_eval_step(self, batch, batch_idx, stage):
         """

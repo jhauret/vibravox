@@ -24,7 +24,7 @@ tags:
 # Model Card 
 
 - **Developed by:** [Cnam-LMSSC](https://huggingface.co/Cnam-LMSSC)
-- **Model type:** [EBEN](https://arxiv.org/pdf/2303.10008)
+- **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py)
 - **Language:** French
 - **License:** MIT
 - **Finetuned dataset:** ??? audio of the `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
