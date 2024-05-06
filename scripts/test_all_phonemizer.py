@@ -13,9 +13,9 @@ import Levenshtein
 import pickle
 
 MICROPHONES = ["airborne.mouth_headworn.reference_microphone",
+               "body_conducted.forehead.miniature_accelerometer",
                "body_conducted.in_ear.rigid_earpiece_microphone",
                "body_conducted.in_ear.comply_foam_microphone",
-               "body_conducted.forehead.miniature_accelerometer",
                "body_conducted.throat.piezoelectric_sensor",
                "body_conducted.temple.contact_microphone"]
 
