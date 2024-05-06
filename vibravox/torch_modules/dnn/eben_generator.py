@@ -1,4 +1,4 @@
-""" EBEN generator and sub blocks definition in Pytorch"""
+""" EBEN generator and sub blocks definition in Pytorch + PyTorchModelHubMixin for Hugging Face Hub integration """
 
 import torch
 from torch import nn
@@ -6,8 +6,62 @@ from torch import nn
 from vibravox.torch_modules.dsp.pqmf import PseudoQMFBanks
 from vibravox.torch_modules.utils import normalized_conv1d, normalized_conv_trans1d
 
+from huggingface_hub import PyTorchModelHubMixin
 
-class EBENGenerator(nn.Module):
+
+MODEL_CARD_TEMPLATE = """
+---
+library_name: transformers
+license: mit
+language: fr
+datasets:
+- Cnam-LMSSC/vibravox
+tags:
+- audio
+- audio-to-audio
+- speech
+---
+# Model Card 
+
+- **Developed by:** [Cnam-LMSSC](https://huggingface.co/Cnam-LMSSC)
+- **Model type:** [EBEN](https://arxiv.org/pdf/2303.10008)
+- **Language:** French
+- **License:** MIT
+- **Finetuned dataset:** ??? audio of the `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
+- **Samplerate for usage:** 16kHz
+
+## Output
+
+Enhanced audio
+
+## Training procedure
+
+The model has been trained for 800 epochs with a constant learning rate of *3e-4*. To reproduce experiment please visit [jhauret/vibravox](https://github.com/jhauret/vibravox).
+
+## Inference script (if you do not want to use the huggingsound library) : 
+
+```python
+import torch, torchaudio
+from vibravox import EBENGenerator
+from datasets import load_dataset
+
+
+model = EBENGenerator.from_pretrained(f"Cnam-LMSSC/eben_test")
+test_dataset = load_dataset("Cnam-LMSSC/vibravox", "speech_clean", split="test", streaming=True)
+audio_48kHz = torch.Tensor(next(iter(test_dataset))["audio.body_conducted.throat.piezoelectric_sensor"]["array"])
+audio_16kHz = torchaudio.functional.resample(audio_48kHz, orig_freq=48_000, new_freq=16_000)
+
+cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz)
+enhanced_audio_16kHz = model(cut_audio_16kHz)
+```
+
+"""
+
+
+class EBENGenerator(
+        nn.Module,
+        PyTorchModelHubMixin,
+        model_card_template=MODEL_CARD_TEMPLATE):
     def __init__(self, m: int, n: int, p: int):
         """
         Generator of EBEN
@@ -232,3 +286,22 @@ class ResidualUnit(nn.Module):
     def forward(self, x):
         out = x + self.nl(self.pointwise_conv(self.dilated_conv(x)))
         return out
+
+
+if __name__ == "__main__":
+
+    model = EBENGenerator(m=4, n=32, p=2)
+
+    #model.save_pretrained("my-awesome-model")
+
+    model.push_to_hub(f"Cnam-LMSSC/eben_test", commit_message=f"Upload EBEN with random weights ")
+
+    reloaded_model = EBENGenerator.from_pretrained(f"Cnam-LMSSC/eben_test")
+    print(model.first_conv.weight)
+    print(reloaded_model.first_conv.weight)
+    # reloaded_model.size
+    #
+    # from huggingface_hub import ModelCard
+    # card = ModelCard.load("username/my-awesome-model")
+    # card.data.tags
+    # card.data.library_name
