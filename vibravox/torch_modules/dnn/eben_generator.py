@@ -277,22 +277,3 @@ class ResidualUnit(nn.Module):
     def forward(self, x):
         out = x + self.nl(self.pointwise_conv(self.dilated_conv(x)))
         return out
-
-
-if __name__ == "__main__":
-
-    model = EBENGenerator(m=4, n=32, p=2)
-
-    #model.save_pretrained("my-awesome-model")
-
-    model.push_to_hub(f"Cnam-LMSSC/eben_test", commit_message=f"Upload EBEN with random weights ")
-
-    reloaded_model = EBENGenerator.from_pretrained(f"Cnam-LMSSC/eben_test")
-    print(model.first_conv.weight)
-    print(reloaded_model.first_conv.weight)
-    # reloaded_model.size
-    #
-    # from huggingface_hub import ModelCard
-    # card = ModelCard.load("username/my-awesome-model")
-    # card.data.tags
-    # card.data.library_name
