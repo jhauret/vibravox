@@ -1,6 +1,22 @@
 ArrayTaskID      Sensor                                                  EBEN_P
-1                body_conducted.forehead.miniature_accelerometer          4
-2                body_conducted.in_ear.comply_foam_microphone             2
-3                body_conducted.in_ear.rigid_earpiece_microphone          2
-4                body_conducted.temple.contact_microphone                 1
-5                body_conducted.throat.piezoelectric_sensor               1
+1                body_conducted.forehead.miniature_accelerometer          1
+2                body_conducted.forehead.miniature_accelerometer          2
+3                body_conducted.forehead.miniature_accelerometer          3
+4                body_conducted.forehead.miniature_accelerometer          4
+5                body_conducted.in_ear.comply_foam_microphone             1
+6                body_conducted.in_ear.comply_foam_microphone             2
+7                body_conducted.in_ear.comply_foam_microphone             3
+8                body_conducted.in_ear.comply_foam_microphone             4
+9                body_conducted.in_ear.rigid_earpiece_microphone          1
+10                body_conducted.in_ear.rigid_earpiece_microphone          2
+11               body_conducted.in_ear.rigid_earpiece_microphone          3
+12               body_conducted.in_ear.rigid_earpiece_microphone          4
+13               body_conducted.temple.contact_microphone                 1
+14               body_conducted.temple.contact_microphone                 2
+15               body_conducted.temple.contact_microphone                 3
+16               body_conducted.temple.contact_microphone                 4
+17               body_conducted.throat.piezoelectric_sensor               1
+18               body_conducted.throat.piezoelectric_sensor               2
+19               body_conducted.throat.piezoelectric_sensor               3
+20               body_conducted.throat.piezoelectric_sensor               4
+
