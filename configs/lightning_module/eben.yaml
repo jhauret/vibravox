@@ -5,6 +5,7 @@ dynamic_loss_balancing: "ema"
 beta_ema: 0.9
 update_discriminator_ratio: 1
 description: ${description}
+push_to_hub_after_testing: True
 
 defaults:
   - dnn_module@generator: eben_generator
