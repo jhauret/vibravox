@@ -8,7 +8,7 @@ ArrayTaskID      Sensor                                                  EBEN_P
 7                body_conducted.in_ear.comply_foam_microphone             3
 8                body_conducted.in_ear.comply_foam_microphone             4
 9                body_conducted.in_ear.rigid_earpiece_microphone          1
-10                body_conducted.in_ear.rigid_earpiece_microphone          2
+10               body_conducted.in_ear.rigid_earpiece_microphone          2
 11               body_conducted.in_ear.rigid_earpiece_microphone          3
 12               body_conducted.in_ear.rigid_earpiece_microphone          4
 13               body_conducted.temple.contact_microphone                 1
