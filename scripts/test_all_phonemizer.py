@@ -21,7 +21,7 @@ MICROPHONES = ["airborne.mouth_headworn.reference_microphone",
 
 PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 SAMPLE_RATE = 16_000
-DATASETS = ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_dummy"]
+DATASETS = ["Cnam-LMSSC/vibravox_enhanced_by_EBEN_dummy", "Cnam-LMSSC/vibravox"]
 FEATURE_EXTRACTOR = transformers.Wav2Vec2FeatureExtractor()
 TOKENIZER = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
 PER = torchmetrics.text.CharErrorRate()
@@ -51,7 +51,7 @@ def decode_operations(predicted_chr: str,
     return ops
 
 
-for subset_idx, dataset_name in enumerate(DATASETS):
+for dataset_idx, dataset_name in enumerate(DATASETS):
     for microphone_idx, microphone in enumerate(MICROPHONES):
         test_dataset = load_dataset(dataset_name, "speech_clean", split="test", streaming=False)
         test_dataset = test_dataset.cast_column(f"audio.{microphone}", Audio(sampling_rate=SAMPLE_RATE, mono=False))
@@ -80,13 +80,13 @@ for subset_idx, dataset_name in enumerate(DATASETS):
 
             # Save PER
             per = PER(preds, targets)
-            print(f"Test PER of {phonemizer} on {microphone} for {subset_name} subset: {per * 100:.2f}%")
-            per_results[subset_idx, microphone_idx, phonemizer_idx] = per
+            print(f"Test PER of {phonemizer} on {microphone} for {dataset_name} subset: {per * 100:.2f}%")
+            per_results[dataset_idx, microphone_idx, phonemizer_idx] = per
 
             # Save edit operations
             occurrences_dict = Counter(editops)
             occurrences_dict = sorted(occurrences_dict.items(), key=lambda x: x[1], reverse=True)
-            editops_occurrences_results[f"{subset_name}-{microphone}-{phonemizer}"] = occurrences_dict
+            editops_occurrences_results[f"{dataset_name}-{microphone}-{phonemizer}"] = occurrences_dict
 
 # Save results
 torch.save(per_results, "./outputs/scripts/stp_phonemizer_per_results.pt")
