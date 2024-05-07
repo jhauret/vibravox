@@ -10,7 +10,7 @@ hydra:
   job:
     chdir: True # change working directory to the job directory
   run:
-    dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/${now:%Y-%m-%d_%H-%M-%S}_p${lightning_module.generator.p}"
+    dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/${now:%Y-%m-%d_%H-%M-%S}_p${lightning_module.generator.p}_q${lightning_module.discriminator.q}_chan${lightning_module.discriminator.min_channels}" # directory for the run
 
 
 # Composing configs
