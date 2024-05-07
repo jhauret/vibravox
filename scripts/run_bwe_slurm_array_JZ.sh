@@ -12,7 +12,7 @@
 #SBATCH --qos=qos_gpu-t4
 #SBATCH --hint=nomultithread
 #SBATCH --account=lbo@v100
-#SBATCH --array=1-20
+#SBATCH --array=1-35
 
 module purge
 conda deactivate
