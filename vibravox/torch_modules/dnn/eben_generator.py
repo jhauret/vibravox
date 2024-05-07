@@ -27,7 +27,7 @@ tags:
 - **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py)
 - **Language:** French
 - **License:** MIT
-- **Finetuned dataset:** Corresponding audio of the model name,`speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
+- **Finetuned dataset:** `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
 - **Samplerate for usage:** 16kHz
 
 ## Training procedure
