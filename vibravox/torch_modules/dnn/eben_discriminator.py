@@ -15,7 +15,7 @@ class DiscriminatorEBENMultiScales(nn.Module):
         q: The number of PMQF bands sent to the discriminators to be refined
     """
 
-    def __init__(self, q: int = 3):
+    def __init__(self, q: int = 3, min_channels: int = 24):
         super().__init__()
 
         self.q = q
@@ -25,7 +25,7 @@ class DiscriminatorEBENMultiScales(nn.Module):
 
         # having multiple dilation helps to focus on multiscale structure of bands
         for dilation in [1, 2, 3]:
-            self.pqmf_discriminators.append(DiscriminatorEBEN(dilation=dilation, q=q))
+            self.pqmf_discriminators.append(DiscriminatorEBEN(dilation=dilation, q=q, min_channels=min_channels))
 
         # MelGAN discriminator
         self.melgan_discriminator = DiscriminatorMelGAN(alpha_leaky_relu=0.2)
