@@ -1,3 +1,9 @@
+"""
+This script is the entry point for training and testing the model.
+It instantiates all necessary modules, trains the model and tests it.
+"""
+
+
 import os
 from typing import List
 import warnings
