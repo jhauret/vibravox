@@ -56,12 +56,12 @@ class DiscriminatorEBEN(nn.Module):
     EBEN PQMF-bands discriminator
     """
 
-    def __init__(self, dilation=1, q: int = 3):
+    def __init__(self, dilation=1, q: int = 3, min_channels: int = 24):
         super().__init__()
 
         self.dilation = dilation
 
-        assert q in [1, 2, 3, 5, 6, 10, 15]
+        assert min_channels % q == 0, "min_channels must be a multiple of q"
 
         self.discriminator = nn.ModuleList(
             [
@@ -69,7 +69,7 @@ class DiscriminatorEBEN(nn.Module):
                     nn.ReflectionPad1d(1),
                     normalized_conv1d(
                         q,
-                        30,
+                        min_channels,
                         kernel_size=(3,),
                         stride=(1,),
                         padding=(1,),
@@ -80,8 +80,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        30,
-                        60,
+                        min_channels,
+                        min_channels*2,
                         kernel_size=(7,),
                         stride=(2,),
                         padding=(3,),
@@ -92,8 +92,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        60,
-                        120,
+                        min_channels*2,
+                        min_channels*4,
                         kernel_size=(7,),
                         stride=(2,),
                         padding=(3,),
@@ -104,8 +104,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        120,
-                        240,
+                        min_channels*4,
+                        min_channels*8,
                         kernel_size=(7,),
                         stride=(2,),
                         padding=(3,),
@@ -116,8 +116,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        240,
-                        480,
+                        min_channels*8,
+                        min_channels*16,
                         kernel_size=(7,),
                         stride=(2,),
                         padding=(3,),
@@ -128,8 +128,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        480,
-                        960,
+                        min_channels*16,
+                        min_channels*32,
                         kernel_size=(7,),
                         stride=(2,),
                         padding=(3,),
@@ -140,8 +140,8 @@ class DiscriminatorEBEN(nn.Module):
                 ),
                 nn.Sequential(
                     normalized_conv1d(
-                        960,
-                        960,
+                        min_channels*32,
+                        min_channels*32,
                         kernel_size=(5,),
                         stride=(1,),
                         padding=(2,),
@@ -151,7 +151,7 @@ class DiscriminatorEBEN(nn.Module):
                     nn.LeakyReLU(0.2, inplace=True),
                 ),
                 normalized_conv1d(
-                    960, 1, kernel_size=(3,), stride=(1,), padding=(1,), groups=1
+                    min_channels*32, 1, kernel_size=(3,), stride=(1,), padding=(1,), groups=1
                 ),
             ]
         )
