@@ -23,7 +23,7 @@ def enhance_audio(sample):
         cut_audio = eben.cut_to_valid_length(resampled_audio)
         enhanced_audio, _ = eben(cut_audio)
         sample[f"audio.{sensor}"]["array"] = enhanced_audio.detach().numpy().squeeze()
-        sample[f"audio.{sensor}"]["sampling_rate"] = 16_000  # todo: this don't work, update sampling rate in dataset features
+        sample[f"audio.{sensor}"]["sampling_rate"] = 16_000
 
     return sample
 
