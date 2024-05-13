@@ -1,8 +1,11 @@
 import torch
 from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 
-SENSOR = "body_conducted.in_ear.rigid_earpiece_microphone"
-PATH = f"outputs/run/bwe/{SENSOR}/2024-05-07_14-58-32_p2_q3_chan24/checkpoints/epoch_001.ckpt"
+SENSOR = "body_conducted.in_ear.comply_foam_microphone"
+RUN = "2024-05-11_05-29-31_p2_q4_chan24"
+CHECKPOINT = "last.ckpt"
+
+PATH = f"outputs/run/bwe/{SENSOR}/{RUN}/checkpoints/{CHECKPOINT}"
 
 checkpoint = torch.load(PATH)
 
@@ -19,4 +22,4 @@ p = state_dict['first_conv.weight'].shape[1]
 model = EBENGenerator(m=m, n=n, p=p)
 model.load_state_dict(state_dict)
 
-model.push_to_hub(f"Cnam-LMSSC/EBEN_{SENSOR}", commit_message=f"Upload EBENGenerator")
+model.push_to_hub(f"Cnam-LMSSC/EBEN_{SENSOR}", commit_message=f"Upload EBENGenerator trained on vibravox_140/200_participants")
