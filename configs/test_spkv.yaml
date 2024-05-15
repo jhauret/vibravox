@@ -1,0 +1,11 @@
+### Top-level config file for tests/lightning_datamodules/spkv_test.py
+
+# Top-level variables available in all config files
+sample_rate: 16000
+
+# Hydra configuration
+version_base: "1.3"
+
+# Composing configs
+defaults:
+  - lightning_datamodule: spkv
