@@ -1,9 +1,3 @@
-import numpy as np
-import torch
-
-from vibravox.lightning_datamodules.spkv import SPKVLightningDataModule
-
-
 """
 This script is the entry point for training and testing the model.
 It instantiates all necessary modules, trains the model and tests it.
@@ -11,7 +5,6 @@ It instantiates all necessary modules, trains the model and tests it.
 
 
 import os
-from typing import List
 import warnings
 import hydra
 import torch
@@ -19,10 +12,8 @@ from lightning import (
     LightningDataModule,
     seed_everything,
 )
-from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 from omegaconf import DictConfig
 
-from torchmetrics import MetricCollection
 
 
 @hydra.main(
