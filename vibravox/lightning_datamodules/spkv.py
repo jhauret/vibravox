@@ -13,7 +13,7 @@ from lightning.pytorch.utilities import CombinedLoader
 
 class SPKVLightningDataModule(LightningDataModule):
 
-    DATASET_NAME = "Cnam-LMSSC/vibravox_enhanced_by_EBEN_dummy" # For tests only, replace it by vibravox later
+    DATASET_NAME = "Cnam-LMSSC/vibravox"
 
     def __init__(
         self,
@@ -100,20 +100,16 @@ class SPKVLightningDataModule(LightningDataModule):
         dataset_dict_a = dataset_dict_a.select([pair[0] for pair in pairs])
         dataset_dict_b = dataset_dict_b.select([pair[1] for pair in pairs])
 
-        print("Renaming columns ...")
+        # Renaming columns to match the format expected by the model :
 
         dataset_dict_a = dataset_dict_a.rename_column(f"audio.{self.sensorA}", "audio")
         dataset_dict_b = dataset_dict_b.rename_column(f"audio.{self.sensorB}", "audio")
 
 
-        print("Setting format to torch ...")
+        # Setting format to torch :
 
         dataset_dict_a = dataset_dict_a.with_format("torch")
-
-        print(dataset_dict_a.shape)
         dataset_dict_b = dataset_dict_b.with_format("torch")
-        print(dataset_dict_a.shape)
-
 
         self.test_dataset_a = dataset_dict_a
         self.test_dataset_b = dataset_dict_b

@@ -12,7 +12,7 @@ from pathlib import Path
 seed_everything(42, workers=True)
 
 
-DATASET_NAME = "Cnam-LMSSC/vibravox_enhanced_by_EBEN_dummy"  # For tests only, replace it by vibravox later
+DATASET_NAME = "Cnam-LMSSC/vibravox"
 
 # Loading the dataset
 dataset_dict = load_dataset(DATASET_NAME, "speech_clean", split="test", streaming=False)
