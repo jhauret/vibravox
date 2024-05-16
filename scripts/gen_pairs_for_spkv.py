@@ -1,4 +1,8 @@
-"""Generates pairs of utterances for speaker verification and then saves them in a pickle file."""
+"""Generates pairs of utterances for speaker verification (both for random gender and same gender)
+ and then saves them in two pickle files for reuse in for the spkv model.
+
+ WARNING : needs to be launched only one time per dataset. If you use another dataset than vibravox, please regenerate
+ the pairs for this specific dataset."""
 
 import pickle
 import itertools
