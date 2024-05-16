@@ -149,9 +149,19 @@ class SPKVLightningDataModule(LightningDataModule):
             Collection of two DataLoaders corresponding to dataset_A and dataset_B
         """
 
-        return CombinedLoader({"a" : DataLoader(self.test_dataset_a ,batch_size=self.batch_size,num_workers=self.num_workers,collate_fn=self.data_collator,),
-                           "b": DataLoader(self.test_dataset_b,batch_size=self.batch_size,num_workers=self.num_workers,collate_fn=self.data_collator,)},
-                          'min_size')
+        dataloader_a = DataLoader(self.test_dataset_a,
+                                  batch_size=self.batch_size,
+                                  num_workers=self.num_workers,
+                                  collate_fn=self.data_collator,
+                                  shuffle=False)  # We do not shuffle the dataset to keep the order of the pairs
+
+        dataloader_b = DataLoader(self.test_dataset_b,
+                                  batch_size=self.batch_size,
+                                  num_workers=self.num_workers,
+                                  collate_fn=self.data_collator,
+                                  shuffle=False)
+
+        return CombinedLoader(iterables={"sensor_a": dataloader_a, "sensor_b": dataloader_b}, mode='min_size')
 
     def data_collator(self, batch: List[Dict[str, Any]]) -> Dict[str, Union[ torch.Tensor, List[str], List[int],List[str]]]:
         """
