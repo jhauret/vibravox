@@ -10,7 +10,6 @@ This repo is meant to be a collaborative project on several tasks related to spe
 |----------|----------------------|
 | `bwe`    | Bandwidth Extension  |
 | `stp`    | Speech to Phoneme    |
-| `stt`    | Speech to Text       |
 | `spkv`   | Speaker Verification |
 
 
