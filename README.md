@@ -34,7 +34,7 @@ python run.py lightning_datamodule=bwe lightning_module=eben
 python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=airborne.mouth_headworn.reference_microphone ++trainer.max_epochs=10
 ```
 
-- Train [titanet](https://huggingface.co/nvidia/speakerverification_en_titanet_large) for Speaker Verification
+- **Test** [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification
 ```
-python run.py lightning_datamodule=spk_verif lightning_module=titanet
+python run.py lightning_datamodule=spkv lightning_module=ecapa2
 ```
