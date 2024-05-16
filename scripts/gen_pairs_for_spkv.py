@@ -76,7 +76,7 @@ for speaker in range(nb_speakers):
 total_pairs = same_speakers_pairs + different_speakers_pairs
 # Save total_pairs list of pairs to a pickle file in the same directory :
 
-with open(Path(__file__).parent.parent / "lightning_datamodule/misc/pairs.pkl", 'wb') as f:
+with open(Path(__file__).parent.parent / "configs/lightning_datamodule/misc/pairs.pkl", 'wb') as f:
     pickle.dump(total_pairs, f)
 
 print("Done !")
