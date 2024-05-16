@@ -7,6 +7,7 @@ from pathlib import Path
 from lightning import LightningDataModule
 from datasets import Audio, load_dataset
 from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 
 from lightning.pytorch.utilities import CombinedLoader
 
@@ -148,19 +149,25 @@ class SPKVLightningDataModule(LightningDataModule):
 
 
     def data_collator(self, batch: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Custom data collator function to extract the array from the Audio feature.
 
-        Args:
-            batch: Dict from the dataset with the keys "audio" , "speaker_id" , and "sentence_id"
-        Returns:
-            dict
         """
+            Collates data samples into a single batch.
+
+            Parameters:
+                batch (List[Dict[str, Union[Tensor, str]]]): List of dictionaries with keys "audio", "speaker_id", "sentence_id", and "gender"
+
+            Returns:
+                Dict[str, Union[List[Tensor], List[str], List[int], List[str]]: A dictionary containing collated data with keys:
+                "audio" (List[Tensor] of dimension (batch_size, 1, sample_rate * duration)),
+                "speaker_id" (List[str]),
+                "sentence_id" (List[int]),
+                "gender" (List[str])
+            """
 
         audio_batch = [sample["audio"]["array"] for sample in batch]
         audio_batch = pad_sequence(audio_batch, batch_first=True, padding_value=0.0).unsqueeze(1)
         speaker_id_batch = [sample["speaker_id"] for sample in batch]
-        sentence_id_batch = [sample["sentence_id"] for sample in batch]
+        sentence_id_batch = [int(sample["sentence_id"]) for sample in batch]
         gender_batch = [sample["gender"] for sample in batch]
 
         return {
