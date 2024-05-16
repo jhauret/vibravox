@@ -51,6 +51,11 @@ class SPKVLightningDataModule(LightningDataModule):
         self.subset = subset
         self.split = split
         self.pklfile_path = pklfile_path
+
+        if streaming:
+            raise AttributeError("Streaming is not supported for SPKVLightningDataModule")
+            # because IterableDataset does not support the sort method
+
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
