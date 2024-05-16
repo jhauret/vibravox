@@ -1,4 +1,5 @@
-from typing import Dict, Any, Tuple
+import torch
+from typing import Dict, List, Any, Union, Tuple
 
 import pickle
 
@@ -147,18 +148,18 @@ class SPKVLightningDataModule(LightningDataModule):
                            "b": DataLoader(self.test_dataset_b,batch_size=self.batch_size,num_workers=self.num_workers,collate_fn=self.data_collator,)},
                           'min_size')
 
-
-    def data_collator(self, batch: Dict[str, Any]) -> Dict[str, Any]:
-
+    def data_collator(self, batch: List[Dict[str, Any]]) -> Dict[str, Union[ torch.Tensor, List[str], List[int],List[str]]]:
         """
-            Collates data samples into a single batch.
+            Collates data samples into a single batch
+
+            Note : since SPKV uses a CombinedLoader, this data_collator is used for both DataLoader
 
             Parameters:
-                batch (List[Dict[str, Union[Tensor, str]]]): List of dictionaries with keys "audio", "speaker_id", "sentence_id", and "gender"
+                batch (Dict[str, Any]): List of dictionaries with keys "audio", "speaker_id", "sentence_id", and "gender"
 
             Returns:
-                Dict[str, Union[List[Tensor], List[str], List[int], List[str]]: A dictionary containing collated data with keys:
-                "audio" (List[Tensor] of dimension (batch_size, 1, sample_rate * duration)),
+                Dict : A dictionary containing collated data with keys:
+                "audio" (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
                 "speaker_id" (List[str]),
                 "sentence_id" (List[int]),
                 "gender" (List[str])
