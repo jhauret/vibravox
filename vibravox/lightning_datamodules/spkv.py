@@ -157,14 +157,15 @@ class SPKVLightningDataModule(LightningDataModule):
             dict
         """
 
-        audio = [sample["audio"]["array"] for sample in batch]
-        speaker_id = [sample["speaker_id"] for sample in batch]
-        sentence_id = [sample["sentence_id"] for sample in batch]
-        gender = [sample["gender"] for sample in batch]
+        audio_batch = [sample["audio"]["array"] for sample in batch]
+        audio_batch = pad_sequence(audio_batch, batch_first=True, padding_value=0.0).unsqueeze(1)
+        speaker_id_batch = [sample["speaker_id"] for sample in batch]
+        sentence_id_batch = [sample["sentence_id"] for sample in batch]
+        gender_batch = [sample["gender"] for sample in batch]
 
         return {
-            "audio": audio,
-            "speaker_id": speaker_id,
-            "sentence_id": sentence_id,
-            "gender": gender,
+            "audio": audio_batch,
+            "speaker_id": speaker_id_batch,
+            "sentence_id": sentence_id_batch,
+            "gender": gender_batch,
         }
