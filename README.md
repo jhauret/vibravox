@@ -6,6 +6,9 @@
 <a href="https://pytorch.org"><img alt="PyTorch" src="https://img.shields.io/badge/-Pytorch 2.2-ee4c2c?style=for-the-badge&logo=pytorch&logoColor=white"></a>
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning 2.2-792ee5?style=for-the-badge&logo=lightning&logoColor=white"></a>
 <a href="https://hydra.cc/"><img alt="Config: hydra" src="https://img.shields.io/badge/-hydra 1.3-89b8cd?style=for-the-badge&logo=hydra&logoColor=white"></a>
+<a href="https://hydra.cc/"><img alt="HuggingFace Datasets" src="https://img.shields.io/badge/🤗 HuggingFace Datasets 2.19-Dataset?style=for-the-badge&logo=🤗&logoColor=white"></a>
+
+
 
 Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibravox dataset.
 
