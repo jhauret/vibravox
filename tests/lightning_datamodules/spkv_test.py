@@ -38,8 +38,27 @@ def main(cfg: DictConfig):
 
     batch = next(iter(lightning_datamodule.test_dataloader()))
 
+    print("\n Combined Batch from CombinedDataloder : \n ")
     print(batch)
 
+    print("\n Keys from Dataloader 'a' :")
+    print(batch[0]['a'].keys())
+
+    print(" \n Values from Dataloader 'a' : \n " )
+    print((batch[0]['a']['audio']))
+    print((batch[0]['a']['speaker_id']))
+    print((batch[0]['a']['sentence_id']))
+    print((batch[0]['a']['gender']))
+
+    print("\n Keys from Dataloader 'b' : \n")
+    print(batch[0]['b'].keys())
+
+    print("\n Values from Dataloader 'b' : \n")
+
+    print((batch[0]['b']['audio']))
+    print((batch[0]['b']['speaker_id']))
+    print((batch[0]['b']['sentence_id']))
+    print((batch[0]['b']['gender']))
 
 
 
