@@ -3,6 +3,7 @@ import hydra
 import torch
 import transformers
 
+from vibravox.lightning_datamodules.spkv import SPKVLightningDataModule
 from vibravox.lightning_datamodules.stp import STPLightningDataModule
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
@@ -139,6 +140,27 @@ def stp_lightning_datamodule_instance(
         batch_size=batch_size,
         feature_extractor=feature_extractor,
         tokenizer=tokenizer
+    )
+
+    datamodule.setup(stage="test")
+
+    return datamodule
+
+
+def spkv_lightning_datamodule_instance(
+    sample_rate, dataset_name, subset_name, sensor_name,
+) -> SPKVLightningDataModule:
+    """SPKVLightningDataModule instance."""
+
+    datamodule = SPKVLightningDataModule(
+        pklfile_path="configs/lightning_datamodule/spkv_pairs/pairs.pkl",
+        sample_rate=sample_rate,
+        dataset_name=dataset_name,
+        subset=subset_name,
+        sensor_a=sensor_name,
+        #keep sensor_b to default value which is "airborne.mouth_headworn.reference_microphone"
+        streaming=False,
+        batch_size=1,
     )
 
     datamodule.setup(stage="test")

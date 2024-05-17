@@ -32,13 +32,13 @@ class SPKVLightningDataModule(LightningDataModule):
         LightningDataModule for Speaker Verification (SPKV)
 
         Args:
+            pklfile_path (str, optional): Pickle file path.
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
             dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox"
             subset (str, optional): Subset. Defaults to "speech_clean"
             sensor_a (str, optional): Sensor. Defaults to "airborne.mouth_headworn.reference_microphone"
             sensor_b (str, optional): Sensor. Defaults to "airborne.mouth_headworn.reference_microphone"
             split (str, optional) : Split. Defaults to "test".
-            pklfile_path (str, optional): Pickle file path. Defaults to "configs/lightning_datamodule/spkv_pairs/pairs.pkl".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 1 since ECAPA2 pretrained model only supports this Batchsize
             num_workers (int, optional): Number of workers. Defaults to 4.
