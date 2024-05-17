@@ -97,9 +97,11 @@ class BWELightningDataModule(LightningDataModule):
         )
         dataset_dict = dataset_dict.with_format("torch")
 
-        self.train_dataset = dataset_dict["train"]
-        self.val_dataset = dataset_dict["validation"]
-        self.test_dataset = dataset_dict["test"]
+        if stage == "fit":
+            self.train_dataset = dataset_dict["train"]
+            self.val_dataset = dataset_dict["validation"]
+        elif stage == "test":
+            self.test_dataset = dataset_dict["test"]
 
     def train_dataloader(self):
         """

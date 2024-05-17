@@ -116,7 +116,7 @@ def bwe_lightning_datamodule_instance(
         streaming=streaming,
         batch_size=batch_size,
     )
-    datamodule.setup()
+    datamodule.setup("test")
 
     return datamodule
 
@@ -141,7 +141,7 @@ def stp_lightning_datamodule_instance(
         tokenizer=tokenizer
     )
 
-    datamodule.setup()
+    datamodule.setup("test")
 
     return datamodule
 
