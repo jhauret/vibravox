@@ -4,24 +4,23 @@ If you're reading this, you're probably interested in contributing to Vibravox. 
 
 ## How to get started?
 
-This repo is meant to be a collaborative project on several tasks related to speech processing recorded by body-conducted microphones. Here is the list of supported tasks:
+This repo is meant to be a collaborative project on several tasks related to speech processing recorded by body-conducted microphones. Here is the list of currently supported tasks:
 
-| Task Tag | Description            |
-|----------|------------------------|
-| `bwe`    | Bandwidth Extension    |
-| `stp`    | Speech to Phoneme      |
-| `stt`    | Speech to Text         |
-| `si`     | Speaker Identification |
+| Task Tag | Description          |
+|----------|----------------------|
+| `bwe`    | Bandwidth Extension  |
+| `stp`    | Speech to Phoneme    |
+| `spkv`   | Speaker Verification |
 
 
 ### Adding a new model to an existing task
 If you're using the Vibravox dataset, you can add your model to one of the supported tasks. Here's how to do it:
-- The entry point of your code should be the `train.py` script.
+- The entry point of your code should be the `run.py` script.
 - You must use the lightning datamodule corresponding to your task.
 - You can create a new lightning module, some torch_modules or any other utils you need.
 - For every created class, you should add the corresponding yaml file in the `configs` folder.
 - Finally, your method should be run with the following command:
-```python train.py lightning_datamodule=<task_tag> lightning_module=<your_model> <other_args>```
+```python run.py lightning_datamodule=<task_tag> lightning_module=<your_model> <other_args>```
 
 ### Adding a new task
 Please open an issue to discuss it.
