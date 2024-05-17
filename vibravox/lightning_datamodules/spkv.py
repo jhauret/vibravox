@@ -283,7 +283,7 @@ class SPKVLightningDataModule(LightningDataModule):
 
         return CombinedLoader(iterables={"sensor_a": dataloader_a, "sensor_b": dataloader_b}, mode='min_size')
 
-    def data_collator(self, batch: List[Dict[str, Any]]) -> Dict[str, Union[ torch.Tensor, List[str], List[int],List[str]]]:
+    def data_collator(self, batch: List[Dict[str, Any]]) -> Dict[str, Union[ torch.Tensor, List[str], List[int],List[str],List[str]]]:
         """
             Collates data samples into a single batch
 
