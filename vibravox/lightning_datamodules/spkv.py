@@ -15,15 +15,14 @@ from lightning.pytorch.utilities import CombinedLoader
 
 class SPKVLightningDataModule(LightningDataModule):
 
-    DATASET_NAME = "Cnam-LMSSC/vibravox"
-
     def __init__(
         self,
         pklfile_path: str,
         sample_rate: int = 16000,
+        dataset_name: str = "Cnam-LMSSC/vibravox",
+        subset: str = "speech_clean",
         sensor_a: str = "airborne.mouth_headworn.reference_microphone",
         sensor_b: str = "airborne.mouth_headworn.reference_microphone",
-        subset: str = "speech_clean",
         streaming: bool = False,
         batch_size: int = 1,
         num_workers: int = 4,
@@ -33,9 +32,10 @@ class SPKVLightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
+            dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox".
+            subset (str, optional): Subset. Defaults to ("speech_clean").
             sensor_a (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
             sensor_b (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
-            subset (str, optional): Subset. Defaults to ("speech_clean").
             pklfile_path (str, optional): Pickle file path. Defaults to "configs/lightning_datamodule/spkv_pairs/vibravox/speech_clean/pairs.pkl".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 1 for testing since ECAPA2 pretrained model only supports this Batchsize
@@ -44,9 +44,12 @@ class SPKVLightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
+        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
+            "dataset_name must be 'Cnam-LMSSC/vibravox' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
+        self.dataset_name = dataset_name
+        self.subset = subset
         self.sensorA = sensor_a
         self.sensorB = sensor_b
-        self.subset = subset
         self.pklfile_path = pklfile_path
 
         self.streaming = streaming
@@ -66,7 +69,7 @@ class SPKVLightningDataModule(LightningDataModule):
         """
 
         dataset_dict = load_dataset(
-            self.DATASET_NAME, self.subset, streaming=self.streaming
+            self.dataset_name, self.subset, streaming=self.streaming
         )
 
         train_dataset_dict = dataset_dict["train"]
