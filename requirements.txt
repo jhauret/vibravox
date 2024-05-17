@@ -9,7 +9,7 @@ tensorboard>=2.15.2
 datasets[audio]>=2.19.0
 huggingface_hub[cli]>=0.23.0
 transformers>=4.37.2
-#pytest>=7.4.3
+pytest>=8.2.0
 #pre-commit>=3.6.2
 auraloss>=0.4.0
 levenshtein==0.25.1

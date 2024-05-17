@@ -14,13 +14,12 @@ from vibravox.utils import set_audio_duration
 
 class BWELightningDataModule(LightningDataModule):
 
-    DATASET_NAME = "Cnam-LMSSC/vibravox"
-
     def __init__(
         self,
         sample_rate: int = 16000,
-        sensor: str = "airborne.mouth_headworn.reference_microphone",
+        dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
+        sensor: str = "airborne.mouth_headworn.reference_microphone",
         collate_strategy: str = "constant_length-2500-ms",
         data_augmentation: torch.nn.Module = None,
         streaming: bool = False,
@@ -32,8 +31,9 @@ class BWELightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            sensor (str, optional): Sensor. Defaults to ("bwe_in-ear_rigid_earpiece_microphone",).
-            subset (str, optional): Subset. Defaults to ("speech_clean",).
+            dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox"
+            subset (str, optional): Subset. Defaults to "speech_clean"
+            sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
@@ -46,8 +46,11 @@ class BWELightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        self.sensor = sensor
+        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
+            "dataset_name must be 'Cnam-LMSSC/vibravox' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
+        self.dataset_name = dataset_name
         self.subset = subset
+        self.sensor = sensor
 
         assert collate_strategy == "pad" or re.match(r"constant_length-\d+-ms", collate_strategy), \
             "collate_strategy must be 'pad' or match the pattern 'constant_length-XXX-ms'"
@@ -55,8 +58,9 @@ class BWELightningDataModule(LightningDataModule):
         self.collate_strategy = collate_strategy
 
         if data_augmentation is None:
-            data_augmentation = vibravox.torch_modules.dsp.data_augmentation.WaveformDataAugmentation(sample_rate)
-        assert isinstance(data_augmentation, vibravox.torch_modules.dsp.data_augmentation.WaveformDataAugmentation), "data_augmentation must be a WaveformDataAugmentation"
+            data_augmentation = WaveformDataAugmentation(sample_rate)
+        assert isinstance(data_augmentation, WaveformDataAugmentation), "data_augmentation must be a WaveformDataAugmentation"
+
         self.data_augmentation = data_augmentation
 
         self.streaming = streaming
@@ -76,7 +80,7 @@ class BWELightningDataModule(LightningDataModule):
         """
 
         dataset_dict = load_dataset(
-            self.DATASET_NAME, self.subset, streaming=self.streaming
+            self.dataset_name, self.subset, streaming=self.streaming
         )
 
         dataset_dict = dataset_dict.rename_column(f"audio.airborne.mouth_headworn.reference_microphone", "audio_airborne")
@@ -93,9 +97,11 @@ class BWELightningDataModule(LightningDataModule):
         )
         dataset_dict = dataset_dict.with_format("torch")
 
-        self.train_dataset = dataset_dict["train"]
-        self.val_dataset = dataset_dict["validation"]
-        self.test_dataset = dataset_dict["test"]
+        if stage == "fit":
+            self.train_dataset = dataset_dict["train"]
+            self.val_dataset = dataset_dict["validation"]
+        elif stage == "test":
+            self.test_dataset = dataset_dict["test"]
 
     def train_dataloader(self):
         """

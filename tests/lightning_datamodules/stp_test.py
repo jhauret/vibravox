@@ -6,15 +6,15 @@ from vibravox.lightning_datamodules.stp import STPLightningDataModule
 
 class TestSTPLightningDataModule:
     def test_dataset_return_type(self, stp_lightning_datamodule_instance):
-        train_dataset = stp_lightning_datamodule_instance.train_dataset
-        dataset_sample = next(iter(train_dataset))
+        test_dataset = stp_lightning_datamodule_instance.test_dataset
+        dataset_sample = next(iter(test_dataset))
 
         assert isinstance(dataset_sample["audio"]["array"], np.ndarray)
         assert isinstance(dataset_sample["phonemized_text"], str)
 
     def test_dataloader_returns_format(self, stp_lightning_datamodule_instance):
-        train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
-        dataloader_sample = next(iter(train_dataloder))
+        test_dataloder = stp_lightning_datamodule_instance.test_dataloader()
+        dataloader_sample = next(iter(test_dataloder))
 
         assert isinstance(dataloader_sample, dict), "Expected a list."
         assert all(
@@ -27,8 +27,8 @@ class TestSTPLightningDataModule:
     def test_tokenize_detokenize_is_bijection_from_dataset(
         self, stp_lightning_datamodule_instance
     ):
-        train_dataset = stp_lightning_datamodule_instance.train_dataset
-        dataset_sample = next(iter(train_dataset))
+        test_dataset = stp_lightning_datamodule_instance.test_dataset
+        dataset_sample = next(iter(test_dataset))
         phonemes = dataset_sample["phonemized_text"]
         tokenized_phonemes = stp_lightning_datamodule_instance.tokenizer(
             phonemes, add_special_tokens=True
@@ -42,8 +42,8 @@ class TestSTPLightningDataModule:
     def test_tokenize_detokenize_is_bijection_from_dataloader(
         self, stp_lightning_datamodule_instance
     ):
-        train_dataloder = stp_lightning_datamodule_instance.train_dataloader()
-        dataloader_sample = next(iter(train_dataloder))
+        test_dataloader = stp_lightning_datamodule_instance.test_dataloader()
+        dataloader_sample = next(iter(test_dataloader))
         phonemes_ids = dataloader_sample["phonemes_ids"][
             0, :
         ]  # First sample in the batch

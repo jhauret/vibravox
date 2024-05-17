@@ -1,6 +1,7 @@
 _target_: vibravox.lightning_datamodules.spkv.SPKVLightningDataModule
 
 sample_rate: 16000
+dataset_name: "Cnam-LMSSC/vibravox"
 subset: "speech_clean"
 split: "test"
 pklfile_path: "configs/lightning_datamodule/spkv_pairs/pairs.pkl"
