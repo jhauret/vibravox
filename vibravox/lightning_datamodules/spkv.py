@@ -77,10 +77,10 @@ class SPKVLightningDataModule(LightningDataModule):
         test_dataset_dict = dataset_dict["test"]
 
         if stage == "fit" or stage is None:
-            print("Generating dataset for training and validation ...")
+            # Generating dataset for training and validation
 
             if self.sensorA == self.sensorB:
-                print("Sensor A and Sensor B are the same")
+                # When self.sensorA and self.sensorB are the same, only generate the dataset using one column
 
                 # Only keep the relevant columns for this task :
                 train_dataset_dict = train_dataset_dict.select_columns(
@@ -97,7 +97,6 @@ class SPKVLightningDataModule(LightningDataModule):
                 )
 
                 # Tag a column with the sensor name :
-
                 train_dataset_dict = train_dataset_dict.add_column("sensor", [self.sensorA] * len(train_dataset_dict))
                 val_dataset_dict = val_dataset_dict.add_column("sensor", [self.sensorA] * len(val_dataset_dict))
 
@@ -106,7 +105,9 @@ class SPKVLightningDataModule(LightningDataModule):
                 val_dataset_dict = val_dataset_dict.rename_column(f"audio.{self.sensorA}", "audio")
 
             else:
-                print("Sensor A and Sensor B are not the same")
+                # When self.sensorA and self.sensorB are different, generate the dataset by interleaving both sensors
+                # in the same dataset for train/validation, which results in a two times larger dataset for training,
+                # but allows to learn embeddings for both sensors
 
                 # Only keep the relevant columns for this task :
                 train_dataset_dict_a = train_dataset_dict.select_columns(
@@ -167,23 +168,24 @@ class SPKVLightningDataModule(LightningDataModule):
             train_dataset_dict = train_dataset_dict.with_format("torch")
             val_dataset_dict = val_dataset_dict.with_format("torch")
 
-            print("Size of the train dataset : ", len(train_dataset_dict))
-            print("Size of the val dataset : ", len(val_dataset_dict))
 
             self.train_dataset = train_dataset_dict
             self.val_dataset = val_dataset_dict
 
 
         if stage == "test":
+            # Generating dataset for testing for Speaker Verification (only for the test set) : pairs are needed
+            # Pairs are only formed for the test set for Speaker Verification. Training and validation in end-to-end
+            # fashion do not need to be paired.
+            # The strategy to form pairs is the same as in the paper from Brydinskyi et al.,
+            # "Comparison of Modern Deep Learning Models for Speaker Verification." Applied Sciences 14.4 (2024): 1329.
+
             if self.streaming:
                 raise AttributeError("Streaming is not supported for testing SPKVLightningDataModule")
                 # because IterableDataset does not support the sort method nor the select method
 
             # Order by speaker_id for easier pairing of audios :
             test_dataset_dict = test_dataset_dict.sort("speaker_id")
-
-            # Pairs are only formed for the test set for Speaker Verification. Training and validation in end-to-end
-            # fashion do not need to be paired.
 
             # Only keep the relevant columns for this task :
             dataset_dict_a = test_dataset_dict.select_columns(
@@ -217,9 +219,6 @@ class SPKVLightningDataModule(LightningDataModule):
 
             dataset_dict_a = dataset_dict_a.rename_column(f"audio.{self.sensorA}", "audio")
             dataset_dict_b = dataset_dict_b.rename_column(f"audio.{self.sensorB}", "audio")
-
-            print("Size of the test dataset : ", len(dataset_dict_a) , len(dataset_dict_b))
-
 
             # Setting format to torch :
 
