@@ -19,7 +19,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         push_to_hub_after_testing: bool = False,
     ):
         """
-        Definition of EBEN and its training pipeline with pytorch lightning paradigm
+        Definition of Wav2Vec2ForSTP and its training pipeline with pytorch lightning paradigm
 
         Args:
             sample_rate (int): Sample rate of the audio

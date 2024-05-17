@@ -41,24 +41,24 @@ def main(cfg: DictConfig):
     print("\n Combined Batch from CombinedDataloder : \n ")
     print(batch)
 
-    print("\n Keys from Dataloader 'a' :")
-    print(batch[0]['a'].keys())
+    print("\n Keys from Dataloader 'sensor_a' :")
+    print(batch[0]['sensor_a'].keys())
 
-    print(" \n Values from Dataloader 'a' : \n " )
-    print((batch[0]['a']['audio']))
-    print((batch[0]['a']['speaker_id']))
-    print((batch[0]['a']['sentence_id']))
-    print((batch[0]['a']['gender']))
+    print(" \n Values from Dataloader 'sensor_a' : \n " )
+    print((batch[0]['sensor_a']['audio']))
+    print((batch[0]['sensor_a']['speaker_id']))
+    print((batch[0]['sensor_a']['sentence_id']))
+    print((batch[0]['sensor_a']['gender']))
 
-    print("\n Keys from Dataloader 'b' : \n")
-    print(batch[0]['b'].keys())
+    print("\n Keys from Dataloader 'sensor_b' : \n")
+    print(batch[0]['sensor_b'].keys())
 
-    print("\n Values from Dataloader 'b' : \n")
+    print("\n Values from Dataloader 'sensor_b' : \n")
 
-    print((batch[0]['b']['audio']))
-    print((batch[0]['b']['speaker_id']))
-    print((batch[0]['b']['sentence_id']))
-    print((batch[0]['b']['gender']))
+    print((batch[0]['sensor_b']['audio']))
+    print((batch[0]['sensor_b']['speaker_id']))
+    print((batch[0]['sensor_b']['sentence_id']))
+    print((batch[0]['sensor_b']['gender']))
 
 
 

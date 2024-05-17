@@ -30,7 +30,7 @@ class SPKVLightningDataModule(LightningDataModule):
         num_workers: int = 4,
     ):
         """
-        LightningDataModule for Speaker Verification (SPKV)
+        LightningDataModule for end-to-end Speaker Verification (SPKV)
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
@@ -38,7 +38,7 @@ class SPKVLightningDataModule(LightningDataModule):
             sensor_b (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
             subset (str, optional): Subset. Defaults to ("speech_clean").
             split (str, optional) : Split. Defaults to "test".
-            pklfile_path (str, optional): Pickle file path. Defaults to "configs/lightning_datamodule/spkv_pairs/pairs.pkl".
+            pklfile_path (str, optional): Pickle file path. Defaults to "configs/lightning_datamodule/spkv_pairs/vibravox/speech_clean/pairs.pkl".
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 1 since ECAPA2 pretrained model only supports this Batchsize
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -72,22 +72,15 @@ class SPKVLightningDataModule(LightningDataModule):
             That is why it is necessary to define attributes here rather than in __init__.
         """
 
-        print("Loading the dataset ...")
         dataset_dict = load_dataset(
             self.DATASET_NAME, self.subset, split=self.split, streaming=self.streaming
         )
-
-        print("Ordering by speaker_id ...")
         # Order by speaker_id for easier pairing of audios :
         dataset_dict = dataset_dict.sort("speaker_id")
-
-        print("Selecting columns for dataset_dict_a ... ")
 
         # Only keep the relevant columns for this task :
         dataset_dict_a = dataset_dict.select_columns([f"audio.{self.sensorA}","speaker_id", "sentence_id", "gender"])
         dataset_dict_b = dataset_dict.select_columns([f"audio.{self.sensorB}","speaker_id", "sentence_id", "gender"])
-
-        print("Resampling the audios to the right sample rate ...")
 
         # Resample the audios to the right sample rate
         dataset_dict_a = dataset_dict_a.cast_column(
@@ -103,7 +96,6 @@ class SPKVLightningDataModule(LightningDataModule):
         with open(Path(__file__).parent.parent.parent / self.pklfile_path, 'rb') as file:
             pairs = pickle.load(file)
 
-        print("Selecting the audios for the test dataset A and B  ...")
         dataset_dict_a = dataset_dict_a.select([pair[0] for pair in pairs])
         dataset_dict_b = dataset_dict_b.select([pair[1] for pair in pairs])
 
