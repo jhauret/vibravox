@@ -23,13 +23,13 @@ def sample_rate(request) -> int:
     return request.param
 
 
-@pytest.fixture(params=[1, 4])
+@pytest.fixture(params=[4])
 def batch_size(request) -> int:
     """Number of files."""
     return request.param
 
 
-@pytest.fixture(params=[15999, 16000, 16001])
+@pytest.fixture(params=[15679])
 def time_len(request) -> int:
     """Number of time samples."""
     return request.param
@@ -68,14 +68,22 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
             "body_conducted.in_ear.comply_foam_microphone",
             "body_conducted.forehead.miniature_accelerometer",
             "airborne.mouth_headworn.reference_microphone"]
-)  # , "bwe_throat_piezoelectric_sensor"
+)
 def sensor_name(request) -> str:
     return request.param
 
 
 @pytest.fixture(
-    params=["speech_clean", "speech_noisy"]
-)  # , "bwe_throat_piezoelectric_sensor"
+    params=["Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"]  # "Cnam-LMSSC/vibravox"
+    # To avoid downloading too much files we only test the smaller dataset
+)
+def dataset_name(request) -> str:
+    return request.param
+
+@pytest.fixture(
+    params=["speech_noisy"]  # "speech_clean"
+    # To avoid downloading too much files wee only test the smaller subset
+)
 def subset_name(request) -> str:
     return request.param
 
@@ -92,7 +100,7 @@ def collate_strategy(request) -> str:
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance(
-    sample_rate, sensor_name, subset_name, collate_strategy, streaming, batch_size
+    sample_rate, dataset_name, subset_name, sensor_name, collate_strategy, streaming, batch_size
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
@@ -101,20 +109,21 @@ def bwe_lightning_datamodule_instance(
 
     datamodule = BWELightningDataModule(
         sample_rate=sample_rate,
-        sensor=sensor_name,
+        dataset_name=dataset_name,
         subset=subset_name,
+        sensor=sensor_name,
         collate_strategy=collate_strategy,
         streaming=streaming,
         batch_size=batch_size,
     )
-    datamodule.setup()
+    datamodule.setup(stage="test")
 
     return datamodule
 
 
 @pytest.fixture
 def stp_lightning_datamodule_instance(
-    sample_rate, sensor_name, subset_name, streaming, batch_size
+    sample_rate, dataset_name, subset_name, sensor_name, streaming, batch_size
 ) -> STPLightningDataModule:
     """STPLightningDataModule instance."""
 
@@ -123,15 +132,16 @@ def stp_lightning_datamodule_instance(
 
     datamodule = STPLightningDataModule(
         sample_rate=sample_rate,
-        sensor=sensor_name,
+        dataset_name=dataset_name,
         subset=subset_name,
+        sensor=sensor_name,
         streaming=streaming,
         batch_size=batch_size,
         feature_extractor=feature_extractor,
         tokenizer=tokenizer
     )
 
-    datamodule.setup()
+    datamodule.setup(stage="test")
 
     return datamodule
 

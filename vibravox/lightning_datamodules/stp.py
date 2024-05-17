@@ -7,13 +7,13 @@ from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
 
 
 class STPLightningDataModule(LightningDataModule):
-    DATASET_NAME = "Cnam-LMSSC/vibravox"
 
     def __init__(
         self,
         sample_rate: int = 16000,
-        sensor: str = "airborne.mouth_headworn.reference_microphone",
+        dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
+        sensor: str = "airborne.mouth_headworn.reference_microphone",
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -25,8 +25,9 @@ class STPLightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            sensor (str, optional): Sensor. Defaults to ("bwe_in-ear_rigid_earpiece_microphone",).
-            subset (str, optional): Subset. Defaults to ("speech_clean",).
+            dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox"
+            subset (str, optional): Subset. Defaults to "speech_clean"
+            sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -37,8 +38,11 @@ class STPLightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        self.sensor = sensor
+        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
+            "dataset_name must be 'Cnam-LMSSC/vibravox' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
+        self.dataset_name = dataset_name
         self.subset = subset
+        self.sensor = sensor
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -58,7 +62,7 @@ class STPLightningDataModule(LightningDataModule):
         """
 
         dataset_dict = load_dataset(
-            self.DATASET_NAME, self.subset, streaming=self.streaming
+            self.dataset_name, self.subset, streaming=self.streaming
         )
 
         dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor}", "audio")
@@ -70,9 +74,11 @@ class STPLightningDataModule(LightningDataModule):
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
 
-        self.train_dataset = dataset_dict["train"]
-        self.val_dataset = dataset_dict["validation"]
-        self.test_dataset = dataset_dict["test"]
+        if stage == "fit":
+            self.train_dataset = dataset_dict["train"]
+            self.val_dataset = dataset_dict["validation"]
+        elif stage == "test":
+            self.test_dataset = dataset_dict["test"]
 
     def train_dataloader(self):
         """
