@@ -150,12 +150,12 @@ def spkv_lightning_datamodule_same_sensors_instance(
     """SPKVLightningDataModule instance."""
 
     datamodule = SPKVLightningDataModule(
-        pklfile_path="configs/lightning_datamodule/spkv_pairs/pairs.pkl",
         sample_rate=sample_rate,
         dataset_name=dataset_name,
         subset=subset_name,
         sensor_a=sensor_name,
         #keep sensor_b to default value which is "airborne.mouth_headworn.reference_microphone"
+        pairs="mixed_gender",
         streaming=False,
         batch_size=1,
     )
