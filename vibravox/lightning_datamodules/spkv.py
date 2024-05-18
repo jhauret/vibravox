@@ -290,7 +290,7 @@ class SPKVLightningDataModule(LightningDataModule):
         audio_batch = [sample["audio"]["array"] for sample in batch]
         audio_batch = pad_sequence(audio_batch, batch_first=True, padding_value=0.0).unsqueeze(1)
         speaker_id_batch = [sample["speaker_id"] for sample in batch]
-        sentence_id_batch = [sample["sentence_id"] for sample in batch]
+        sentence_id_batch = [int(sample["sentence_id"]) for sample in batch]
         gender_batch = [sample["gender"] for sample in batch]
         sensor_batch = [sample["sensor"] for sample in batch]
 

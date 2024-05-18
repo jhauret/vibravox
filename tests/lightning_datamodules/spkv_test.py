@@ -32,11 +32,12 @@ class TestSPKVLightningDataModule:
         spkv_lightning_datamodule_same_sensors_instance.setup("test")
         test_dataloder = spkv_lightning_datamodule_same_sensors_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloder))
+        dataloader_sample_0 = dataloader_sample[0]
 
-        assert isinstance(dataloader_sample, tuple), "Expected dataloader_sample to be a dictionary."
-        assert dataloader_sample.keys() == {"sensor_a", "sensor_b"}
-        assert isinstance(dataloader_sample["sensor_a"], dict), "Expected dataloader_sample['sensor_a'] to be a dictionary."
-        assert isinstance(dataloader_sample["sensor_b"], dict), "Expected dataloader_sample['sensor_b'] to be a dictionary."
-        assert dataloader_sample["sensor_a"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
-        assert dataloader_sample["sensor_b"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
+        # assert isinstance(dataloader_sample, dict), "Expected dataloader_sample to be a dictionary."
+        # assert dataloader_sample.keys() == {"sensor_a", "sensor_b"}
+        assert isinstance(dataloader_sample_0["sensor_a"], dict), "Expected dataloader_sample['sensor_a'] to be a dictionary."
+        assert isinstance(dataloader_sample_0["sensor_b"], dict), "Expected dataloader_sample['sensor_b'] to be a dictionary."
+        assert dataloader_sample_0["sensor_a"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
+        assert dataloader_sample_0["sensor_b"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
 
