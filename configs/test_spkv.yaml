@@ -1,4 +1,4 @@
-### Top-level config file for tests/lightning_datamodules/spkv_test.py
+### Top-level config file for tests/lightning_datamodules/spkv_test_a_la_papa.py
 
 # Top-level variables available in all config files
 sample_rate: 16000
