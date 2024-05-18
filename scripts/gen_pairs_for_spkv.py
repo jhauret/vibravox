@@ -4,6 +4,7 @@
  WARNING : needs to be launched only one time per dataset. If you use another dataset than vibravox, please regenerate
  the pairs for this specific dataset."""
 
+import os
 import pickle
 import itertools
 import random
@@ -12,21 +13,23 @@ from lightning import seed_everything
 from datasets import load_dataset
 from pathlib import Path
 
-def load_and_process_data(dataset_name):
+def load_and_process_data(dataset_name,subset):
 
     """
     Load and process data for a specified dataset to generate pairs based on "speaker_id" and "gender".
     Parameters:
         dataset_name (str): The name of the dataset to load and process.
+        subset (str): The subset of the dataset to load and process.
     Returns:
         Dataset: A processed dataset containing only "speaker_id" and "gender" columns sorted by "speaker_id".
     """
 
-    dataset_dict = load_dataset(dataset_name, "speech_clean", split="test", streaming=False)
+    dataset_dict = load_dataset(dataset_name, subset , split="test", streaming=False)
     # Only keep the "speaker_id" and "gender" columns which are the only columns we need to generate pairs
     dataset_dict = dataset_dict.select_columns(["speaker_id", "gender"])
     dataset_dict = dataset_dict.sort("speaker_id")
     return dataset_dict
+
 
 def generate_ranges_per_speaker(dataset_dict):
 
@@ -182,7 +185,7 @@ def generate_speaker_pairs_same_gender(ranges_per_speaker, males_speaker_idx, fe
 
     return total_pairs_same_gender
 
-def save_pairs_to_pickle(total_pairs,filename):
+def save_pairs_to_pickle(total_pairs,filename, dataset_name, subset):
 
     """
     Save pairs to a pickle file.
@@ -190,25 +193,32 @@ def save_pairs_to_pickle(total_pairs,filename):
     Args:
         total_pairs (list): List of pairs to be saved.
         filename (str): Name of the pickle file (with extension .pkl) to save the pairs to.
-
+        dataset_name (str): Name of the dataset.
+        subset (str): Name of the subset.
     Returns:
         None
     """
 
-    with open(Path(__file__).parent.parent / "configs/lightning_datamodule/spkv_pairs" / filename, 'wb') as f:
+    short_dataset_name = dataset_name.split("/")[-1]
+
+    filepath = Path(__file__).parent.parent / "configs/lightning_datamodule/spkv_pairs" / short_dataset_name / subset / filename
+    os.makedirs(filepath.parent, exist_ok=True)
+
+    with open(filepath, 'wb') as f:
         pickle.dump(total_pairs, f)
+    print("Pairs generated and saved to pickle files in", filepath)
 
 
 
 if __name__ == "__main__":
     seed_everything(42, workers=True) # For deterministic picking of pairs and reproducibility
     DATASET_NAME = "Cnam-LMSSC/vibravox"
-    dataset_dict = load_and_process_data(dataset_name = DATASET_NAME)
+    SUBSET = "speech_clean"
+    dataset_dict = load_and_process_data(dataset_name = DATASET_NAME, subset = SUBSET)
     ranges_per_speaker, nb_speakers, min_utterances = generate_ranges_per_speaker(dataset_dict)
     males_speaker_idx, females_speaker_idx = get_gender_per_speaker(dataset_dict, ranges_per_speaker,nb_speakers)
     total_pairs = generate_speaker_pairs(ranges_per_speaker, nb_speakers, min_utterances)
     total_pairs_same_gender = generate_speaker_pairs_same_gender(ranges_per_speaker, males_speaker_idx, females_speaker_idx, min_utterances)
     print(len(total_pairs))
-    save_pairs_to_pickle(total_pairs, "pairs.pkl")
-    save_pairs_to_pickle(total_pairs_same_gender, "pairs_same_gender.pkl")
-    print("Pairs generated and saved to pickle files in", Path(__file__).parent.parent / "configs/lightning_datamodule/spkv_pairs")
+    save_pairs_to_pickle(total_pairs, "pairs.pkl", DATASET_NAME, SUBSET)
+    save_pairs_to_pickle(total_pairs_same_gender, "pairs_same_gender.pkl", DATASET_NAME, SUBSET)
