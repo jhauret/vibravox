@@ -5,6 +5,7 @@ from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 
 class TestBWELightningDataModule:
     def test_dataset_returns_torch_tensor(self, bwe_lightning_datamodule_instance):
+        bwe_lightning_datamodule_instance.setup(stage="test")
         test_dataset = bwe_lightning_datamodule_instance.test_dataset
         dataset_sample = next(iter(test_dataset))
 
@@ -12,6 +13,7 @@ class TestBWELightningDataModule:
         assert isinstance(dataset_sample["audio_airborne"]["array"], torch.Tensor)
 
     def test_dataloader_returns_format(self, bwe_lightning_datamodule_instance):
+        bwe_lightning_datamodule_instance.setup(stage="test")
         test_dataloader = bwe_lightning_datamodule_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloader))
 
@@ -26,6 +28,7 @@ class TestBWELightningDataModule:
         assert dataloader_sample["audio_body_conducted"].dim() == 3, "Expected 3 dimensions in the tensor."
 
     def test_dataloader_returns_tensors_with_same_shape(self, bwe_lightning_datamodule_instance):
+        bwe_lightning_datamodule_instance.setup(stage="test")
         test_dataloader = bwe_lightning_datamodule_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloader))
 
@@ -36,6 +39,7 @@ class TestBWELightningDataModule:
         ), "Expected the same number of samples in both tensors."
 
     def test_no_offset_between_audio_samples(self, bwe_lightning_datamodule_instance):
+        bwe_lightning_datamodule_instance.setup(stage="test")
         if bwe_lightning_datamodule_instance.dataset_name == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
             pytest.skip("Skipping for Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp")
         if bwe_lightning_datamodule_instance.subset == "speech_noisy":
