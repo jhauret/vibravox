@@ -72,12 +72,10 @@ class SPKVLightningDataModule(LightningDataModule):
             self.dataset_name, self.subset, streaming=self.streaming
         )
 
-        train_dataset = dataset_dict["train"]
-        val_dataset = dataset_dict["validation"]
-        test_dataset = dataset_dict["test"]
-
         if stage == "fit" or stage is None:
             # Generating dataset for training and validation
+            train_dataset = dataset_dict["train"]
+            val_dataset = dataset_dict["validation"]
 
             if self.sensorA == self.sensorB:
                 # When self.sensorA and self.sensorB are the same, only generate the dataset using one column
@@ -169,6 +167,8 @@ class SPKVLightningDataModule(LightningDataModule):
             # fashion do not need to be paired.
             # The strategy to form pairs is the same as in the paper from Brydinskyi et al.,
             # "Comparison of Modern Deep Learning Models for Speaker Verification." Applied Sciences 14.4 (2024): 1329.
+
+            test_dataset = dataset_dict["test"]
 
             if self.streaming:
                 raise AttributeError("Streaming is not supported for testing SPKVLightningDataModule")
