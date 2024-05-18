@@ -117,7 +117,7 @@ def bwe_lightning_datamodule_instance(
         streaming=streaming,
         batch_size=batch_size,
     )
-    datamodule.setup(stage="test")
+    datamodule.setup()
 
     return datamodule
 
@@ -142,12 +142,13 @@ def stp_lightning_datamodule_instance(
         tokenizer=tokenizer
     )
 
-    datamodule.setup(stage="test")
+    datamodule.setup()
 
     return datamodule
 
 
-def spkv_lightning_datamodule_instance(
+@pytest.fixture
+def spkv_lightning_datamodule_test_same_sensors_instance(
     sample_rate, dataset_name, subset_name, sensor_name,
 ) -> SPKVLightningDataModule:
     """SPKVLightningDataModule instance."""
@@ -164,6 +165,28 @@ def spkv_lightning_datamodule_instance(
     )
 
     datamodule.setup(stage="test")
+
+    return datamodule
+
+
+@pytest.fixture
+def spkv_lightning_datamodule_fit_same_sensors_instance(
+    sample_rate, dataset_name, subset_name, sensor_name,
+) -> SPKVLightningDataModule:
+    """SPKVLightningDataModule instance."""
+
+    datamodule = SPKVLightningDataModule(
+        pklfile_path="configs/lightning_datamodule/spkv_pairs/pairs.pkl",
+        sample_rate=sample_rate,
+        dataset_name=dataset_name,
+        subset=subset_name,
+        sensor_a=sensor_name,
+        #keep sensor_b to default value which is "airborne.mouth_headworn.reference_microphone"
+        streaming=False,
+        batch_size=1,
+    )
+
+    datamodule.setup(stage="fit")
 
     return datamodule
 
