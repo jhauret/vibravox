@@ -74,10 +74,10 @@ class STPLightningDataModule(LightningDataModule):
             "audio", Audio(sampling_rate=self.sample_rate, mono=False)
         )
 
-        if stage == "fit":
+        if stage == "fit" or stage is None:
             self.train_dataset = dataset_dict["train"]
             self.val_dataset = dataset_dict["validation"]
-        elif stage == "test":
+        elif stage == "test" or stage is None:
             self.test_dataset = dataset_dict["test"]
 
     def train_dataloader(self):
