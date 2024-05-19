@@ -1,5 +1,5 @@
 import torch
-
+import pytest
 from vibravox.lightning_datamodules.spkv import SPKVLightningDataModule
 
 
@@ -84,6 +84,8 @@ class TestSPKVLightningDataModule:
                                                       "airborne.mouth_headworn.reference_microphone"]
 
     def test_dataset_fit_stage_returns_type(self, spkv_lightning_datamodule_same_sensors_instance):
+        if spkv_lightning_datamodule_same_sensors_instance.dataset_name=="Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+            pytest.skip("Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets")
         spkv_lightning_datamodule_same_sensors_instance.setup("fit")
         val_dataset = spkv_lightning_datamodule_same_sensors_instance.val_dataset
         train_dataset = spkv_lightning_datamodule_same_sensors_instance.train_dataset
@@ -106,6 +108,9 @@ class TestSPKVLightningDataModule:
         assert isinstance(dataset_sample_train["sensor"], str)
 
     def test_dataloader_fit_stage_returns_format(self, spkv_lightning_datamodule_same_sensors_instance):
+        if spkv_lightning_datamodule_same_sensors_instance.dataset_name=="Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+            pytest.skip("Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets")
+
         spkv_lightning_datamodule_same_sensors_instance.setup("fit")
         train_dataloder = spkv_lightning_datamodule_same_sensors_instance.train_dataloader()
         val_dataloder = spkv_lightning_datamodule_same_sensors_instance.val_dataloder()
