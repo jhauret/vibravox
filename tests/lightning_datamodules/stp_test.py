@@ -6,6 +6,7 @@ from vibravox.lightning_datamodules.stp import STPLightningDataModule
 
 class TestSTPLightningDataModule:
     def test_dataset_return_type(self, stp_lightning_datamodule_instance):
+        stp_lightning_datamodule_instance.setup(stage="test")
         test_dataset = stp_lightning_datamodule_instance.test_dataset
         dataset_sample = next(iter(test_dataset))
 
@@ -13,6 +14,7 @@ class TestSTPLightningDataModule:
         assert isinstance(dataset_sample["phonemized_text"], str)
 
     def test_dataloader_returns_format(self, stp_lightning_datamodule_instance):
+        stp_lightning_datamodule_instance.setup(stage="test")
         test_dataloder = stp_lightning_datamodule_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloder))
 
@@ -27,6 +29,7 @@ class TestSTPLightningDataModule:
     def test_tokenize_detokenize_is_bijection_from_dataset(
         self, stp_lightning_datamodule_instance
     ):
+        stp_lightning_datamodule_instance.setup(stage="test")
         test_dataset = stp_lightning_datamodule_instance.test_dataset
         dataset_sample = next(iter(test_dataset))
         phonemes = dataset_sample["phonemized_text"]
@@ -42,6 +45,7 @@ class TestSTPLightningDataModule:
     def test_tokenize_detokenize_is_bijection_from_dataloader(
         self, stp_lightning_datamodule_instance
     ):
+        stp_lightning_datamodule_instance.setup(stage="test")
         test_dataloader = stp_lightning_datamodule_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloader))
         phonemes_ids = dataloader_sample["phonemes_ids"][

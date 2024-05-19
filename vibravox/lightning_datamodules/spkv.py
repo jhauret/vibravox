@@ -17,12 +17,12 @@ class SPKVLightningDataModule(LightningDataModule):
 
     def __init__(
         self,
-        pklfile_path: str,
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
         sensor_a: str = "airborne.mouth_headworn.reference_microphone",
         sensor_b: str = "airborne.mouth_headworn.reference_microphone",
+        pairs: str = "mixed_gender",
         streaming: bool = False,
         batch_size: int = 1,
         num_workers: int = 4,
@@ -32,11 +32,14 @@ class SPKVLightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox".
+            dataset_name (str, optional): Dataset name.
+                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
+                Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to ("speech_clean").
             sensor_a (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
             sensor_b (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
-            pklfile_path (str, optional): Pickle file path. Defaults to "configs/lightning_datamodule/spkv_pairs/vibravox/speech_clean/pairs.pkl".
+            pairs (str, optional): Pairs configuration. Must be one of "mixed_gender" or "same_gender".
+                Default to "mixed_gender"
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 1 for testing since ECAPA2 pretrained model only supports this Batchsize
             num_workers (int, optional): Number of workers. Defaults to 4.
@@ -50,8 +53,8 @@ class SPKVLightningDataModule(LightningDataModule):
         self.subset = subset
         self.sensorA = sensor_a
         self.sensorB = sensor_b
-        self.pklfile_path = pklfile_path
-
+        assert pairs in ["mixed_gender", "same_gender"], "pairs must be 'mixed_gender' or 'same_gender'"
+        self.pairs = pairs
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -72,37 +75,35 @@ class SPKVLightningDataModule(LightningDataModule):
             self.dataset_name, self.subset, streaming=self.streaming
         )
 
-        train_dataset_dict = dataset_dict["train"]
-        val_dataset_dict = dataset_dict["validation"]
-        test_dataset_dict = dataset_dict["test"]
-
         if stage == "fit" or stage is None:
             # Generating dataset for training and validation
+            train_dataset = dataset_dict["train"]
+            val_dataset = dataset_dict["validation"]
 
             if self.sensorA == self.sensorB:
                 # When self.sensorA and self.sensorB are the same, only generate the dataset using one column
 
                 # Only keep the relevant columns for this task :
-                train_dataset_dict = train_dataset_dict.select_columns(
+                train_dataset = train_dataset.select_columns(
                     [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
-                val_dataset_dict = val_dataset_dict.select_columns(
+                val_dataset = val_dataset.select_columns(
                     [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
 
                 # Resample the audios to the right sample rate
-                train_dataset_dict = train_dataset_dict.cast_column(
+                train_dataset = train_dataset.cast_column(
                 f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
-                val_dataset_dict = val_dataset_dict.cast_column(
+                val_dataset = val_dataset.cast_column(
                 f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
                 # Tag a column with the sensor name :
-                train_dataset_dict = train_dataset_dict.add_column("sensor", [self.sensorA] * len(train_dataset_dict))
-                val_dataset_dict = val_dataset_dict.add_column("sensor", [self.sensorA] * len(val_dataset_dict))
+                train_dataset = train_dataset.add_column("sensor", [self.sensorA] * len(train_dataset))
+                val_dataset = val_dataset.add_column("sensor", [self.sensorA] * len(val_dataset))
 
                 # Renaming columns to match the format expected by the model :
-                train_dataset_dict = train_dataset_dict.rename_column(f"audio.{self.sensorA}", "audio")
-                val_dataset_dict = val_dataset_dict.rename_column(f"audio.{self.sensorA}", "audio")
+                train_dataset = train_dataset.rename_column(f"audio.{self.sensorA}", "audio")
+                val_dataset = val_dataset.rename_column(f"audio.{self.sensorA}", "audio")
 
             else:
                 # When self.sensorA and self.sensorB are different, generate the dataset by interleaving both sensors
@@ -110,68 +111,58 @@ class SPKVLightningDataModule(LightningDataModule):
                 # but allows to learn embeddings for both sensors
 
                 # Only keep the relevant columns for this task :
-                train_dataset_dict_a = train_dataset_dict.select_columns(
+                train_dataset_a = train_dataset.select_columns(
                     [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
-                train_dataset_dict_b = train_dataset_dict.select_columns(
+                train_dataset_b = train_dataset.select_columns(
                     [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
 
-                val_dataset_dict_a = val_dataset_dict.select_columns(
+                val_dataset_a = val_dataset.select_columns(
                     [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
-                val_dataset_dict_b = val_dataset_dict.select_columns(
+                val_dataset_b = val_dataset.select_columns(
                     [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
 
                 # Resample the audios to the right sample rate
-                train_dataset_dict_a = train_dataset_dict_a.cast_column(
+                train_dataset_a = train_dataset_a.cast_column(
                     f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
-                train_dataset_dict_b = train_dataset_dict_b.cast_column(
+                train_dataset_b = train_dataset_b.cast_column(
                     f"audio.{self.sensorB}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
-                val_dataset_dict_a = val_dataset_dict_a.cast_column(
+                val_dataset_a = val_dataset_a.cast_column(
                     f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
-                val_dataset_dict_b = val_dataset_dict_b.cast_column(
+                val_dataset_b = val_dataset_b.cast_column(
                     f"audio.{self.sensorB}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
                 # Renaming columns to match the format expected by the model :
-                train_dataset_dict_a = train_dataset_dict_a.rename_column(f"audio.{self.sensorA}", "audio")
-                train_dataset_dict_b = train_dataset_dict_b.rename_column(f"audio.{self.sensorB}", "audio")
+                train_dataset_a = train_dataset_a.rename_column(f"audio.{self.sensorA}", "audio")
+                train_dataset_b = train_dataset_b.rename_column(f"audio.{self.sensorB}", "audio")
 
-                val_dataset_dict_a = val_dataset_dict_a.rename_column(f"audio.{self.sensorA}", "audio")
-                val_dataset_dict_b = val_dataset_dict_b.rename_column(f"audio.{self.sensorB}", "audio")
+                val_dataset_a = val_dataset_a.rename_column(f"audio.{self.sensorA}", "audio")
+                val_dataset_b = val_dataset_b.rename_column(f"audio.{self.sensorB}", "audio")
 
                 # Tag a column with the sensor name :
+                train_dataset_a = train_dataset_a.add_column("sensor", [self.sensorA] * len(train_dataset_a))
+                train_dataset_b = train_dataset_b.add_column("sensor", [self.sensorB] * len(train_dataset_b))
 
-                train_dataset_dict_a = train_dataset_dict_a.add_column("sensor", [self.sensorA] * len(train_dataset_dict_a))
-                train_dataset_dict_b = train_dataset_dict_b.add_column("sensor", [self.sensorB] * len(train_dataset_dict_b))
-
-                val_dataset_dict_a = val_dataset_dict_a.add_column("sensor", [self.sensorA] * len(val_dataset_dict_a))
-                val_dataset_dict_b = val_dataset_dict_b.add_column("sensor", [self.sensorB] * len(val_dataset_dict_b))
-
+                val_dataset_a = val_dataset_a.add_column("sensor", [self.sensorA] * len(val_dataset_a))
+                val_dataset_b = val_dataset_b.add_column("sensor", [self.sensorB] * len(val_dataset_b))
 
                 # Interleave datasets of two sensors for training/validation :
-                train_dataset_dict = interleave_datasets(datasets=[train_dataset_dict_a, train_dataset_dict_b],
-                                                             probabilities=[0.5,0.5],
-                                                             stopping_strategy='all_exhausted'
-                                                             )
+                train_dataset = interleave_datasets(datasets=[train_dataset_a, train_dataset_b],
+                                                         probabilities=[0.5, 0.5],
+                                                         stopping_strategy='all_exhausted')
 
-                val_dataset_dict = interleave_datasets(datasets=[val_dataset_dict_a, val_dataset_dict_b],
-                                                             probabilities=[0.5,0.5],
-                                                             stopping_strategy='all_exhausted'
-                                                             )
-            # Setting format to torch :
-
-            train_dataset_dict = train_dataset_dict.with_format("torch")
-            val_dataset_dict = val_dataset_dict.with_format("torch")
-
-
-            self.train_dataset = train_dataset_dict
-            self.val_dataset = val_dataset_dict
-
+                val_dataset = interleave_datasets(datasets=[val_dataset_a, val_dataset_b],
+                                                       probabilities=[0.5, 0.5],
+                                                       stopping_strategy='all_exhausted')
+            # Setting format to torch
+            self.train_dataset = train_dataset.with_format("torch")
+            self.val_dataset = val_dataset.with_format("torch")
 
         if stage == "test":
             # Generating dataset for testing for Speaker Verification (only for the test set) : pairs are needed
@@ -180,54 +171,50 @@ class SPKVLightningDataModule(LightningDataModule):
             # The strategy to form pairs is the same as in the paper from Brydinskyi et al.,
             # "Comparison of Modern Deep Learning Models for Speaker Verification." Applied Sciences 14.4 (2024): 1329.
 
+            test_dataset = dataset_dict["test"]
+
             if self.streaming:
                 raise AttributeError("Streaming is not supported for testing SPKVLightningDataModule")
                 # because IterableDataset does not support the sort method nor the select method
 
             # Order by speaker_id for easier pairing of audios :
-            test_dataset_dict = test_dataset_dict.sort("speaker_id")
+            test_dataset = test_dataset.sort("speaker_id")
 
             # Only keep the relevant columns for this task :
-            dataset_dict_a = test_dataset_dict.select_columns(
+            test_dataset_a = test_dataset.select_columns(
                 [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
-            dataset_dict_b = test_dataset_dict.select_columns(
+            test_dataset_b = test_dataset.select_columns(
                 [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
 
             # Tag a column with the sensor name :
-
-            dataset_dict_a = dataset_dict_a.add_column("sensor", [self.sensorA] * len(dataset_dict_a))
-            dataset_dict_b = dataset_dict_b.add_column("sensor", [self.sensorB] * len(dataset_dict_b))
+            test_dataset_a = test_dataset_a.add_column("sensor", [self.sensorA] * len(test_dataset_a))
+            test_dataset_b = test_dataset_b.add_column("sensor", [self.sensorB] * len(test_dataset_b))
 
             # Resample the audios to the right sample rate
-            dataset_dict_a = dataset_dict_a.cast_column(
+            test_dataset_a = test_dataset_a.cast_column(
                 f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
             )
 
-            dataset_dict_b = dataset_dict_b.cast_column(
+            test_dataset_b = test_dataset_b.cast_column(
                 f"audio.{self.sensorB}", Audio(sampling_rate=self.sample_rate, mono=False)
             )
 
             # Load the pickle file located in pkfile_path generated by scripts/gen_pairs_for_spkv.py :
-
-            with open(Path(__file__).parent.parent.parent / self.pklfile_path, 'rb') as file:
+            pickle_folder = f"configs/lightning_datamodule/spkv_pairs/{self.dataset_name.split("/")[1]}/{self.subset}/{self.pairs}.pkl"
+            with open( Path(__file__).parent.parent.parent /pickle_folder, 'rb') as file:
                 pairs = pickle.load(file)
 
-            dataset_dict_a = dataset_dict_a.select([pair[0] for pair in pairs])
-            dataset_dict_b = dataset_dict_b.select([pair[1] for pair in pairs])
+            test_dataset_a = test_dataset_a.select([pair[0] for pair in pairs])
+            test_dataset_b = test_dataset_b.select([pair[1] for pair in pairs])
 
             # Renaming columns to match the format expected by the model :
 
-            dataset_dict_a = dataset_dict_a.rename_column(f"audio.{self.sensorA}", "audio")
-            dataset_dict_b = dataset_dict_b.rename_column(f"audio.{self.sensorB}", "audio")
+            test_dataset_a = test_dataset_a.rename_column(f"audio.{self.sensorA}", "audio")
+            test_dataset_b = test_dataset_b.rename_column(f"audio.{self.sensorB}", "audio")
 
-            # Setting format to torch :
-
-            dataset_dict_a = dataset_dict_a.with_format("torch")
-            dataset_dict_b = dataset_dict_b.with_format("torch")
-
-            self.test_dataset_a = dataset_dict_a
-            self.test_dataset_b = dataset_dict_b
-
+            # Setting format to torch
+            self.test_dataset_a = test_dataset_a.with_format("torch")
+            self.test_dataset_b = test_dataset_b.with_format("torch")
 
 
     def train_dataloader(self):
@@ -306,7 +293,6 @@ class SPKVLightningDataModule(LightningDataModule):
         sentence_id_batch = [int(sample["sentence_id"]) for sample in batch]
         gender_batch = [sample["gender"] for sample in batch]
         sensor_batch = [sample["sensor"] for sample in batch]
-
 
         return {
             "audio": audio_batch,

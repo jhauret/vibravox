@@ -220,5 +220,5 @@ if __name__ == "__main__":
     total_pairs = generate_speaker_pairs(ranges_per_speaker, nb_speakers, min_utterances)
     total_pairs_same_gender = generate_speaker_pairs_same_gender(ranges_per_speaker, males_speaker_idx, females_speaker_idx, min_utterances)
     print(len(total_pairs))
-    save_pairs_to_pickle(total_pairs, "pairs.pkl", DATASET_NAME, SUBSET)
-    save_pairs_to_pickle(total_pairs_same_gender, "pairs_same_gender.pkl", DATASET_NAME, SUBSET)
+    save_pairs_to_pickle(total_pairs, "mixed_gender.pkl", DATASET_NAME, SUBSET)
+    save_pairs_to_pickle(total_pairs_same_gender, "same_gender.pkl", DATASET_NAME, SUBSET)

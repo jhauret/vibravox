@@ -31,7 +31,9 @@ class BWELightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            dataset_name (str, optional): Dataset name. Defaults to "Cnam-LMSSC/vibravox"
+            dataset_name (str, optional): Dataset name.
+                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
+                Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to "speech_clean"
             sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
