@@ -132,10 +132,15 @@ class STPLightningDataModule(LightningDataModule):
         Custom data collator function to dynamically pad the data.
 
         Args:
-            batch (Dict[str, Any]) : Dict from the dataset with the keys "audio" and "phonemes"
+            batch (Dict[str, Any]) : Dict from the dataset with the keys "audio" and "phonemes":
+                - 'audio' (torch.Tensor of dimension (sample_rate * duration))
+                - 'phonemes' (str)
         
         Returns:
-            Dict[str, Any]: batch updated with the keys "audio" and "phonemes"
+            Dict[str, Any]: batch updated with the keys "audio" and "phonemes":
+            - 'audio' (torch.Tensor of dimension (batch_size, sample_rate * duration)),
+            - 'phonemes_ids' (torch.Tensor of dimension (batch_size, multiples of 128),
+            - 'phonemes_str' (List[str]),
         """
 
         audios = [sample["audio"]["array"] for sample in batch]
@@ -162,6 +167,12 @@ class STPLightningDataModule(LightningDataModule):
         labels = labels_processed.input_ids.masked_fill(
             labels_processed.attention_mask.ne(1), -100
         )
+
+        dict = {
+            "audio": audio_processed.input_values,
+            "phonemes_ids": labels,
+            "phonemes_str": phonemes,
+        }
 
         return {
             "audio": audio_processed.input_values,

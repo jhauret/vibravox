@@ -155,14 +155,18 @@ class BWELightningDataModule(LightningDataModule):
         Custom data collator function to dynamically pad the data.
 
         Args:
-            - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys "audio_body_conducted" and "audio_airborne".
+            - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys "audio_body_conducted" and "audio_airborne":
+                - "audio_body_conducted": (torch.Tensor of dimension (sample_rate * duration))
+                - "audio_airborne": (torch.Tensor of dimension (sample_rate * duration))
             - deterministic (bool): If True, always select the same part of the signal.
             - collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
         
         Returns:
-            Dict[str, torch.Tensor]
+            Dict[str, torch.Tensor] with the keys "audio_body_conducted" and "audio_airborne":
+                - "audio_body_conducted": (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
+                - "audio_airborne": (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
         """
 
         body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
