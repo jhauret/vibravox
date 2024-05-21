@@ -269,14 +269,14 @@ class SPKVLightningDataModule(LightningDataModule):
 
         return CombinedLoader(iterables={"sensor_a": dataloader_a, "sensor_b": dataloader_b}, mode='min_size')
 
-    def data_collator(self, batch: List[Dict[str, Any]]) -> Dict[str, Union[torch.Tensor, List[str], List[int], List[str], List[str]]]:
+    def data_collator(self, batch: List[Dict[str, Union[torch.Tensor, str, int, str, str]]]) -> Dict[str, Union[torch.Tensor, List[str], List[int], List[str], List[str]]]:
         """
             Collates data samples into a single batch
 
             Note : since SPKV uses a CombinedLoader, this data_collator is used for both DataLoader
 
             Parameters:
-                batch (List[Dict[str, Any]]): List of dictionaries with keys "audio", "speaker_id", "sentence_id", "gender", and "sensor"
+                batch (List[Dict[str, Union[torch.Tensor, str, int, str, str]]]): List of dictionaries with keys 'audio', 'speaker_id', 'sentence_id', 'gender', and 'sensor'
                 Each Dict has the following keys :
                     - 'audio' (torch.Tensor of dimension (sample_rate * duration)),
                     - 'speaker_id' (str),
@@ -286,11 +286,11 @@ class SPKVLightningDataModule(LightningDataModule):
 
             Returns:
                 Dict : A dictionary containing collated data with keys:
-                - "audio" (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
-                - "speaker_id" (List[str]),
-                - "sentence_id" (List[torch.Tensor of int]),
-                - "gender" (List[str]),
-                - "sensor" (List[str])
+                - 'audio' (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
+                - 'speaker_id' (List[str]),
+                - 'sentence_id' (List[torch.Tensor of int]),
+                - 'gender' (List[str]),
+                - 'sensor' (List[str])
             """
 
         audio_batch = [sample["audio"]["array"] for sample in batch]
