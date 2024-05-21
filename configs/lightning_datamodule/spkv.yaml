@@ -3,7 +3,7 @@ _target_: vibravox.lightning_datamodules.spkv.SPKVLightningDataModule
 sample_rate: 16000
 dataset_name: "Cnam-LMSSC/vibravox"
 subset: "speech_clean"
-pklfile_path: "configs/lightning_datamodule/spkv_pairs/vibravox/speech_clean/pairs.pkl"
+pairs: "mixed_gender" # can also be "same_gender"
 sensor_a: "airborne.mouth_headworn.reference_microphone"
 sensor_b: "body_conducted.forehead.miniature_accelerometer"
 streaming: False

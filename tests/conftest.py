@@ -62,6 +62,14 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
         return hydra.utils.instantiate(cfg)
 
 
+@pytest.fixture
+def spkv_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
+    with hydra.initialize(
+        version_base="1.3", config_path="../configs/lightning_datamodule"
+    ):
+        cfg = hydra.compose(config_name="stp")
+        return hydra.utils.instantiate(cfg)
+
 @pytest.fixture(
     params=["body_conducted.temple.contact_microphone",
             "body_conducted.throat.piezoelectric_sensor",

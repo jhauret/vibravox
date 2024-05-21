@@ -165,4 +165,9 @@ class TestSPKVLightningDataModule:
                                                         "body_conducted.forehead.miniature_accelerometer",
                                                         "airborne.mouth_headworn.reference_microphone"]
 
+    def test_hydra_instantiation(self, spkv_lightning_datamodule_instance_from_hydra):
+
+        assert isinstance(
+            spkv_lightning_datamodule_instance_from_hydra, SPKVLightningDataModule
+        )
 
