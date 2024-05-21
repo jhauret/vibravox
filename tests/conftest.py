@@ -63,11 +63,11 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
 
 
 @pytest.fixture
-def spkv_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
+def spkv_lightning_datamodule_instance_from_hydra() -> SPKVLightningDataModule:
     with hydra.initialize(
         version_base="1.3", config_path="../configs/lightning_datamodule"
     ):
-        cfg = hydra.compose(config_name="stp")
+        cfg = hydra.compose(config_name="skv")
         return hydra.utils.instantiate(cfg)
 
 @pytest.fixture(
