@@ -1,0 +1,4 @@
+_target_: vibravox.lightning_modules.ecapa2.ECAPA2LightningModule
+
+sample_rate: ${sample_rate}
+description: ${description}
