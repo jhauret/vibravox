@@ -132,9 +132,10 @@ class STPLightningDataModule(LightningDataModule):
         Custom data collator function to dynamically pad the data.
 
         Args:
-            batch: Dict from the dataset with the keys "audio" and "phonemes"
+            batch (Dict[str, Any]) : Dict from the dataset with the keys "audio" and "phonemes"
+        
         Returns:
-            dict
+            Dict[str, Any]: batch updated with the keys "audio" and "phonemes"
         """
 
         audios = [sample["audio"]["array"] for sample in batch]
