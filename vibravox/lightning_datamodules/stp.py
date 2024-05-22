@@ -1,5 +1,6 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Union, List
 
+import torch
 from datasets import load_dataset, Audio
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
@@ -127,14 +128,20 @@ class STPLightningDataModule(LightningDataModule):
             collate_fn=self.data_collator,
         )
 
-    def data_collator(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+    def data_collator(self, batch: Dict[str, Union[torch.Tensor, List[str]]]) -> Dict[str, Union[torch.Tensor, List[int], List[str]]]:
         """
         Custom data collator function to dynamically pad the data.
 
         Args:
-            batch: Dict from the dataset with the keys "audio" and "phonemes"
+            batch (Dict[str, Union[torch.Tensor, List[str]]]) : Dict from the dataset with the keys 'audio' and 'phonemes':
+                - 'audio' (torch.Tensor of dimension (sample_rate * duration))
+                - 'phonemes' (str)
+        
         Returns:
-            dict
+            Dict[str, Union[torch.Tensor, List[int], List[str]]]: A dictionary containing collated data with keys:
+            - 'audio' (torch.Tensor of dimension (batch_size, sample_rate * duration)),
+            - 'phonemes_ids' (torch.Tensor of dimension (batch_size, multiples of 128),
+            - 'phonemes_str' (List[str]),
         """
 
         audios = [sample["audio"]["array"] for sample in batch]
