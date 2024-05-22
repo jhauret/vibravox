@@ -1,0 +1,13 @@
+equal_error_rate:
+  _target_: vibravox.metrics.equal_error_rate.EqualErrorRate
+  n_threshold: 1000
+
+minimum_detection_cost_function:
+  _target_: vibravox.metrics.minimum_dcf.MinimumDetectionCostFunction
+  n_threshold: 1000
+  target_probability: 0.05
+  false_reject_cost: 1.0
+  false_accept_cost: 1.0
+
+binary_embedding_distance:
+  _target_: vibravox.metrics.embedding_distance.BinaryEmbeddingDistance
