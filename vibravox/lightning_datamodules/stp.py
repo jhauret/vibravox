@@ -138,7 +138,7 @@ class STPLightningDataModule(LightningDataModule):
                 - 'phonemes' (str)
         
         Returns:
-            Dict: batch updated with the keys 'audio' and 'phonemes':
+            Dict[str, Union[torch.Tensor, List[int], List[str]]]: A dictionary containing collated data with keys:
             - 'audio' (torch.Tensor of dimension (batch_size, sample_rate * duration)),
             - 'phonemes_ids' (torch.Tensor of dimension (batch_size, multiples of 128),
             - 'phonemes_str' (List[str]),
