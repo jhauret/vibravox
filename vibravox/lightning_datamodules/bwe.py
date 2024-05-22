@@ -164,7 +164,7 @@ class BWELightningDataModule(LightningDataModule):
                 - 'constant_length-XXX-ms': Cut or pad the audio signals to XXXms
         
         Returns:
-            Dict[str, torch.Tensor] with the keys 'audio_body_conducted' and 'audio_airborne':
+            Dict[str, torch.Tensor] A dictionary containing collated data with keys:
                 - 'audio_body_conducted': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
                 - 'audio_airborne': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
         """
