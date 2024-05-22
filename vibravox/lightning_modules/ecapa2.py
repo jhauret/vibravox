@@ -1,7 +1,11 @@
 import torch
-from torch.nn import CosineSimilarity
+from torch.nn.functional import normalize
 from lightning import LightningModule
 from torchmetrics import MetricCollection
+from torchmetrics.functional import (
+    pairwise_cosine_similarity,
+    pairwise_euclidean_distance,
+)
 
 from huggingface_hub import hf_hub_download
 
@@ -16,22 +20,25 @@ class ECAPA2LightningModule(LightningModule):
         """
         Definition of ECAPA2 with pytorch lightning paradigm
 
+        Initialize the ECAPA2 model with the specified parameters
+
         Args:
-            description (str): Description to log in tensorboard
+            sample_rate (int): the sample rate for the model
+            metrics (MetricCollection): collection of metrics to compute
+            description (str): description to log in tensorboard
         """
         super().__init__()
+        assert sample_rate == 16_000, "ECAPA2 model only accepts 16 kHz"
 
         self.sample_rate = sample_rate
 
         self.model_file = hf_hub_download(repo_id="Jenthe/ECAPA2", filename="ecapa2.pt")
-        self.ecapa2 = torch.jit.load(self.model_file)
-
-        self.cosine_similarity = CosineSimilarity(dim=2, eps=1e-8)
+        self.ecapa2 = torch.jit.load(self.model_file, map_location=self.device)
+        self.ecapa2.half()  # optional, but results in faster inference
 
         self.metrics = metrics
 
         self.description: str = description
-
 
     def training_step(self, batch):
         """
@@ -62,29 +69,20 @@ class ECAPA2LightningModule(LightningModule):
             batch_idx (int): Index of the batch
 
         Returns:
-            outputs (Dict[torch.Tensor, torch.Tensor, List]): Output Dict with keys "cosine similarity",
+            outputs (Dict[torch.Tensor, torch.Tensor]): Output Dict with keys "cosine similarity",
                                                               "euclidean_distance" and "label"
         """
         # Speaker embeddings for audio A and B
         embedding_a = self.ecapa2(batch["sensor_a"]["audio"])
         embedding_b = self.ecapa2(batch["sensor_b"]["audio"])
 
-        # Cosine Similarity and Euclidean Distance between the embeddings
-        cos_sim = self.cosine_similarity(embedding_a, embedding_b)
-        distance = torch.cdist(embedding_a, embedding_b, p=2).squeeze(-1)
-
-        # True Label: Speaker A == Speaker B ?
-        label = [
-            spk_a == spk_b
-            for spk_a, spk_b in zip(
-                batch["sensor_a"]["speaker_id"], batch["sensor_a"]["speaker_id"]
-            )
-        ]
+        # Normalize the embeddings
+        embedding_a = normalize(embedding_a, dim=1)
+        embedding_b = normalize(embedding_b, dim=1)
 
         outputs = {
-            "cosine_similarity": cos_sim,
-            "euclidean_distance": distance,
-            "label": label,
+            "embedding_a": embedding_a,
+            "embedding_b": embedding_b,
         }
 
         return outputs
@@ -101,15 +99,41 @@ class ECAPA2LightningModule(LightningModule):
         pass
 
     def on_test_batch_end(
-        self, outputs, batch, batch_idx: int, dataloader_idx: int = 0
+        self, outputs: dict, batch: dict, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
         """
         Called at the end of the test batch. Send the outputs to the metrics to prepare final computation.
         """
+        # Cosine Similarity between the embeddings
+        outputs["cosine_similarity"] = pairwise_cosine_similarity(
+            outputs["embedding_a"], outputs["embedding_b"]
+        ).squeeze(-1)
+
+        # Normalized Euclidean Distance between the embeddings
+        outputs["euclidean_distance"] = pairwise_euclidean_distance(
+            outputs["embedding_a"], outputs["embedding_b"]
+        ).squeeze(-1)
+
+        # True Label: Speaker A == Speaker B ?
+        label = [
+            int(spk_a == spk_b)
+            for spk_a, spk_b in zip(
+                batch["sensor_a"]["speaker_id"],
+                batch["sensor_b"]["speaker_id"],
+            )
+        ]
+        outputs["label"] = torch.Tensor(label).int().to(self.device)
+
+        # Update the metrics
         self.metrics.update(outputs)
 
-    def on_test_end(self) -> None:
+    def on_test_epoch_end(self):
+        metrics_to_log = self.metrics.compute()
+        self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
+
+    def on_test_start(self) -> None:
         """
-        Called at the end of the test on the whole dataset. Perform the metrics computation.
+        Called at the beginning of the testing loop. Logs the description in tensorboard.
         """
-        self.metrics.compute()
+
+        self.logger.experiment.add_text(tag="description", text_string=self.description)
