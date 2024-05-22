@@ -45,8 +45,8 @@ class TestBWELightningDataModule:
         if bwe_lightning_datamodule_instance.subset == "speech_noisy":
             pytest.skip("Skipping for noisy speech.")
 
-        test_dataloder = bwe_lightning_datamodule_instance.test_dataloader()
-        dataloader_sample = next(iter(test_dataloder))
+        test_dataloader = bwe_lightning_datamodule_instance.test_dataloader()
+        dataloader_sample = next(iter(test_dataloader))
 
         corrupted_audio = dataloader_sample["audio_body_conducted"][0:1, 0:1, :]
         reference_audio = dataloader_sample["audio_airborne"][0:1, 0:1, :]
