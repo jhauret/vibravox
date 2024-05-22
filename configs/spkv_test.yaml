@@ -1,0 +1,22 @@
+### Top-level config file for train.py
+
+# Top-level variables available in all config files
+sample_rate: 16000
+description: "${lightning_datamodule.sensor_a} / ${lightning_datamodule.sensor_b} || ECAPA2"
+
+# Hydra configuration
+version_base: "1.3"
+hydra:
+  job:
+    chdir: True # change working directory to the job directory
+  run:
+    dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor_a}/${lightning_datamodule.sensor_b}/${now:%Y-%m-%d_%H-%M-%S}"
+
+# Composing configs
+defaults:
+  - lightning_datamodule: spkv
+  - lightning_module: ecapa2
+  - trainer: ddp
+  - logging: tensorboard
+  - metrics: ${lightning_datamodule}
+  - _self_ # priority is given to train.yaml for overrides
