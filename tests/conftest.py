@@ -47,28 +47,34 @@ def sample(batch_size, time_len) -> torch.Tensor:
 @pytest.fixture
 def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
     with hydra.initialize(
-        version_base="1.3", config_path="../configs/lightning_datamodule"
+        version_base="1.3", config_path="../configs"
     ):
-        cfg = hydra.compose(config_name="bwe")
-        return hydra.utils.instantiate(cfg)
+        overrides = [f"lightning_datamodule='bwe'"]
+        cfg = hydra.compose(config_name="train", overrides=overrides)
+
+        return hydra.utils.instantiate(cfg.lightning_datamodule)
 
 
 @pytest.fixture
 def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
     with hydra.initialize(
-        version_base="1.3", config_path="../configs/lightning_datamodule"
+        version_base="1.3", config_path="../configs"
     ):
-        cfg = hydra.compose(config_name="stp")
-        return hydra.utils.instantiate(cfg)
+        overrides = [f"lightning_datamodule='stp'"]
+        cfg = hydra.compose(config_name="train", overrides=overrides)
+
+        return hydra.utils.instantiate(cfg.lightning_datamodule)
 
 
 @pytest.fixture
 def spkv_lightning_datamodule_instance_from_hydra() -> SPKVLightningDataModule:
     with hydra.initialize(
-        version_base="1.3", config_path="../configs/lightning_datamodule"
+        version_base="1.3", config_path="../configs"
     ):
-        cfg = hydra.compose(config_name="spkv")
-        return hydra.utils.instantiate(cfg)
+        overrides = [f"lightning_datamodule='spkv'"]
+        cfg = hydra.compose(config_name="train", overrides=overrides)
+
+        return hydra.utils.instantiate(cfg.lightning_datamodule)
 
 @pytest.fixture(
     params=["body_conducted.temple.contact_microphone",
