@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="https://github.com/jhauret/vibravox/assets/53187038/dd7ec23f-b5d9-4650-985f-afdf72a6badd"
+  <img src="./logo.png"
 </p>
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white"></a>
