@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="./logo.png"
+  <img src="./logo.png">
 </p>
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white"></a>
