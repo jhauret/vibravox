@@ -13,24 +13,21 @@ from huggingface_hub import hf_hub_download
 class ECAPA2LightningModule(LightningModule):
     def __init__(
         self,
-        sample_rate: int,
         metrics: MetricCollection,
         description: str = None,
     ):
         """
-        Definition of ECAPA2 with pytorch lightning paradigm
-
         Initialize the ECAPA2 model with the specified parameters
 
         Args:
-            sample_rate (int): the sample rate for the model
             metrics (MetricCollection): collection of metrics to compute
             description (str): description to log in tensorboard
         """
         super().__init__()
-        assert sample_rate == 16_000, "ECAPA2 model only accepts 16 kHz"
 
-        self.sample_rate = sample_rate
+        # ECAPA2 model only accepts 16 kHz sample rate and batch_size of 1
+        self.sample_rate = 16_000
+        self.batch_size = 1
 
         self.model_file = hf_hub_download(repo_id="Jenthe/ECAPA2", filename="ecapa2.pt")
         self.ecapa2 = torch.jit.load(self.model_file, map_location=self.device)
@@ -98,6 +95,26 @@ class ECAPA2LightningModule(LightningModule):
 
         pass
 
+    def on_test_start(self) -> None:
+        """
+        Called at the beginning of the testing loop. Logs the description in tensorboard.
+        """
+        # Check sample rate
+        assert self.trainer.datamodule.sample_rate == self.sample_rate, (
+            f"sample_rate is not consistent. "
+            f"ECAPA2 model only accepts 16_000 and "
+            f"{self.trainer.datamodule.sample_rate} is provided by the LightningDataModule"
+        )
+
+        # Check batch size
+        assert self.trainer.datamodule.batch_size == self.batch_size, (
+            f"batch_size is not consistent. "
+            f"ECAPA2 model only accepts 1 and "
+            f"{self.trainer.datamodule.batch_size} is provided by the LightningDataModule"
+        )
+
+        self.logger.experiment.add_text(tag="description", text_string=self.description)
+
     def on_test_batch_end(
         self, outputs: dict, batch: dict, batch_idx: int, dataloader_idx: int = 0
     ) -> None:
@@ -130,10 +147,3 @@ class ECAPA2LightningModule(LightningModule):
     def on_test_epoch_end(self):
         metrics_to_log = self.metrics.compute()
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
-
-    def on_test_start(self) -> None:
-        """
-        Called at the beginning of the testing loop. Logs the description in tensorboard.
-        """
-
-        self.logger.experiment.add_text(tag="description", text_string=self.description)
