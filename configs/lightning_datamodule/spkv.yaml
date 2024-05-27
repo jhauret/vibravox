@@ -1,6 +1,6 @@
 _target_: vibravox.lightning_datamodules.spkv.SPKVLightningDataModule
 
-sample_rate: 16000
+sample_rate: ${sample_rate}
 dataset_name: "Cnam-LMSSC/vibravox"
 subset: "speech_clean"
 pairs: "mixed_gender" # can also be "same_gender"
