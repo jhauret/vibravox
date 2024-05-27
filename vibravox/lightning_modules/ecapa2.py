@@ -122,23 +122,11 @@ class ECAPA2LightningModule(LightningModule):
         """
         Called at the beginning of the testing loop.
 
-        - Checks the LightningDataModule sample_rate.
-        - Checks the LightningDataModule batch_size.
+        - Checks the LightningDataModule parameters.
         - Logs the description in tensorboard.
         """
-        # Check sample rate
-        assert self.trainer.datamodule.sample_rate == self.sample_rate, (
-            f"sample_rate is not consistent. "
-            f"ECAPA2 model only accepts 16_000 and "
-            f"{self.trainer.datamodule.sample_rate} is provided by the LightningDataModule"
-        )
-
-        # Check batch size
-        assert self.trainer.datamodule.batch_size == self.batch_size, (
-            f"batch_size is not consistent. "
-            f"ECAPA2 model only accepts 1 and "
-            f"{self.trainer.datamodule.batch_size} is provided by the LightningDataModule"
-        )
+        # Check DataModule parameters
+        self.check_datamodule_parameter()
 
         # Log description
         self.logger.experiment.add_text(tag="description", text_string=self.description)
@@ -207,3 +195,26 @@ class ECAPA2LightningModule(LightningModule):
 
         # Log in tensorboard
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
+
+    def check_datamodule_parameter(self) -> None:
+        """
+        List of assertions checking that the parameters of the LightningDatamodule correspond to the LightningModule.
+
+        (Can only be called in stages where the trainer's LightningDataModule is available, e.g. in on_fit_start hook.)
+
+        - Checks the LightningDataModule sample_rate.
+        - Checks the LightningDataModule batch_size.
+        """
+        # Check sample rate
+        assert self.trainer.datamodule.sample_rate == self.sample_rate, (
+            f"sample_rate is not consistent. "
+            f"{self.sample_rate} is specified for the LightningModule and "
+            f"{self.trainer.datamodule.sample_rate} is provided by the LightningDataModule"
+        )
+
+        # Check batch size
+        assert self.trainer.datamodule.batch_size == self.batch_size, (
+            f"batch_size is not consistent. "
+            f"ECAPA2 model only accepts 1 and "
+            f"{self.trainer.datamodule.batch_size} is provided by the LightningDataModule"
+        )
