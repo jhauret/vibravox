@@ -1,17 +1,56 @@
+from typing import Dict, List, Optional, Union
+
 import torch
 from torchmetrics import Metric, ROC
 
 
 class EqualErrorRate(Metric):
+    """
+    Given the scores and true labels of a binary classifier, this metric computes the Equal Error Rate (EER), defined
+    as the point where the False Rejection Rate (FRR) and the False Acceptance Rate (FAR) are equal. The algorithm
+    firstly computes the FRR and the FAR for different values of the decision threshold. Then it calculates the optimal
+    threshold that minimizes the absolute difference between FRR and FAR. Finally, it computes and returns the
+    corresponding EER, FRR and FAR at the optimal threshold.
+
+    By default, the algorithm employs the non-binned approach to calculate the thresholds from the data. It is also
+    possible to get a fixed number of threshold linearly spaced from 0 to 1, or to provide a list (or tensor) of
+    predefined thresholds.
+
+    The design of this metric is different from the majority of TorchMetrics, because the data from one whole epoch is
+    required for the computation. Therefore, it requires that the update() method is called at the end of each batch
+    and the compute() method is called at the end of the epoch. Directly calling the forward() method won't give the
+    correct outputs.
+    """
     def __init__(
         self,
-        n_threshold: int,
+        score_key: str,
+        label_key: str,
+        thresholds: Optional[Union[int, List[float], torch.Tensor]] = None,
         **kwargs,
     ) -> None:
+        """
+        Initializes the EER metric.
+
+        - Initializes the ROC curve
+        - Adds states for the metric's inputs and outputs.
+
+        Args:
+            score_key (str): Key for the scores in the model's output dictionary.
+            label_key (str): Key for the labels in the model's output dictionary.
+            thresholds (Union[int, List[float], torch.Tensor], optional): Threshold parameter for the ROC curve. See
+                torchmetrics.ROC for more details. Defaults to None: will use the most accurate non-binned approach to
+                dynamically calculate the thresholds.
+        """
         super().__init__(**kwargs)
 
-        self.roc = ROC(thresholds=n_threshold, task="binary")
+        # Keys for the model scores and labels
+        self.score_key = score_key
+        self.label_key = label_key
 
+        # Init ROC
+        self.roc = ROC(thresholds=thresholds, task="binary")
+
+        # Add states for the metric's outputs
         self.add_state("score", default=torch.Tensor())
         self.add_state("label", default=torch.Tensor())
         self.add_state("eer", default=torch.tensor(0.0))
@@ -19,20 +58,32 @@ class EqualErrorRate(Metric):
         self.add_state("fr_rate_at_threshold", default=torch.tensor(0.0))
         self.add_state("fa_rate_at_threshold", default=torch.tensor(0.0))
 
-    def update(self, outputs: dict) -> None:
-        """Update state with predictions and targets.
+    def update(self, outputs: Dict[str, torch.Tensor]) -> None:
+        """
+        Update the input states of the metric from the model scores and labels.
 
         Args:
+            outputs (Dict[str, torch.Tensor]): Dictionary containing model scores and labels as torch.Tensor of
+                dimension (batch_size, ).
         """
         if self.score.shape[0] == 0:
-            self.score = outputs["cosine_similarity"]
-            self.label = outputs["label"]
+            self.score = outputs[self.score_key]
+            self.label = outputs[self.label_key]
         else:
-            self.score = torch.cat((self.score, outputs["cosine_similarity"]), dim=0)
-            self.label = torch.cat((self.label, outputs["label"]), dim=0)
+            self.score = torch.cat((self.score, outputs[self.score_key]), dim=0)
+            self.label = torch.cat((self.label, outputs[self.label_key]), dim=0)
 
-    def compute(self) -> dict:
-        """Computes Equal Error Rate."""
+    def compute(self) -> Dict[str, torch.Tensor]:
+        """
+        Computes the outputs of the EER metric.
+
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary containing the scalar outputs with keys:
+                - "equal_error_rate": Equal Error Rate,
+                - "threshold": binary decision threshold at which the EER is obtained,
+                - "false_reject_rate": False rejection rate at threshold,
+                - "false_accept_rate": False acceptance rate at threshold,
+        """
         # ROC
         fa_rate, ta_rate, thresholds = self.roc(self.score, self.label)
         fr_rate = 1 - ta_rate

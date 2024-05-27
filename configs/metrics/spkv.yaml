@@ -1,10 +1,12 @@
 equal_error_rate:
   _target_: vibravox.metrics.equal_error_rate.EqualErrorRate
-  n_threshold: 1000
+  score_key: "cosine_similarity"
+  label_key: "label"
+  thresholds: null
 
 minimum_detection_cost_function:
   _target_: vibravox.metrics.minimum_dcf.MinimumDetectionCostFunction
-  n_threshold: 1000
+  n_threshold: null
   target_probability: 0.05
   false_reject_cost: 1.0
   false_accept_cost: 1.0

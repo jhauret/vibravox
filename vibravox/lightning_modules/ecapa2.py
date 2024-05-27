@@ -170,7 +170,7 @@ class ECAPA2LightningModule(LightningModule):
                 - "gender" (List[str]),
                 - "sensor" (List[str])
             batch_idx (int): Index of the batch
-            dataloader_idx (int): Index of the dataloader
+            dataloader_idx (int, optional): Index of the dataloader. Defaults to 0.
         """
         # Cosine Similarity between the embeddings
         outputs["cosine_similarity"] = pairwise_cosine_similarity(
