@@ -1,6 +1,11 @@
+from typing import Dict, List, Union
+
 import torch
+
 from torch.nn.functional import normalize
+
 from lightning import LightningModule
+
 from torchmetrics import MetricCollection
 from torchmetrics.functional import (
     pairwise_cosine_similarity,
@@ -17,7 +22,9 @@ class ECAPA2LightningModule(LightningModule):
         description: str = None,
     ):
         """
-        Initialize the ECAPA2 model with the specified parameters
+        Initializes the ECAPA2 model with Pytorch Lightning paradigm.
+
+        The model is loaded as a JIT RecursiveScriptModule. Therefore, it can only be employed for testing.
 
         Args:
             metrics (MetricCollection): collection of metrics to compute
@@ -29,12 +36,15 @@ class ECAPA2LightningModule(LightningModule):
         self.sample_rate = 16_000
         self.batch_size = 1
 
+        # Load model from HuggingFace
         self.model_file = hf_hub_download(repo_id="Jenthe/ECAPA2", filename="ecapa2.pt")
         self.ecapa2 = torch.jit.load(self.model_file, map_location=self.device)
         self.ecapa2.half()  # optional, but results in faster inference
 
+        # Metrics
         self.metrics = metrics
 
+        # Description string for the logger
         self.description: str = description
 
     def training_step(self, batch):
@@ -56,18 +66,30 @@ class ECAPA2LightningModule(LightningModule):
         """
         pass
 
-    def test_step(self, batch, batch_idx):
+    def test_step(
+        self,
+        batch: Dict[str, Dict[str, Union[torch.Tensor, List[str], List[int]]]],
+        batch_idx: int,
+    ) -> Dict[str, torch.Tensor]:
         """
-        Lightning validation step
+        Lightning testing step
+
+        Computes the normalized embeddings of the ECAPA2 model for both input sensors.
 
         Args:
-            batch (Dict[Dict, Dict]): Dict with keys "sensor_a" and "sensor_b", whose values are Dict with keys
-                                        "audio" and "speaker_id".
+            batch (Dict[str, Dict]): Dictionary with keys "sensor_a" and "sensor_b", whose values are dictionaries
+                with keys:
+                - "audio" (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
+                - "speaker_id" (List[str]),
+                - "sentence_id" (List[torch.Tensor of int]),
+                - "gender" (List[str]),
+                - "sensor" (List[str])
             batch_idx (int): Index of the batch
 
         Returns:
-            outputs (Dict[torch.Tensor, torch.Tensor]): Output Dict with keys "cosine similarity",
-                                                              "euclidean_distance" and "label"
+            Dict[str, torch.Tensor]: Dictionary containing both sensors' normalized embeddings with keys:
+                - "embedding_a" (torch.Tensor of dimension (batch_size, 192)),
+                - "embedding_b" (torch.Tensor of dimension (batch_size, 192)),
         """
         # Speaker embeddings for audio A and B
         embedding_a = self.ecapa2(batch["sensor_a"]["audio"])
@@ -77,6 +99,7 @@ class ECAPA2LightningModule(LightningModule):
         embedding_a = normalize(embedding_a, dim=1)
         embedding_b = normalize(embedding_b, dim=1)
 
+        # Output Dict
         outputs = {
             "embedding_a": embedding_a,
             "embedding_b": embedding_b,
@@ -97,7 +120,11 @@ class ECAPA2LightningModule(LightningModule):
 
     def on_test_start(self) -> None:
         """
-        Called at the beginning of the testing loop. Logs the description in tensorboard.
+        Called at the beginning of the testing loop.
+
+        - Checks the LightningDataModule sample_rate.
+        - Checks the LightningDataModule batch_size.
+        - Logs the description in tensorboard.
         """
         # Check sample rate
         assert self.trainer.datamodule.sample_rate == self.sample_rate, (
@@ -113,13 +140,37 @@ class ECAPA2LightningModule(LightningModule):
             f"{self.trainer.datamodule.batch_size} is provided by the LightningDataModule"
         )
 
+        # Log description
         self.logger.experiment.add_text(tag="description", text_string=self.description)
 
     def on_test_batch_end(
-        self, outputs: dict, batch: dict, batch_idx: int, dataloader_idx: int = 0
+        self,
+        outputs: Dict[str, torch.Tensor],
+        batch: Dict[str, Dict[str, Union[torch.Tensor, List[str], List[int]]]],
+        batch_idx: int,
+        dataloader_idx: int = 0,
     ) -> None:
         """
-        Called at the end of the test batch. Send the outputs to the metrics to prepare final computation.
+        Called at the end of the test batch.
+
+        - Computes the cosine similarity between the embeddings.
+        - Computes the Euclidean distance between the embeddings.
+        - Find the test label: is speaker A the same as speaker B?
+        - Sends the outputs to the metrics to prepare final computation.
+
+        Args:
+            outputs (Dict[str, torch.Tensor]): Dictionary containing both sensors' normalized embeddings with keys:
+                - "embedding_a" (torch.Tensor of dimension (batch_size, 192)),
+                - "embedding_b" (torch.Tensor of dimension (batch_size, 192)),
+            batch (Dict[str, Dict]): Dictionary with keys "sensor_a" and "sensor_b", whose values are dictionaries
+                with keys:
+                - "audio" (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
+                - "speaker_id" (List[str]),
+                - "sentence_id" (List[torch.Tensor of int]),
+                - "gender" (List[str]),
+                - "sensor" (List[str])
+            batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
         # Cosine Similarity between the embeddings
         outputs["cosine_similarity"] = pairwise_cosine_similarity(
@@ -145,5 +196,14 @@ class ECAPA2LightningModule(LightningModule):
         self.metrics.update(outputs)
 
     def on_test_epoch_end(self):
+        """
+        Called at the end of the test epoch.
+
+        - Triggers the computation of the metrics.
+        - Logs the metrics to tensorboard.
+        """
+        # Get the metrics as a dict
         metrics_to_log = self.metrics.compute()
+
+        # Log in tensorboard
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
