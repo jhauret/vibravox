@@ -173,7 +173,7 @@ class EBENLightningModule(LightningModule):
 
     def test_step(self, batch, batch_idx):
         """
-        Lightning validation step
+        Lightning testing step
 
         Args:
             batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
