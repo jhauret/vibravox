@@ -1,42 +1,98 @@
+from typing import Dict, List, Optional, Union
+
 import torch
 from torchmetrics import Metric, ROC
 
 
 class MinimumDetectionCostFunction(Metric):
+    """
+    Normalized Minimum Detection Cost Function Metric
+
+    The Detection Cost Function (DCF) is defined as a weighted sum of false rejection and false acceptance
+    probabilities.
+    The algorithm computes the DCF from the scores and labels of a binary classifier for different values of the
+    decision threshold between 0 and 1. The parameters are the weights of the sum, namely the cost of a false rejection
+    and the cost of a false acceptance, and the a priori probability of the target label.
+    This metric normalizes the minimum value of the DCF by dividing it by a default cost, defined as the best cost that
+    could be obtained by either always accepting of rejecting the classifier's score.
+    This leads to the normalized minimum of the detection cost function.
+
+    By default, the algorithm employs the non-binned approach to calculate the thresholds from the data. It is also
+    possible to get a fixed number of threshold linearly spaced from 0 to 1, or to provide a list (or tensor) of
+    predefined thresholds.
+
+    The data from one whole epoch is required for the computation of this metric. Therefore, it requires that the
+    update() method is called at the end of each batch and the compute() method is called at the end of the epoch.
+    Directly calling the forward() method won't give the correct outputs.
+    """
     def __init__(
         self,
-        n_threshold: int,
+        score_key: str,
+        label_key: str,
+        thresholds: Optional[Union[int, List[float], torch.Tensor]] = None,
         target_probability: float = 0.05,
         false_reject_cost: float = 1.0,
         false_accept_cost: float = 1.0,
         **kwargs,
     ) -> None:
+        """
+        Initializes the MinDCF metric.
+
+        - Initializes the ROC curve
+        - Adds states for the metric's inputs and outputs.
+
+        Args:
+            score_key (str): Key for the scores in the model's output dictionary.
+            label_key (str): Key for the labels in the model's output dictionary.
+            thresholds (Union[int, List[float], torch.Tensor], optional): Threshold parameter for the ROC curve. See
+                torchmetrics.ROC for more details. Defaults to None: will use the most accurate non-binned approach to
+                dynamically calculate the thresholds.
+            target_probability (float, optional): A priori probability of the target label. Defaults to 0.05.
+            false_reject_cost (float, optional): Cost of a missed detection. Defaults to 1.
+            false_accept_cost (float, optional): Cost of a spurious detection. Defaults to 1.
+        """
         super().__init__(**kwargs)
 
-        self.roc = ROC(thresholds=n_threshold, task="binary")
+        # Keys for the model scores and labels
+        self.score_key = score_key
+        self.label_key = label_key
 
+        # Init ROC
+        self.roc = ROC(thresholds=thresholds, task="binary")
+
+        # Metric parameters
         self.target_probability = target_probability
         self.false_reject_cost = false_reject_cost
         self.false_accept_cost = false_accept_cost
 
+        # Add states for the metric's inputs and outputs
         self.add_state("score", default=torch.Tensor())
         self.add_state("label", default=list())
         self.add_state("min_dcf", default=torch.tensor(0.0))
 
-    def update(self, outputs: dict) -> None:
-        """Update state with predictions and targets.
+    def update(self, outputs: Dict[str, torch.Tensor]) -> None:
+        """
+        Update the input states of the metric from the model scores and labels.
 
         Args:
+            outputs (Dict[str, torch.Tensor]): Dictionary containing model scores and labels as torch.Tensor of
+                dimension (batch_size, ).
         """
         if self.score.shape[0] == 0:
-            self.score = outputs["cosine_similarity"]
-            self.label = outputs["label"]
+            self.score = outputs[self.score_key]
+            self.label = outputs[self.label_key]
         else:
-            self.score = torch.cat((self.score, outputs["cosine_similarity"]), dim=0)
-            self.label = torch.cat((self.label, outputs["label"]), dim=0)
+            self.score = torch.cat((self.score, outputs[self.score_key]), dim=0)
+            self.label = torch.cat((self.label, outputs[self.label_key]), dim=0)
 
-    def compute(self) -> dict:
-        """Computes Minimum Detection Cost Function."""
+    def compute(self) -> Dict[str, torch.Tensor]:
+        """
+        Computes Minimum Detection Cost Function.
+
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary containing the scalar output with keys:
+                - "minimum_detection_cost_function": Normalized minimum detection cost.
+        """
         # ROC
         fa_rate, ta_rate, thresholds = self.roc(self.score, self.label)
         fr_rate = 1 - ta_rate
@@ -46,7 +102,11 @@ class MinimumDetectionCostFunction(Metric):
             self.false_reject_cost * self.target_probability * fr_rate
             + self.false_accept_cost * (1 - self.target_probability) * fa_rate
         )
+
+        # Find the minimum of the cost function
         c_det = torch.min(dcf)
+
+        # Normalization with the default cost
         c_def = min(
             self.false_reject_cost * self.target_probability,
             self.false_accept_cost * (1 - self.target_probability),
