@@ -68,8 +68,6 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
 
 @pytest.fixture
 def spkv_lightning_datamodule_instance_from_hydra() -> SPKVLightningDataModule:
-    # TODO: remove first return when SPKV configs files are mature
-    return SPKVLightningDataModule()
     with hydra.initialize(
         version_base="1.3", config_path="../configs"
     ):
