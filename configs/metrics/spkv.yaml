@@ -15,3 +15,5 @@ minimum_detection_cost_function:
 
 binary_embedding_distance:
   _target_: vibravox.metrics.embedding_distance.BinaryEmbeddingDistance
+  score_key: "euclidean_distance"
+  label_key: "label"
