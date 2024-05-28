@@ -6,7 +6,9 @@ from torchmetrics import Metric, ROC
 
 class EqualErrorRate(Metric):
     """
-    Given the scores and true labels of a binary classifier, this metric computes the Equal Error Rate (EER), defined
+    Equal Error Rate Metric
+
+    Given the scores and labels of a binary classifier, this metric computes the Equal Error Rate (EER), defined
     as the point where the False Rejection Rate (FRR) and the False Acceptance Rate (FAR) are equal. The algorithm
     firstly computes the FRR and the FAR for different values of the decision threshold. Then it calculates the optimal
     threshold that minimizes the absolute difference between FRR and FAR. Finally, it computes and returns the
@@ -16,10 +18,9 @@ class EqualErrorRate(Metric):
     possible to get a fixed number of threshold linearly spaced from 0 to 1, or to provide a list (or tensor) of
     predefined thresholds.
 
-    The design of this metric is different from the majority of TorchMetrics, because the data from one whole epoch is
-    required for the computation. Therefore, it requires that the update() method is called at the end of each batch
-    and the compute() method is called at the end of the epoch. Directly calling the forward() method won't give the
-    correct outputs.
+    The data from one whole epoch is required for the computation of this metric. Therefore, it requires that the
+    update() method is called at the end of each batch and the compute() method is called at the end of the epoch.
+    Directly calling the forward() method won't give the correct outputs.
     """
     def __init__(
         self,
@@ -50,7 +51,7 @@ class EqualErrorRate(Metric):
         # Init ROC
         self.roc = ROC(thresholds=thresholds, task="binary")
 
-        # Add states for the metric's outputs
+        # Add states for the metric's inputs and outputs
         self.add_state("score", default=torch.Tensor())
         self.add_state("label", default=torch.Tensor())
         self.add_state("eer", default=torch.tensor(0.0))
@@ -60,7 +61,7 @@ class EqualErrorRate(Metric):
 
     def update(self, outputs: Dict[str, torch.Tensor]) -> None:
         """
-        Update the input states of the metric from the model scores and labels.
+        Updates the input states of the metric from the model scores and labels.
 
         Args:
             outputs (Dict[str, torch.Tensor]): Dictionary containing model scores and labels as torch.Tensor of
@@ -80,7 +81,7 @@ class EqualErrorRate(Metric):
         Returns:
             Dict[str, torch.Tensor]: Dictionary containing the scalar outputs with keys:
                 - "equal_error_rate": Equal Error Rate,
-                - "threshold": binary decision threshold at which the EER is obtained,
+                - "threshold": Binary decision threshold at which the EER is obtained,
                 - "false_reject_rate": False rejection rate at threshold,
                 - "false_accept_rate": False acceptance rate at threshold,
         """

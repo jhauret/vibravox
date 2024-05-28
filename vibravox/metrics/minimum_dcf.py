@@ -72,7 +72,7 @@ class MinimumDetectionCostFunction(Metric):
 
     def update(self, outputs: Dict[str, torch.Tensor]) -> None:
         """
-        Update the input states of the metric from the model scores and labels.
+        Updates the input states of the metric from the model scores and labels.
 
         Args:
             outputs (Dict[str, torch.Tensor]): Dictionary containing model scores and labels as torch.Tensor of
