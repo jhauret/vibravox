@@ -36,7 +36,7 @@ class MinimumDetectionCostFunction(Metric):
         **kwargs,
     ) -> None:
         """
-        Initializes the MinDCF metric.
+        Initializes the normalized MinDCF metric.
 
         - Initializes the ROC curve
         - Adds states for the metric's inputs and outputs.
@@ -87,7 +87,7 @@ class MinimumDetectionCostFunction(Metric):
 
     def compute(self) -> Dict[str, torch.Tensor]:
         """
-        Computes Minimum Detection Cost Function.
+        Computes the Normalized Minimum Detection Cost Function.
 
         Returns:
             Dict[str, torch.Tensor]: Dictionary containing the scalar output with keys:
