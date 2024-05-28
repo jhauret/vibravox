@@ -9,12 +9,12 @@ class MinimumDetectionCostFunction(Metric):
     Normalized Minimum Detection Cost Function Metric
 
     The Detection Cost Function (DCF) is defined as a weighted sum of false rejection and false acceptance
-    probabilities.
+    probabilities (cf. NIST 2018 Speaker Recognition Evaluation Plan `[1]`_).
     The algorithm computes the DCF from the scores and labels of a binary classifier for different values of the
     decision threshold between 0 and 1. The parameters are the weights of the sum, namely the cost of a false rejection
     and the cost of a false acceptance, and the a priori probability of the target label.
     This metric normalizes the minimum value of the DCF by dividing it by a default cost, defined as the best cost that
-    could be obtained by either always accepting of rejecting the classifier's score.
+    could be obtained by either always accepting of rejecting the classifier's score `[1]`_.
     This leads to the normalized minimum of the detection cost function.
 
     By default, the algorithm employs the non-binned approach to calculate the thresholds from the data. It is also
@@ -24,6 +24,9 @@ class MinimumDetectionCostFunction(Metric):
     The data from one whole epoch is required for the computation of this metric. Therefore, it requires that the
     update() method is called at the end of each batch and the compute() method is called at the end of the epoch.
     Directly calling the forward() method won't give the correct outputs.
+
+    .. _[1]:
+        https://www.nist.gov/system/files/documents/2018/08/17/sre18_eval_plan_2018-05-31_v6.pdf
     """
     def __init__(
         self,
