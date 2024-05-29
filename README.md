@@ -27,7 +27,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 ## Requirements
 ```pip install -r requirements.txt```
 
-## Train some models
+## Train/Test some models
 
 - Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
 ```
@@ -41,5 +41,5 @@ python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightni
 
 - **Test** [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification
 ```
-python run.py lightning_datamodule=spkv lightning_module=ecapa2
+python run.py lightning_datamodule=spkv lightning_module=ecapa2 ++trainer.limit_train_batches=0
 ```
