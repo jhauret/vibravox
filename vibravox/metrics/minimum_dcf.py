@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 import torch
 from torchmetrics import Metric, ROC
@@ -102,8 +102,8 @@ class MinimumDetectionCostFunction(Metric):
 
         # Detection Cost Function
         dcf = (
-            self.false_reject_cost * self.target_probability * fr_rate
-            + self.false_accept_cost * (1 - self.target_probability) * fa_rate
+                self.false_reject_cost * self.target_probability * fr_rate
+                + self.false_accept_cost * (1 - self.target_probability) * fa_rate
         )
 
         # Find the minimum of the cost function
@@ -121,3 +121,16 @@ class MinimumDetectionCostFunction(Metric):
         }
 
         return metric_output
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Raises an error, as only the update() and compute() methods should be called.
+
+        Raises:
+            NotImplementedError
+        """
+        raise NotImplementedError(
+            f"The forward() method of this metric is deactivated. "
+            f"The update() method should be called at the end of each batch and "
+            f"compute() at the end of the epoch."
+        )

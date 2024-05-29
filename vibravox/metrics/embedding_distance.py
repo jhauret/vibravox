@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 
 import torch
 from torchmetrics import Metric
@@ -93,3 +93,16 @@ class BinaryEmbeddingDistance(Metric):
         }
 
         return metric_output
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Raises an error, as only the update() and compute() methods should be called.
+
+        Raises:
+            NotImplementedError
+        """
+        raise NotImplementedError(
+            f"The forward() method of this metric is deactivated. "
+            f"The update() method should be called at the end of each batch and "
+            f"compute() at the end of the epoch."
+        )
