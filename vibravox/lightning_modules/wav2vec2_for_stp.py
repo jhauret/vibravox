@@ -12,7 +12,6 @@ from transformers import Wav2Vec2Processor
 class Wav2Vec2ForSTPLightningModule(LightningModule):
     def __init__(
         self,
-        sample_rate: int,
         wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC,
         optimizer: partial[torch.optim.Optimizer],
         metrics: MetricCollection,
@@ -22,7 +21,6 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         Definition of Wav2Vec2ForSTP and its training pipeline with pytorch lightning paradigm
 
         Args:
-            sample_rate (int): Sample rate of the audio
             wav2vec2_for_ctc (torch.nn.Module): Neural network to enhance the speech
             optimizer (partial[torch.optim.Optimizer]): Optimizer
             metrics (MetricCollection): Metrics to be computed.
@@ -30,7 +28,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         """
         super().__init__()
 
-        self.sample_rate: int = sample_rate
+        self.sample_rate: int = 16_000
         self.wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC = wav2vec2_for_ctc(
             pad_token_id=35,  # Corresponds to `self.trainer.datamodule.tokenizer.pad_token_id`
             vocab_size=38,  # Corresponds to `len(self.trainer.datamodule.tokenizer)`
@@ -84,15 +82,21 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return self.optimizer
 
-    def on_train_start(self) -> None:
+    def on_fit_start(self) -> None:
         """
-        Method to be called when the train starts.
-        """
+        Called at the beginning of the fit loop.
 
-        assert (
-            self.trainer.datamodule.tokenizer.pad_token_id == 35
-        ), "Pad token id must be 35"
-        assert len(self.trainer.datamodule.tokenizer) == 38, "Vocab size must be 38"
+        - Checks the consistency of the DataModule's parameters
+        """
+        self.check_datamodule_parameter()
+
+    def on_test_start(self) -> None:
+        """
+        Called at the beginning of the testing loop.
+
+        - Checks the consistency of the DataModule's parameters
+        """
+        self.check_datamodule_parameter()
 
     def on_train_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int
@@ -219,3 +223,26 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         ]
 
         return predicted_phonemes
+
+    def check_datamodule_parameter(self) -> None:
+        """
+        List of assertions checking that the parameters of the LightningDatamodule correspond to the LightningModule.
+
+        (Can only be called in stages where the trainer's LightningDataModule is available, e.g. in on_fit_start hook.)
+
+        - Checks the LightningDataModule sample_rate.
+        - Checks tokenizer's pad_token_id.
+        - Checks the length of the tokenizer.
+        """
+        # Check sample rate
+        assert self.trainer.datamodule.sample_rate == self.sample_rate, (
+            f"sample_rate is not consistent. "
+            f"{self.sample_rate} is specified for the LightningModule and "
+            f"{self.trainer.datamodule.sample_rate} is provided by the LightningDataModule"
+        )
+
+        # Check tokenizer's pad_token_id
+        assert self.trainer.datamodule.tokenizer.pad_token_id == 35, "Pad token id must be 35"
+
+        # Check length of tokenizer
+        assert len(self.trainer.datamodule.tokenizer) == 38, "Vocab size must be 38"

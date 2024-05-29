@@ -173,7 +173,7 @@ class EBENLightningModule(LightningModule):
 
     def test_step(self, batch, batch_idx):
         """
-        Lightning validation step
+        Lightning testing step
 
         Args:
             batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
@@ -199,6 +199,22 @@ class EBENLightningModule(LightningModule):
         """
 
         self.logger.experiment.add_text(tag='description', text_string=self.description)
+
+    def on_fit_start(self) -> None:
+        """
+        Called at the beginning of the fit loop.
+
+        - Checks the consistency of the DataModule's parameters
+        """
+        self.check_datamodule_parameter()
+
+    def on_test_start(self) -> None:
+        """
+        Called at the beginning of the testing loop.
+
+        - Checks the consistency of the DataModule's parameters
+        """
+        self.check_datamodule_parameter()
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
@@ -479,3 +495,18 @@ class EBENLightningModule(LightningModule):
             torch.Tensor: Layer where the gradient norm is computed
         """
         return self.generator.last_conv.weight
+
+    def check_datamodule_parameter(self) -> None:
+        """
+        List of assertions checking that the parameters of the LightningDatamodule correspond to the LightningModule.
+
+        (Can only be called in stages where the trainer's LightningDataModule is available, e.g. in on_fit_start hook.)
+
+        - Checks the LightningDataModule sample_rate.
+        """
+        # Check sample rate
+        assert self.trainer.datamodule.sample_rate == self.sample_rate, (
+            f"sample_rate is not consistent. "
+            f"{self.sample_rate} is specified for the LightningModule and "
+            f"{self.trainer.datamodule.sample_rate} is provided by the LightningDataModule"
+        )

@@ -1,0 +1,3 @@
+_target_: vibravox.lightning_modules.ecapa2.ECAPA2LightningModule
+
+description: ${description}
