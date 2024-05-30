@@ -20,5 +20,5 @@ tokenizer:
   _target_: transformers.Wav2Vec2CTCTokenizer.from_pretrained
   pretrained_model_name_or_path: "Cnam-LMSSC/vibravox-phonemes-tokenizer"
 
-# This is not used in the actual classes, but just for the description and hydra run directory
+# This is not used in the actual classes, but just for the hydra run directory
 id: ${lightning_datamodule.sensor}
