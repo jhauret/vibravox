@@ -11,4 +11,4 @@ batch_size: 1
 num_workers: 16
 
 # This is not used in the actual classes, but just for the description and hydra run directory
-id: ${sensor_a}_${sensor_b}_${dataset_name}_${pairs}
+id: ${lightning_datamodule.sensor_a}_${lightning_datamodule.sensor_b}_${lightning_datamodule.dataset_name}_${lightning_datamodule.pairs}
