@@ -9,6 +9,9 @@ streaming: False
 batch_size: 32
 num_workers: 16
 
+# This is not used in the actual classes, but just for the description and hydra run directory
+id: ${lightning_datamodule.sensor}
+
 defaults:
   - data_augmentation: light
   - _self_ # priority is given to bwe.yaml for overrides

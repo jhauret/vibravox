@@ -25,6 +25,7 @@ class BWELightningDataModule(LightningDataModule):
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
+        **kwargs,
     ):
         """
         LightningDataModule for Bandwidth Extension (BWE)

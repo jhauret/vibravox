@@ -26,6 +26,7 @@ class SPKVLightningDataModule(LightningDataModule):
         streaming: bool = False,
         batch_size: int = 1,
         num_workers: int = 4,
+        **kwargs,
     ):
         """
         LightningDataModule for end-to-end Speaker Verification (SPKV)

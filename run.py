@@ -25,7 +25,7 @@ from torchmetrics import MetricCollection
 
 @hydra.main(
     config_path="configs",
-    config_name="train.yaml",
+    config_name="run.yaml",
     version_base="1.3",
 )
 def main(cfg: DictConfig):
