@@ -200,7 +200,7 @@ class ECAPA2LightningModule(LightningModule):
         """
         List of assertions checking that the parameters of the LightningDatamodule correspond to the LightningModule.
 
-        (Can only be called in stages where the trainer's LightningDataModule is available, e.g. in on_fit_start hook.)
+        (Can only be called in stages where the trainer's LightningDataModule is available, e.g. in on_test_start hook.)
 
         - Checks the LightningDataModule sample_rate.
         - Checks the LightningDataModule batch_size.
