@@ -20,6 +20,7 @@ class STPLightningDataModule(LightningDataModule):
         num_workers: int = 4,
         feature_extractor: Wav2Vec2FeatureExtractor = None,
         tokenizer: Wav2Vec2CTCTokenizer = None,
+        **kwargs,
     ):
         """
         LightningDataModule for Speech-to-Phoneme (STP).
