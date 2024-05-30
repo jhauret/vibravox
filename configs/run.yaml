@@ -2,8 +2,6 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-#description: "${lightning_datamodule.sensor} || EBEN(M=4,P=${lightning_module.generator.p},Q=${lightning_module.discriminator.q}) with min_channels_dis=${lightning_module.discriminator.min_channels}, (data_aug light/lb-beta-ema=0.9/update-ratio=1)"
-#description: "${lightning_datamodule.sensor_a} / ${lightning_datamodule.sensor_b} || ECAPA2  || ${lightning_datamodule.pairs} "
 description: "${hydra:runtime.choices.lightning_datamodule}: ${lightning_datamodule.id}  || ${hydra:runtime.choices.lightning_datamodule}: ${lightning_datamodule.id}"
 
 # Hydra configuration
@@ -13,9 +11,6 @@ hydra:
     chdir: True # change working directory to the job directory
   run:
     dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.id}/${now:%Y-%m-%d_%H-%M-%S}"
-    #dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.sensor}/${now:%Y-%m-%d_%H-%M-%S}_p${lightning_module.generator.p}_q${lightning_module.discriminator.q}_chan${lightning_module.discriminator.min_channels}" # directory for the run
-    #dir: "outputs/run/${hydra:runtime.choices.lightning_datamodule}/${lightning_datamodule.pairs}/${lightning_datamodule.sensor_a}/${lightning_datamodule.sensor_b}/${now:%Y-%m-%d_%H-%M-%S}"
-
 
 # Composing configs
 defaults:
