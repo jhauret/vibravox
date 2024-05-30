@@ -128,9 +128,6 @@ class ECAPA2LightningModule(LightningModule):
         # Check DataModule parameters
         self.check_datamodule_parameter()
 
-        # Log description
-        self.logger.experiment.add_text(tag="description", text_string=self.description)
-
     def on_test_batch_end(
         self,
         outputs: Dict[str, torch.Tensor],
@@ -188,12 +185,12 @@ class ECAPA2LightningModule(LightningModule):
         Called at the end of the test epoch.
 
         - Triggers the computation of the metrics.
-        - Logs the metrics to tensorboard.
+        - Logs the metrics to the logger (preference: csv for extracting results as there is no training curves to log).
         """
         # Get the metrics as a dict
         metrics_to_log = self.metrics.compute()
 
-        # Log in tensorboard
+        # Log in the logger
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
 
     def check_datamodule_parameter(self) -> None:
