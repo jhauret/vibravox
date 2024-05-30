@@ -50,7 +50,7 @@ def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
         version_base="1.3", config_path="../configs"
     ):
         overrides = [f"lightning_datamodule='bwe'"]
-        cfg = hydra.compose(config_name="train", overrides=overrides)
+        cfg = hydra.compose(config_name="run", overrides=overrides)
 
         return hydra.utils.instantiate(cfg.lightning_datamodule)
 
@@ -61,7 +61,7 @@ def stp_lightning_datamodule_instance_from_hydra() -> STPLightningDataModule:
         version_base="1.3", config_path="../configs"
     ):
         overrides = [f"lightning_datamodule='stp'"]
-        cfg = hydra.compose(config_name="train", overrides=overrides)
+        cfg = hydra.compose(config_name="run", overrides=overrides)
 
         return hydra.utils.instantiate(cfg.lightning_datamodule)
 
@@ -72,7 +72,7 @@ def spkv_lightning_datamodule_instance_from_hydra() -> SPKVLightningDataModule:
         version_base="1.3", config_path="../configs"
     ):
         overrides = [f"lightning_datamodule='spkv'"]
-        cfg = hydra.compose(config_name="train", overrides=overrides)
+        cfg = hydra.compose(config_name="run", overrides=overrides)
 
         return hydra.utils.instantiate(cfg.lightning_datamodule)
 
