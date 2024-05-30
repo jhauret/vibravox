@@ -11,4 +11,4 @@ batch_size: 1
 num_workers: 16
 
 # This is not used in the actual classes, but just for the hydra run directory
-id: ${lightning_datamodule.dataset_name}/${lightning_datamodule.subset}/${lightning_datamodule.pairs}/${lightning_datamodule.sensor_a}_${lightning_datamodule.sensor_b}
+id: ${lightning_datamodule.dataset_name}/${lightning_datamodule.subset}/${lightning_datamodule.pairs}/${lightning_datamodule.sensor_a}_vs_${lightning_datamodule.sensor_b}
