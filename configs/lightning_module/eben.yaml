@@ -4,8 +4,10 @@ sample_rate: ${sample_rate}
 dynamic_loss_balancing: "ema"
 beta_ema: 0.9
 update_discriminator_ratio: 1
-description: "${description} || EBEN(M=${generator.m},P=${generator.p},Q=${discriminator.q})"
+description: "${description} || EBEN(M=${lightning_module.generator.m},P=${lightning_module.generator.p},Q=${lightning_module.discriminator.q})"
 push_to_hub_after_testing: False
+
+
 
 defaults:
   - dnn_module@generator: eben_generator
