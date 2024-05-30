@@ -193,20 +193,15 @@ class EBENLightningModule(LightningModule):
 
         return [self.generator_optimizer, self.discriminator_optimizer]
 
-    def on_train_start(self) -> None:
-        """
-        Called at the beginning of the training loop. Logs the description in tensorboard.
-        """
-
-        self.logger.experiment.add_text(tag='description', text_string=self.description)
-
     def on_fit_start(self) -> None:
         """
         Called at the beginning of the fit loop.
 
         - Checks the consistency of the DataModule's parameters
+        - Logs the description in tensorboard.
         """
         self.check_datamodule_parameter()
+        self.logger.experiment.add_text(tag='description', text_string=self.description)
 
     def on_test_start(self) -> None:
         """
