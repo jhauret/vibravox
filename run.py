@@ -18,7 +18,6 @@ from lightning import (
 )
 
 from lightning.pytorch.loggers import Logger
-from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 from omegaconf import DictConfig
 
 from torchmetrics import MetricCollection
@@ -53,8 +52,7 @@ def main(cfg: DictConfig):
 
     # Instantiate Trainer
     callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
-    #logger: TensorBoardLogger = hydra.utils.instantiate(cfg.logging.logger)
-    logger: List[Logger] = hydra.utils.instantiate(cfg.logging.logger)
+    logger: Logger = hydra.utils.instantiate(cfg.logging.logger)
     trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
