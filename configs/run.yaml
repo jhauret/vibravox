@@ -2,7 +2,7 @@
 
 # Top-level variables available in all config files
 sample_rate: 16000
-description: "${hydra:runtime.choices.lightning_datamodule}: ${lightning_datamodule.id}  || ${hydra:runtime.choices.lightning_datamodule}: ${lightning_datamodule.id}"
+description: "${hydra:runtime.choices.lightning_datamodule}: ${lightning_datamodule.id}  || ${hydra:runtime.choices.lightning_module}: ${lightning_module.id}"
 
 # Hydra configuration
 version_base: "1.3"
