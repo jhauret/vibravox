@@ -8,7 +8,7 @@
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=10
-#SBATCH --time=99:00:00
+#SBATCH --time=05:00:00
 #SBATCH --qos=qos_gpu-t4
 #SBATCH --hint=nomultithread
 #SBATCH --account=lbo@v100
