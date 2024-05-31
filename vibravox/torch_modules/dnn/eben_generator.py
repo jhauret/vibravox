@@ -24,17 +24,27 @@ tags:
 # Model Card 
 
 - **Developed by:** [Cnam-LMSSC](https://huggingface.co/Cnam-LMSSC)
-- **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py)
+- **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py) (see [publication](https://ieeexplore.ieee.org/document/10244161))
 - **Language:** French
 - **License:** MIT
 - **Finetuned dataset:** `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
 - **Samplerate for usage:** 16kHz
 
+## Overview
+
+This bandwidth extension model is trained on one specific body conduction sensor data from the [Vibravox dataset](https://huggingface.co/datasets/Cnam-LMSSC/vibravox). 
+The model is designed to to enhance the audio quality of body-conducted captured speech, by denoising and regenerating mid and high frequencies from low frequency content only.
+
+## Disclaimer
+This model has been trained for **specific non-conventional speech sensors** and is intended to be used with **in-domain data**.
+Please be advised that using these models outside their intended sensor data may result in suboptimal performance.
+
+
 ## Training procedure
 
-To reproduce experiment please visit [jhauret/vibravox](https://github.com/jhauret/vibravox).
+Detailed instructions for reproducing the experiments are available on the [jhauret/vibravox](https://github.com/jhauret/vibravox) Github repository.
 
-## Inference script (if you do not want to use the huggingsound library) : 
+## Inference script : 
 
 ```python
 import torch, torchaudio
@@ -46,6 +56,11 @@ audio_16kHz, _ = torch.load("path_to_audio")
 cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz)
 enhanced_audio_16kHz = model(cut_audio_16kHz)
 ```
+
+## Link to other BWE models trained on other body conducted sensors : 
+
+An entry point to all **audio bandwidth extension** (BWE) models trained on different sensor data from the trained on different sensor data from the [Vibravox dataset](https://huggingface.co/datasets/Cnam-LMSSC/vibravox) is available at [https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_bwe_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_bwe_models).  
+
 """
 
 
