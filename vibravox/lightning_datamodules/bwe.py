@@ -19,7 +19,7 @@ class BWELightningDataModule(LightningDataModule):
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
-        sensor: str = "airborne.mouth_headworn.reference_microphone",
+        sensor: str = "headset_microphone",
         collate_strategy: str = "constant_length-2500-ms",
         data_augmentation: torch.nn.Module = None,
         streaming: bool = False,
