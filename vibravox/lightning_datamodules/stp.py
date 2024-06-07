@@ -14,7 +14,7 @@ class STPLightningDataModule(LightningDataModule):
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
-        sensor: str = "airborne.mouth_headworn.reference_microphone",
+        sensor: str = "headset_microphone",
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
@@ -31,7 +31,7 @@ class STPLightningDataModule(LightningDataModule):
                 Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
                 Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to "speech_clean"
-            sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
+            sensor (str, optional): Sensor. Defaults to "headset_microphone"
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.

@@ -36,7 +36,7 @@ class BWELightningDataModule(LightningDataModule):
                 Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
                 Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to "speech_clean"
-            sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
+            sensor (str, optional): Sensor. Defaults to "headset_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
