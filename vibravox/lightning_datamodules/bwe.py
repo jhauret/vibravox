@@ -86,7 +86,7 @@ class BWELightningDataModule(LightningDataModule):
             self.dataset_name, self.subset, streaming=self.streaming
         )
 
-        dataset_dict = dataset_dict.rename_column(f"audio.airborne.mouth_headworn.reference_microphone", "audio_airborne")
+        dataset_dict = dataset_dict.rename_column(f"audio.headset_microphone", "audio_airborne")
         dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor}", "audio_body_conducted")
 
         dataset_dict = dataset_dict.select_columns(["audio_airborne", "audio_body_conducted"])
