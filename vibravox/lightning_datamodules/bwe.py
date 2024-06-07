@@ -7,7 +7,6 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
-import vibravox.torch_modules.dsp.data_augmentation
 from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.utils import set_audio_duration
 
