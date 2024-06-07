@@ -77,12 +77,12 @@ def spkv_lightning_datamodule_instance_from_hydra() -> SPKVLightningDataModule:
         return hydra.utils.instantiate(cfg.lightning_datamodule)
 
 @pytest.fixture(
-    params=["body_conducted.temple.contact_microphone",
-            "body_conducted.throat.piezoelectric_sensor",
-            "body_conducted.in_ear.rigid_earpiece_microphone",
-            "body_conducted.in_ear.comply_foam_microphone",
-            "body_conducted.forehead.miniature_accelerometer",
-            "airborne.mouth_headworn.reference_microphone"]
+    params=["temple_vibration_pickup",
+            "throat_microphone",
+            "rigid_in_ear_microphone",
+            "soft_in_ear_microphone",
+            "forehead_accelerometer",
+            "headset_microphone"]
 )
 def sensor_name(request) -> str:
     return request.param
@@ -119,8 +119,8 @@ def bwe_lightning_datamodule_instance(
 ) -> BWELightningDataModule:
     """BWELightningDataModule instance."""
 
-    if sensor_name == "airborne.mouth_headworn.reference_microphone":
-        pytest.skip("Skipping for airborne.mouth_headworn.reference_microphone")
+    if sensor_name == "headset_microphone":
+        pytest.skip("Skipping for headset_microphone")
 
     datamodule = BWELightningDataModule(
         sample_rate=sample_rate,
@@ -168,7 +168,7 @@ def spkv_lightning_datamodule_same_sensors_instance(
         dataset_name=dataset_name,
         subset=subset_name,
         sensor_a=sensor_name,
-        #keep sensor_b to default value which is "airborne.mouth_headworn.reference_microphone"
+        sensor_b=sensor_name,
         pairs="mixed_gender",
         streaming=False,
         batch_size=1,
