@@ -36,7 +36,7 @@ python run.py lightning_datamodule=bwe lightning_datamodule.sensor=throat_microp
 
 - Train [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
 ```
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=headset_microphone ++trainer.max_epochs=10
+python run.py lightning_datamodule=stp lightning_datamodule.sensor=headset_microphone lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 ++trainer.max_epochs=10
 ```
 
 - Test [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification
