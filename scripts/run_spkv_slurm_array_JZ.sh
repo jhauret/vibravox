@@ -27,10 +27,10 @@ array_config=./configs/slurm_array/spkv.txt
 
 # Extract values of the job
 dataset_name=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $2}' $array_config)
-split=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $3}' $array_config)
+subset=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $3}' $array_config)
 sensor_a=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $4}' $array_config)
 sensor_b=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $5}' $array_config)
 pairs=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $6}' $array_config)
 
 set -x
-srun python -u run.py lightning_datamodule=spkv lightning_module=ecapa2 lightning_datamodule.dataset_name="$dataset_name"  lightning_datamodule.split="$split" lightning_datamodule.sensor_a="$sensor_a" lightning_datamodule.sensor_b="$sensor_b" lightning_datamodule.pairs="$pairs" ++trainer.limit_train_batches=0
+srun python -u run.py lightning_datamodule=spkv lightning_module=ecapa2 lightning_datamodule.dataset_name="$dataset_name"  lightning_datamodule.subset="$subset" lightning_datamodule.sensor_a="$sensor_a" lightning_datamodule.sensor_b="$sensor_b" lightning_datamodule.pairs="$pairs" ++trainer.limit_train_batches=0
