@@ -12,7 +12,7 @@
 #SBATCH --qos=qos_gpu-t4
 #SBATCH --hint=nomultithread
 #SBATCH --account=lbo@v100
-#SBATCH --array=1-35
+#SBATCH --array=1-5
 
 module purge
 conda deactivate
@@ -32,4 +32,4 @@ q=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $4}' $array_
 min_channels=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $5}' $array_config)
 
 set -x
-srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$sensor" lightning_module=eben lightning_module.generator.p="$p" lightning_module.discriminator.q="$q" lightning_module.discriminator.min_channels="$min_channels" ++trainer.check_val_every_n_epoch=15
+srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$sensor" lightning_module=eben lightning_module.generator.p="$p" lightning_module.discriminator.q="$q" lightning_module.discriminator.min_channels="$min_channels" ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=600

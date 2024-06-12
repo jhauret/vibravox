@@ -1,39 +1,9 @@
 ArrayTaskID      Sensor                      EBEN_P    EBEN_Q  MIN_CHANNEL_DIS
-1                forehead_accelerometer        4         1          30
-2                forehead_accelerometer        4         2          30
-3                forehead_accelerometer        4         3          30
-4                forehead_accelerometer        4         1          24
-5                forehead_accelerometer        4         2          24
-6                forehead_accelerometer        4         3          24
-7                forehead_accelerometer        4         4          24
-8                soft_in_ear_microphone        2         1          30
-9                soft_in_ear_microphone        2         2          30
-10               soft_in_ear_microphone        2         3          30
-11               soft_in_ear_microphone        2         1          24
-12               soft_in_ear_microphone        2         2          24
-13               soft_in_ear_microphone        2         3          24
-14               soft_in_ear_microphone        2         4          24
-15               rigid_in_ear_microphone       2         1          30
-16               rigid_in_ear_microphone       2         2          30
-17               rigid_in_ear_microphone       2         3          30
-18               rigid_in_ear_microphone       2         1          24
-19               rigid_in_ear_microphone       2         2          24
-20               rigid_in_ear_microphone       2         3          24
-21               rigid_in_ear_microphone       2         4          24
-22               temple_vibration_pickup       1         1          30
-23               temple_vibration_pickup       1         2          30
-24               temple_vibration_pickup       1         3          30
-25               temple_vibration_pickup       1         1          24
-26               temple_vibration_pickup       1         2          24
-27               temple_vibration_pickup       1         3          24
-28               temple_vibration_pickup       1         4          24
-29               throat_microphone             2         1          30
-30               throat_microphone             2         2          30
-31               throat_microphone             2         3          30
-32               throat_microphone             2         1          24
-33               throat_microphone             2         2          24
-34               throat_microphone             2         3          24
-35               throat_microphone             2         4          24
+1               forehead_accelerometer        4         4          24
+2               soft_in_ear_microphone        2         4          24
+3               rigid_in_ear_microphone       2         4          24
+4               temple_vibration_pickup       1         4          24
+5               throat_microphone             2         4          24
 
 
 
