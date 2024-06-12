@@ -7,7 +7,6 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 
-import vibravox.torch_modules.dsp.data_augmentation
 from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.utils import set_audio_duration
 
@@ -19,7 +18,7 @@ class BWELightningDataModule(LightningDataModule):
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
-        sensor: str = "airborne.mouth_headworn.reference_microphone",
+        sensor: str = "headset_microphone",
         collate_strategy: str = "constant_length-2500-ms",
         data_augmentation: torch.nn.Module = None,
         streaming: bool = False,
@@ -36,7 +35,7 @@ class BWELightningDataModule(LightningDataModule):
                 Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
                 Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to "speech_clean"
-            sensor (str, optional): Sensor. Defaults to "bwe_in-ear_rigid_earpiece_microphone"
+            sensor (str, optional): Sensor. Defaults to "headset_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
@@ -49,8 +48,8 @@ class BWELightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
-            "dataset_name must be 'Cnam-LMSSC/vibravox' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
+        assert dataset_name in ["Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
+            "dataset_name must be 'Cnam-LMSSC/vibravox2' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
         self.dataset_name = dataset_name
         self.subset = subset
         self.sensor = sensor
@@ -86,7 +85,7 @@ class BWELightningDataModule(LightningDataModule):
             self.dataset_name, self.subset, streaming=self.streaming
         )
 
-        dataset_dict = dataset_dict.rename_column(f"audio.airborne.mouth_headworn.reference_microphone", "audio_airborne")
+        dataset_dict = dataset_dict.rename_column(f"audio.headset_microphone", "audio_airborne")
         dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor}", "audio_body_conducted")
 
         dataset_dict = dataset_dict.select_columns(["audio_airborne", "audio_body_conducted"])

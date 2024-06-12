@@ -1,9 +1,9 @@
 pyenv which python;
 echo "Will run all STP trainings sequentially";
 sleep 5;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=airborne.mouth_headworn.reference_microphone ++trainer.max_epochs=10;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=body_conducted.forehead.miniature_accelerometer ++trainer.max_epochs=10;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=body_conducted.in_ear.comply_foam_microphone ++trainer.max_epochs=10;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=body_conducted.in_ear.rigid_earpiece_microphone ++trainer.max_epochs=10;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=body_conducted.temple.contact_microphone ++trainer.max_epochs=10;
-python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=body_conducted.throat.piezoelectric_sensor ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=headset_microphone ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=forehead_accelerometer ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=soft_in_ear_microphone ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=rigid_in_ear_microphone ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=temple_vibration_pickup ++trainer.max_epochs=10;
+python run.py lightning_datamodule=stp lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 lightning_datamodule.sensor=throat_microphone ++trainer.max_epochs=10;

@@ -12,16 +12,16 @@ from tqdm import tqdm
 import Levenshtein
 import pickle
 
-MICROPHONES = ["airborne.mouth_headworn.reference_microphone",
-               "body_conducted.forehead.miniature_accelerometer",
-               "body_conducted.in_ear.rigid_earpiece_microphone",
-               "body_conducted.in_ear.comply_foam_microphone",
-               "body_conducted.throat.piezoelectric_sensor",
-               "body_conducted.temple.contact_microphone"]
+MICROPHONES = ["headset_microphone",
+               "forehead_accelerometer",
+               "rigid_in_ear_microphone",
+               "soft_in_ear_microphone",
+               "throat_microphone",
+               "temple_vibration_pickup"]
 
 PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 SAMPLE_RATE = 16_000
-DATASETS = ["Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp", "Cnam-LMSSC/vibravox"]
+DATASETS = ["Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp", "Cnam-LMSSC/vibravox2"]
 FEATURE_EXTRACTOR = transformers.Wav2Vec2FeatureExtractor()
 TOKENIZER = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
 PER = torchmetrics.text.CharErrorRate()

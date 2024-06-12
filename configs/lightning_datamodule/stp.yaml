@@ -1,9 +1,9 @@
 _target_: vibravox.lightning_datamodules.stp.STPLightningDataModule
 
 sample_rate: ${sample_rate}
-dataset_name: "Cnam-LMSSC/vibravox"
+dataset_name: "Cnam-LMSSC/vibravox2"
 subset: "speech_clean"
-sensor: "airborne.mouth_headworn.reference_microphone"
+sensor: "headset_microphone"
 streaming: False
 batch_size: 8
 num_workers: 16

@@ -1,11 +1,11 @@
 _target_: vibravox.lightning_datamodules.spkv.SPKVLightningDataModule
 
 sample_rate: ${sample_rate}
-dataset_name: "Cnam-LMSSC/vibravox"
+dataset_name: "Cnam-LMSSC/vibravox2"
 subset: "speech_clean"
 pairs: "mixed_gender" # can also be "same_gender"
-sensor_a: "airborne.mouth_headworn.reference_microphone"
-sensor_b: "body_conducted.forehead.miniature_accelerometer"
+sensor_a: "headset_microphone"
+sensor_b: "rigid_in_ear_microphone"
 streaming: False
 batch_size: 1
 num_workers: 16

@@ -20,8 +20,8 @@ class SPKVLightningDataModule(LightningDataModule):
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
         subset: str = "speech_clean",
-        sensor_a: str = "airborne.mouth_headworn.reference_microphone",
-        sensor_b: str = "airborne.mouth_headworn.reference_microphone",
+        sensor_a: str = "headset_microphone",
+        sensor_b: str = "headset_microphone",
         pairs: str = "mixed_gender",
         streaming: bool = False,
         batch_size: int = 1,
@@ -37,8 +37,8 @@ class SPKVLightningDataModule(LightningDataModule):
                 Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
                 Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to ("speech_clean").
-            sensor_a (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
-            sensor_b (str, optional): Sensor. Defaults to ("airborne.mouth_headworn.reference_microphone").
+            sensor_a (str, optional): Sensor. Defaults to ("headset_microphone").
+            sensor_b (str, optional): Sensor. Defaults to ("headset_microphone").
             pairs (str, optional): Pairs configuration. Must be one of "mixed_gender" or "same_gender".
                 Default to "mixed_gender"
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
@@ -48,8 +48,8 @@ class SPKVLightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
-            "dataset_name must be 'Cnam-LMSSC/vibravox' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
+        assert dataset_name in ["Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp"], \
+            "dataset_name must be 'Cnam-LMSSC/vibravox2' or 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp'"
         self.dataset_name = dataset_name
         self.subset = subset
         self.sensorA = sensor_a
