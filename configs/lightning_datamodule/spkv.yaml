@@ -5,7 +5,7 @@ dataset_name: "Cnam-LMSSC/vibravox2"
 subset: "speech_clean"
 pairs: "mixed_gender" # can also be "same_gender"
 sensor_a: "headset_microphone"
-sensor_b: "rigid_in_ear_microphone"
+sensor_b: "headset_microphone"
 streaming: False
 batch_size: 1
 num_workers: 16
