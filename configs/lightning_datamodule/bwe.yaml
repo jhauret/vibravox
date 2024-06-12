@@ -1,7 +1,7 @@
 _target_: vibravox.lightning_datamodules.bwe.BWELightningDataModule
 
 sample_rate: ${sample_rate}
-dataset_name: "Cnam-LMSSC/vibravox"
+dataset_name: "Cnam-LMSSC/vibravox2"
 subset: "speech_clean"
 sensor: "body_conducted.rigid_in_ear_microphone"
 collate_strategy: "constant_length-2500-ms"
