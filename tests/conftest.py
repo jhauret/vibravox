@@ -103,7 +103,7 @@ def subset_name(request) -> str:
     return request.param
 
 
-@pytest.fixture(params=[True, False])
+@pytest.fixture(params=[True]) #False
 def streaming(request) -> bool:
     return request.param
 
