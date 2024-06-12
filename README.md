@@ -31,7 +31,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 - Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
 ```
-python run.py lightning_datamodule=bwe lightning_module=eben
+python run.py lightning_datamodule=bwe lightning_datamodule.sensor=throat_microphone lightning_module=eben
 ```
 
 - Train [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
