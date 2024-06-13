@@ -209,7 +209,6 @@ def save_pairs_to_pickle(total_pairs,filename, dataset_name, subset):
     print("Pairs generated and saved to pickle files in", filepath)
 
 
-
 if __name__ == "__main__":
     seed_everything(42, workers=True) # For deterministic picking of pairs and reproducibility
     DATASET_NAME = "Cnam-LMSSC/vibravox2"
