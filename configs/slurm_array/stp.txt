@@ -1,0 +1,7 @@
+ArrayTaskID      Sensor
+1               forehead_accelerometer
+2               soft_in_ear_microphone
+3               rigid_in_ear_microphone
+4               temple_vibration_pickup
+5               throat_microphone
+6               headset_microphone
