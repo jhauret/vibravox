@@ -30,4 +30,4 @@ array_config=./configs/slurm_array/stp.txt
 sensor=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $2}' $array_config)
 
 set -x
-srun python -u run.py lightning_datamodule=stp lightning_datamodule.sensor="$sensor" lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 ++trainer.max_epochs=10
+srun python -u run.py lightning_datamodule=stp lightning_datamodule.sensor="$sensor" lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 ++trainer.max_epochs=10 +callbacks=stp_checkpoint
