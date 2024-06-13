@@ -89,7 +89,7 @@ def sensor_name(request) -> str:
 
 
 @pytest.fixture(
-    params=["Cnam-LMSSC/vibravox2"]  # "Cnam-LMSSC/vibravox_enhanced_by_EBEN"
+    params=["Cnam-LMSSC/vibravox-test"]  # "Cnam-LMSSC/vibravox_enhanced_by_EBEN"
     # To avoid downloading too much files we only test the smaller dataset
 )
 def dataset_name(request) -> str:
