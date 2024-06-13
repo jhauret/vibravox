@@ -1,0 +1,6 @@
+checkpoint:
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  save_last: True # additionally, always save model from last epoch
+  verbose: False
+  dirpath: "checkpoints/"
+  filename: "epoch_{epoch:03d}"
