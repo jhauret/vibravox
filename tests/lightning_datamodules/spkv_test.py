@@ -112,10 +112,10 @@ class TestSPKVLightningDataModule:
             pytest.skip("Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets")
 
         spkv_lightning_datamodule_same_sensors_instance.setup("fit")
-        train_dataloder = spkv_lightning_datamodule_same_sensors_instance.train_dataloader()
-        val_dataloder = spkv_lightning_datamodule_same_sensors_instance.val_dataloder()
-        train_dataloader_sample = next(iter(train_dataloder))
-        val_dataloader_sample = next(iter(val_dataloder))
+        train_dataloader = spkv_lightning_datamodule_same_sensors_instance.train_dataloader()
+        val_dataloader = spkv_lightning_datamodule_same_sensors_instance.val_dataloader()
+        train_dataloader_sample = next(iter(train_dataloader))
+        val_dataloader_sample = next(iter(val_dataloader))
 
         assert isinstance(train_dataloader_sample, dict), "Expected dataloader_sample to be a dictionary."
         assert isinstance(val_dataloader_sample, dict), "Expected dataloader_sample to be a dictionary."
