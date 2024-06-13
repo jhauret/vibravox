@@ -18,7 +18,7 @@ defaults:
   - lightning_module: null # NEEDS TO BE OVERRIDDEN
   - trainer: ddp
   - callbacks: # Dict of callbacks
-      - bwe_checkpoint
+      # - bwe_checkpoint
       - rich_model_summary
   - logging: tensorboard
   - metrics: ${lightning_datamodule}
