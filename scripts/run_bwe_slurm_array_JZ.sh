@@ -31,6 +31,5 @@ sensor=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $2}' $a
 p=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $3}' $array_config)
 q=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $4}' $array_config)
 
-
 set -x
 srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$sensor" lightning_module=eben lightning_module.generator.p="$p"  ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=600 +callbacks=bwe_checkpoint
