@@ -1,9 +1,9 @@
-ArrayTaskID      Sensor                      EBEN_P    EBEN_Q  MIN_CHANNEL_DIS
-1               forehead_accelerometer        4         4          24
-2               soft_in_ear_microphone        2         4          24
-3               rigid_in_ear_microphone       2         4          24
-4               temple_vibration_pickup       1         4          24
-5               throat_microphone             2         4          24
+ArrayTaskID      Sensor                     EBEN_P
+1               forehead_accelerometer        4
+2               soft_in_ear_microphone        2
+3               rigid_in_ear_microphone       2
+4               temple_vibration_pickup       1
+5               throat_microphone             2
 
 
 
