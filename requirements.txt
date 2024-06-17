@@ -1,3 +1,4 @@
+numpy<2
 isort
 torch>=2.2.0
 lightning>=2.2.0
