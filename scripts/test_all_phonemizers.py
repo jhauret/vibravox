@@ -19,14 +19,7 @@ MICROPHONES = ["headset_microphone",
                "throat_microphone",
                "temple_vibration_pickup"]
 
-OLD_MICROPHONES = ["airborne.mouth_headworn.reference_microphone",
-                   "body_conducted.forehead.miniature_accelerometer",
-                   "body_conducted.in_ear.rigid_earpiece_microphone",
-                   "body_conducted.in_ear.comply_foam_microphone",
-                   "body_conducted.throat.piezoelectric_sensor",
-                   "body_conducted.temple.contact_microphone"]
-
-PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in OLD_MICROPHONES]
+PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 
 
 SAMPLE_RATE = 16_000
@@ -122,8 +115,6 @@ for dataset_idx, dataset_name in enumerate(DATASETS):
         test_dataset = load_dataset(dataset_name, "speech_clean", split="test", streaming=False)
         test_dataset = test_dataset.cast_column(f"audio.{microphone}", Audio(sampling_rate=SAMPLE_RATE, mono=False))
         for phonemizer_idx, phonemizer in enumerate(PHONEMIZERS):
-            if microphone_idx!=phonemizer_idx:
-                continue
             processor = AutoProcessor.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
             model = AutoModelForCTC.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
             preds, targets, editops_in_word, editops_before_space, editops_all = [], [], [], [], []
