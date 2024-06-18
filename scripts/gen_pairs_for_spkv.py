@@ -211,7 +211,7 @@ def save_pairs_to_pickle(total_pairs,filename, dataset_name, subset):
 
 if __name__ == "__main__":
     seed_everything(42, workers=True) # For deterministic picking of pairs and reproducibility
-    DATASET_NAME = "Cnam-LMSSC/vibravox-test"
+    DATASET_NAME = "Cnam-LMSSC/vibravox_enhanced_by_EBEN"
     SUBSET = "speech_clean"
     dataset_dict = load_and_process_data(dataset_name = DATASET_NAME, subset = SUBSET)
     ranges_per_speaker, nb_speakers, min_utterances = generate_ranges_per_speaker(dataset_dict)
