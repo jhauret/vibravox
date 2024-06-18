@@ -78,8 +78,11 @@ class SPKVLightningDataModule(LightningDataModule):
 
         if stage == "fit" or stage is None:
             # Generating dataset for training and validation
-            train_dataset = dataset_dict["train"]
-            val_dataset = dataset_dict["validation"]
+            train_dataset = dataset_dict.get("train", None)
+            val_dataset = dataset_dict.get("validation", None)
+
+            if train_dataset is None or val_dataset is None:
+                pass
 
             if self.sensorA == self.sensorB:
                 # When self.sensorA and self.sensorB are the same, only generate the dataset using one column
