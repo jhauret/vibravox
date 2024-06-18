@@ -84,7 +84,7 @@ class SPKVLightningDataModule(LightningDataModule):
             if train_dataset is None or val_dataset is None:
                 pass
 
-            if self.sensorA == self.sensorB:
+            if self.sensorA == self.sensorB and train_dataset is not None and val_dataset is not None:
                 # When self.sensorA and self.sensorB are the same, only generate the dataset using one column
 
                 # Only keep the relevant columns for this task :
@@ -109,7 +109,7 @@ class SPKVLightningDataModule(LightningDataModule):
                 train_dataset = train_dataset.rename_column(f"audio.{self.sensorA}", "audio")
                 val_dataset = val_dataset.rename_column(f"audio.{self.sensorA}", "audio")
 
-            else:
+            elif self.sensorA != self.sensorB and train_dataset is not None and val_dataset is not None:
                 # When self.sensorA and self.sensorB are different, generate the dataset by interleaving both sensors
                 # in the same dataset for train/validation, which results in a two times larger dataset for training,
                 # but allows to learn embeddings for both sensors
@@ -164,9 +164,11 @@ class SPKVLightningDataModule(LightningDataModule):
                 val_dataset = interleave_datasets(datasets=[val_dataset_a, val_dataset_b],
                                                        probabilities=[0.5, 0.5],
                                                        stopping_strategy='all_exhausted')
-            # Setting format to torch
-            self.train_dataset = train_dataset.with_format("torch")
-            self.val_dataset = val_dataset.with_format("torch")
+
+            if train_dataset is not None and val_dataset is not None:
+                # Setting format to torch
+                self.train_dataset = train_dataset.with_format("torch")
+                self.val_dataset = val_dataset.with_format("torch")
 
         if stage == "test":
             # Generating dataset for testing for Speaker Verification (only for the test set) : pairs are needed
