@@ -79,10 +79,10 @@ class STPLightningDataModule(LightningDataModule):
         )
 
         if stage == "fit" or stage is None:
-            self.train_dataset = dataset_dict["train"]
-            self.val_dataset = dataset_dict["validation"]
+            self.train_dataset = dataset_dict.get("train", None)
+            self.val_dataset = dataset_dict.get("validation", None)
         elif stage == "test" or stage is None:
-            self.test_dataset = dataset_dict["test"]
+            self.test_dataset = dataset_dict.get("test", None)
 
     def train_dataloader(self):
         """
