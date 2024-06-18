@@ -11,34 +11,58 @@ from huggingface_hub import PyTorchModelHubMixin
 
 MODEL_CARD_TEMPLATE = """
 ---
-library_name: transformers
-license: mit
-language: fr
-datasets:
-- Cnam-LMSSC/vibravox
-tags:
-- audio
-- audio-to-audio
-- speech
 ---
+language: fr
+license: mit
+library_name: transformers
+tags:
+  - audio
+  - audio-to-audio
+  - speech
+datasets:
+  - Cnam-LMSSC/vibravox
+model-index:
+  - name: EBEN(M=4,P=2,Q=4)
+    results:
+      - task:
+          name: Bandwidth Extension
+          type: speech-enhancement
+        dataset:
+          name: Vibravox["YOUR_MIC"]
+          type: Cnam-LMSSC/vibravox
+          args: fr
+        metrics:
+          - name: Test STOI, in-domain training
+            type: stoi
+            value: 0.8676
+          - name: Test Noresqa-MOS, in-domain training
+            type: n-mos
+            value: 4.331
+---
+
+<p align="center">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/65302a613ecbe51d6a6ddcec/zhB1fh-c0pjlj-Tr4Vpmr.png" style="object-fit:contain; width:280px; height:280px;" >
+</p>
+
 # Model Card 
 
 - **Developed by:** [Cnam-LMSSC](https://huggingface.co/Cnam-LMSSC)
-- **Model type:** [EBEN](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py) (see [publication](https://ieeexplore.ieee.org/document/10244161))
+- **Model:** [EBEN(M=?,P=?,Q=?)](https://github.com/jhauret/vibravox/blob/main/vibravox/torch_modules/dnn/eben_generator.py) (see [publication in IEEE TASLP](https://ieeexplore.ieee.org/document/10244161) - [arXiv link](https://arxiv.org/abs/2303.10008))
 - **Language:** French
 - **License:** MIT
-- **Finetuned dataset:** `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
+- **Training dataset:** `speech_clean` subset of [Cnam-LMSSC/vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox)
 - **Samplerate for usage:** 16kHz
 
 ## Overview
 
-This bandwidth extension model is trained on one specific body conduction sensor data from the [Vibravox dataset](https://huggingface.co/datasets/Cnam-LMSSC/vibravox). 
-The model is designed to to enhance the audio quality of body-conducted captured speech, by denoising and regenerating mid and high frequencies from low frequency content only.
+This bandwidth extension model, trained on [Vibravox](https://huggingface.co/datasets/Cnam-LMSSC/vibravox) body conduction sensor data, enhances body-conducted speech audio by denoising and regenerating mid and high frequencies from low-frequency content.
 
 ## Disclaimer
-This model has been trained for **specific non-conventional speech sensors** and is intended to be used with **in-domain data**.
-Please be advised that using these models outside their intended sensor data may result in suboptimal performance.
+This model, trained for **a specific non-conventional speech sensor**, is intended to be used with **in-domain data**. Using it with other sensor data may lead to suboptimal performance.
 
+## Link to BWE models trained on other body conducted sensors : 
+
+The entry point to all EBEN models for Bandwidth Extension (BWE) is available at [https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_models).  
 
 ## Training procedure
 
@@ -48,19 +72,18 @@ Detailed instructions for reproducing the experiments are available on the [jhau
 
 ```python
 import torch, torchaudio
-from vibravox import EBENGenerator
+from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 from datasets import load_dataset
 
-audio_16kHz, _ = torch.load("path_to_audio")
+model = EBENGenerator.from_pretrained("Cnam-LMSSC/EBEN_YOUR_MIC")
+test_dataset = load_dataset("Cnam-LMSSC/vibravox", "speech_clean", split="test", streaming=True)
 
-cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz)
+audio_48kHz = torch.Tensor(next(iter(test_dataset))["audio.YOUR_MIC"]["array"])
+audio_16kHz = torchaudio.functional.resample(audio_48kHz, orig_freq=48_000, new_freq=16_000)
+
+cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz[None, None, :])
 enhanced_audio_16kHz = model(cut_audio_16kHz)
 ```
-
-## Link to other BWE models trained on other body conducted sensors : 
-
-An entry point to all **audio bandwidth extension** (BWE) models trained on different sensor data from the trained on different sensor data from the [Vibravox dataset](https://huggingface.co/datasets/Cnam-LMSSC/vibravox) is available at [https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_bwe_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_bwe_models).  
-
 """
 
 
