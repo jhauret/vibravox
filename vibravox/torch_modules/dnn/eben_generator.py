@@ -11,7 +11,6 @@ from huggingface_hub import PyTorchModelHubMixin
 
 MODEL_CARD_TEMPLATE = """
 ---
----
 language: fr
 license: mit
 library_name: transformers
@@ -22,7 +21,7 @@ tags:
 datasets:
   - Cnam-LMSSC/vibravox
 model-index:
-  - name: EBEN(M=4,P=2,Q=4)
+  - name: EBEN(M=?,P=?,Q=?)
     results:
       - task:
           name: Bandwidth Extension
@@ -34,10 +33,10 @@ model-index:
         metrics:
           - name: Test STOI, in-domain training
             type: stoi
-            value: 0.8676
+            value: ???
           - name: Test Noresqa-MOS, in-domain training
             type: n-mos
-            value: 4.331
+            value: ???
 ---
 
 <p align="center">
