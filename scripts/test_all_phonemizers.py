@@ -23,7 +23,7 @@ PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 
 
 SAMPLE_RATE = 16_000
-DATASETS = ["Cnam-LMSSC/vibravox2"]  #"Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp",
+DATASETS = ["Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"]
 FEATURE_EXTRACTOR = transformers.Wav2Vec2FeatureExtractor()
 TOKENIZER = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
 PER = torchmetrics.text.CharErrorRate()
