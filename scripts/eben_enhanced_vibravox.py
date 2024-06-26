@@ -12,7 +12,7 @@ EBENs = {"forehead_accelerometer": EBENGenerator.from_pretrained(f"Cnam-LMSSC/EB
 
 resampler = torchaudio.transforms.Resample(orig_freq=48_000, new_freq=16_000)
 
-test_dataset = load_dataset("Cnam-LMSSC/vibravox2", "speech_clean", split="test", streaming=False)
+test_dataset = load_dataset("Cnam-LMSSC/vibravox", "speech_clean", split="test", streaming=False)
 
 
 def enhance_audio(sample):
