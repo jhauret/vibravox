@@ -20,9 +20,10 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 ## Resources:
 
-- **📝**: The paper related to this project is yet to be published. Stay tuned for updates!  
+- **📝**: The paper related to this project is available on arXiv on [this link](https://arxiv.org/abs/2407.11828).
 - **🤗**: The dataset used in this project is hosted by Hugging Face. You can access it [here](https://huggingface.co/datasets/Cnam-LMSSC/vibravox).  
 - **🌐**: For more information about the project, visit our [project page](https://vibravox.cnam.fr/).
+- **🏆**: Explore Leaderboards on [Papers With Code](https://paperswithcode.com/paper/vibravox-a-dataset-of-french-speech-captured).
 
 ## Requirements
 ```pip install -r requirements.txt```
