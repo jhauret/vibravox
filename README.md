@@ -12,7 +12,7 @@
 
 
 
-Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibravox dataset.
+Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibravox dataset. 
 
 
 
