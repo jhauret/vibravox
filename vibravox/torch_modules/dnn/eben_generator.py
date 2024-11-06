@@ -81,7 +81,7 @@ audio_48kHz = torch.Tensor(next(iter(test_dataset))["audio.YOUR_MIC"]["array"])
 audio_16kHz = torchaudio.functional.resample(audio_48kHz, orig_freq=48_000, new_freq=16_000)
 
 cut_audio_16kHz = model.cut_to_valid_length(audio_16kHz[None, None, :])
-enhanced_audio_16kHz = model(cut_audio_16kHz)
+enhanced_audio_16kHz, enhanced_audio_decomposed_4kHz = model(cut_audio_16kHz)
 ```
 """
 
