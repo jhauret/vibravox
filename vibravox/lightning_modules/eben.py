@@ -83,6 +83,7 @@ class EBENLightningModule(LightningModule):
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
         self.automatic_optimization = False
+        self.num_val_runs = 0
 
     def training_step(self, batch):
         """
@@ -202,6 +203,12 @@ class EBENLightningModule(LightningModule):
         """
         self.check_datamodule_parameter()
         self.logger.experiment.add_text(tag='description', text_string=self.description)
+
+    def on_validation_start(self) -> None:
+        """
+        Called when the validation loop begins.
+        """
+        self.num_val_runs += 1
 
     def on_test_start(self) -> None:
         """
@@ -325,47 +332,46 @@ class EBENLightningModule(LightningModule):
         )
 
         # Log audio
-        self.log_audio(
-            prefix=f"{stage}/", speech_dict=outputs, batch_idx=batch_idx
-        )
-
-    @staticmethod
-    def ready_to_log(audio_tensor):
-        """
-        Prepare the audio tensor to be logged in tensorboard.
-        Select the first audio of the batch and remove the channel dimension.
-
-        Args:
-            audio_tensor (torch.Tensor): Audio tensor of shape (batch_size, channels, samples)
-
-        Returns:
-            torch.Tensor: Audio tensor of shape (samples)
-
-        """
-        audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
-        return audio_tensor
+        if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
+            self.log_audio(
+                audio_tensor=outputs["enhanced"],
+                tag=f"{stage}_{batch_idx}/enhanced",
+                global_step=self.num_val_runs,
+            )
+            if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
+                self.log_audio(
+                    audio_tensor=outputs["reference"],
+                    tag=f"{stage}_{batch_idx}/reference",
+                    global_step=self.num_val_runs,
+                )
+                self.log_audio(
+                    audio_tensor=outputs["corrupted"],
+                    tag=f"{stage}_{batch_idx}/corrupted",
+                    global_step=self.num_val_runs,
+                )
 
     def log_audio(
-        self, speech_dict: Dict[str, torch.Tensor], prefix: str, batch_idx: int = 0
+            self,
+            audio_tensor: torch.Tensor,
+            tag: str,
+            global_step: int,
     ):
         """
         Log the first audio of the batch of every speech_dict values to tensorboard.
 
         Args:
-            speech_dict (Dict[str, torch.Tensor]): Dictionary of tensors of shape (batch_size, channels, samples)
-            prefix (str): Prefix to be added to the name of the audio
-            batch_idx (int): Batch index to be added to the global_step as `self.trainer.global_step` only counts optimizer steps
+            audio_tensor (torch.Tensor): Audio tensor of shape (batch_size, channels, samples) at 48kHz
+            tag (str): Tag to identify the audio
+            global_step (int): Global step for the audio
         """
 
-        if self.logger:
-            for speech_name, speech_tensor in speech_dict.items():
-                speech_tensor = self.ready_to_log(speech_tensor)
-                self.logger.experiment.add_audio(
-                    tag=f"{prefix}{speech_name}",
-                    snd_tensor=speech_tensor,
-                    global_step=self.trainer.global_step + batch_idx,
-                    sample_rate=self.sample_rate,
-                )
+        audio_tensor = audio_tensor.detach().cpu()[0, 0, :]
+        self.logger.experiment.add_audio(
+            tag=tag,
+            snd_tensor=audio_tensor,
+            global_step=global_step,
+            sample_rate=self.sample_rate,
+        )
 
     def compute_atomic_losses(self,
                               network: str,
