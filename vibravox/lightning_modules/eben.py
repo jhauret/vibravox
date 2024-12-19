@@ -301,7 +301,7 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_discriminator.items():
-            self.log(f"train/discriminator/{key}", value, sync_dist=True)
+            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
