@@ -4,7 +4,7 @@ import torch
 from torchaudio.functional import lowpass_biquad
 
 
-from typing import Optional
+from typing import Optional, Tuple
 
 def pad_audio(audio: torch.Tensor, desired_samples: int) -> torch.Tensor:
     """
@@ -116,3 +116,33 @@ def remove_hf(
     waveform = waveform[..., padding_length:-padding_length]
 
     return waveform
+
+# speech_batch and noise_batch are not the same size
+def mix_speech_and_noise(
+    speech_batch: torch.Tensor, noise_batch: torch.Tensor, snr=5.0
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Mix speech and noise batches at a given SNR.
+
+    Args:
+        speech_batch (torch.Tensor): a single speech sample (batch_size, 1, time)
+        noise_batch (torch.Tensor): a single noise sample (batch_size, 1, time)
+        snr (float): signal-to-noise ratio (SNR) in dB
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor]: (batch_size, 1, time)
+    """
+
+    # Compute power of speech and noise
+    speech_power = torch.mean(speech_batch**2, dim=-1, keepdim=True)
+    noise_power = torch.mean(noise_batch**2, dim=-1, keepdim=True)
+
+    # Compute scaling factor for the noise
+    snr_linear = 10 ** (snr / 10.0)
+    scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
+
+    # Scale the noise
+    noise_batch_scaled = noise_batch * scale_factor
+
+    # Add scaled noise to the speech
+    corrupted_speech_batch = speech_batch + noise_batch_scaled
+
+    return corrupted_speech_batch, noise_batch_scaled
