@@ -174,7 +174,9 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return forward_result
 
-    def common_logging(self, stage: str, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+    def common_logging(
+        self, stage: str, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
         """
         Common logging for training, validation and test steps.
 
