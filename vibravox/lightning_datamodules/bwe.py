@@ -171,7 +171,7 @@ class BWELightningDataModule(LightningDataModule):
 
         dataloader_principal = DataLoader(
             self.val_dataset_principal,
-            batch_size=min(1,self.batch_size // 4),
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
@@ -183,7 +183,7 @@ class BWELightningDataModule(LightningDataModule):
 
         dataloader_secondary = DataLoader(
             self.val_dataset_secondary,
-            batch_size=min(1,self.batch_size // 4),
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
@@ -202,7 +202,7 @@ class BWELightningDataModule(LightningDataModule):
 
         dataloader_principal = DataLoader(
             self.test_dataset_principal,
-            batch_size=min(1,self.batch_size // 4),
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
@@ -214,7 +214,7 @@ class BWELightningDataModule(LightningDataModule):
 
         dataloader_secondary = DataLoader(
             self.test_dataset_secondary,
-            batch_size=min(1,self.batch_size // 4),
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
