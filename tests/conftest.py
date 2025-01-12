@@ -124,7 +124,7 @@ def bwe_lightning_datamodule_instance(
 
     datamodule = BWELightningDataModule(
         sample_rate=sample_rate,
-        dataset_name=dataset_name,
+        dataset_name_principal=dataset_name,
         subset=subset_name,
         sensor=sensor_name,
         collate_strategy=collate_strategy,
