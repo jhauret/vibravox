@@ -6,7 +6,7 @@ from vibravox.lightning_datamodules.bwe import BWELightningDataModule
 class TestBWELightningDataModule:
     def test_dataset_returns_torch_tensor(self, bwe_lightning_datamodule_instance):
         bwe_lightning_datamodule_instance.setup(stage="test")
-        test_dataset = bwe_lightning_datamodule_instance.test_dataset
+        test_dataset = bwe_lightning_datamodule_instance.test_dataset_principal
         dataset_sample = next(iter(test_dataset))
 
         assert isinstance(dataset_sample["audio_body_conducted"]["array"], torch.Tensor)
