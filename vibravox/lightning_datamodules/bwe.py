@@ -125,7 +125,6 @@ class BWELightningDataModule(LightningDataModule):
 
         Args:
             dataset_dict (DatasetDict): Dataset dictionary.
-            sample_rate (int): Sample rate.
 
         Returns:
             DatasetDict: Prepared dataset dictionary.
@@ -177,20 +176,19 @@ class BWELightningDataModule(LightningDataModule):
                 batch, deterministic=True, collate_strategy=self.collate_strategy
             ),
         )
+        if self.dataset_name_secondary is not None:
+            dataloader_secondary = DataLoader(
+                self.val_dataset_secondary,
+                batch_size=min(1, self.batch_size // 4),
+                num_workers=self.num_workers,
+                collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True, collate_strategy=self.collate_strategy
+                ),
+            )
 
-        if self.dataset_name_secondary is None:
+            return {"principal": dataloader_principal, "secondary": dataloader_secondary}
+        else:
             return dataloader_principal
-
-        dataloader_secondary = DataLoader(
-            self.val_dataset_secondary,
-            batch_size=min(1, self.batch_size // 4),
-            num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(
-                batch, deterministic=True, collate_strategy=self.collate_strategy
-            ),
-        )
-
-        return {"principal": dataloader_principal, "secondary": dataloader_secondary}
 
     def test_dataloader(self) -> Union[DataLoader, Dict[str, DataLoader]]:
         """
@@ -209,19 +207,19 @@ class BWELightningDataModule(LightningDataModule):
             ),
         )
 
-        if self.dataset_name_secondary is None:
+        if self.dataset_name_secondary is not None:
+            dataloader_secondary = DataLoader(
+                self.test_dataset_secondary,
+                batch_size=min(1, self.batch_size // 4),
+                num_workers=self.num_workers,
+                collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True, collate_strategy=self.collate_strategy
+                ),
+            )
+
+            return {"principal": dataloader_principal, "secondary": dataloader_secondary}
+        else:
             return dataloader_principal
-
-        dataloader_secondary = DataLoader(
-            self.test_dataset_secondary,
-            batch_size=min(1, self.batch_size // 4),
-            num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(
-                batch, deterministic=True, collate_strategy=self.collate_strategy
-            ),
-        )
-
-        return {"principal": dataloader_principal, "secondary": dataloader_secondary}
 
     def data_collator(
         self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str

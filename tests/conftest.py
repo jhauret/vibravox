@@ -146,7 +146,7 @@ def stp_lightning_datamodule_instance(
 
     datamodule = STPLightningDataModule(
         sample_rate=sample_rate,
-        dataset_name=dataset_name,
+        dataset_name_principal=dataset_name,
         subset=subset_name,
         sensor=sensor_name,
         streaming=streaming,
