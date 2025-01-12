@@ -32,7 +32,7 @@ class TestBWELightningDataModule:
         test_dataloader = bwe_lightning_datamodule_instance.test_dataloader()
         dataloader_sample = next(iter(test_dataloader))
 
-        if bwe_lightning_datamodule_instance.dataset_name == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+        if bwe_lightning_datamodule_instance.dataset_name_principal == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
             pytest.skip("Skipping for vibravox_enhanced_by_EBEN_tmp because the audio_body_conducted are shorter.")
         assert (
             dataloader_sample["audio_body_conducted"].shape == dataloader_sample["audio_airborne"].shape
@@ -40,7 +40,7 @@ class TestBWELightningDataModule:
 
     def test_no_offset_between_audio_samples(self, bwe_lightning_datamodule_instance):
         bwe_lightning_datamodule_instance.setup(stage="test")
-        if bwe_lightning_datamodule_instance.dataset_name == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+        if bwe_lightning_datamodule_instance.dataset_name_principal == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
             pytest.skip("Skipping for Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp")
         if bwe_lightning_datamodule_instance.subset == "speech_noisy":
             pytest.skip("Skipping for noisy speech.")
