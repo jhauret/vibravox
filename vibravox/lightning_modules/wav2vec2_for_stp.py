@@ -34,9 +34,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             vocab_size=38,  # Corresponds to `len(self.trainer.datamodule.tokenizer)`
         )
 
-        self.optimizer: torch.optim.Optimizer = optimizer(
-            params=self.wav2vec2_for_ctc.parameters()
-        )
+        self.optimizer: torch.optim.Optimizer = optimizer(params=self.wav2vec2_for_ctc.parameters())
 
         self.metrics: MetricCollection = metrics
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
@@ -51,22 +49,26 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return self.common_step(batch)
 
-    def validation_step(self, batch: Dict[str, torch.Tensor]):
+    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx, dataloader_idx=0):
         """
         Lightning validation step
 
         Args:
             batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
+            batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
 
         return self.common_step(batch)
 
-    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx):
+    def test_step(self, batch: Dict[str, torch.Tensor], batch_idx, dataloader_idx=0):
         """
         Lightning test step
 
         Args:
             batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
+            batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
 
         return self.common_step(batch)
@@ -98,9 +100,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         """
         self.check_datamodule_parameter()
 
-    def on_train_batch_end(
-        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int
-    ) -> None:
+    def on_train_batch_end(self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int) -> None:
         """
         Method automatically called when the train batch ends.
 
@@ -124,11 +124,9 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             batch_idx (int): Index of the batch
         """
 
-        self.common_logging("validation", outputs, batch, batch_idx)
+        self.common_logging("validation", outputs, batch, batch_idx, dataloader_idx)
 
-    def on_test_batch_end(
-        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
-    ) -> None:
+    def on_test_batch_end(self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
         """
         Method automatically called when the test batch ends.
 
@@ -137,19 +135,24 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             batch (Any): Batch
             batch_idx (int): Index of the batch
         """
-        self.common_logging("test", outputs, batch, batch_idx)
+        self.common_logging("test", outputs, batch, batch_idx, dataloader_idx)
 
     def on_test_end(self) -> None:
         """
         Method to be called when the test ends.
         """
         if self.push_to_hub_after_testing:
-            self.wav2vec2_for_ctc.push_to_hub(f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
-                                              commit_message=f"Upload Wav2Vec2ForCTC after {self.trainer.current_epoch} epochs")
-            processor = Wav2Vec2Processor(feature_extractor=self.trainer.datamodule.feature_extractor,
-                                          tokenizer=self.trainer.datamodule.tokenizer)
-            processor.push_to_hub(f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
-                                  commit_message=f"Upload Wav2Vec2Processor after {self.trainer.current_epoch} epochs")
+            self.wav2vec2_for_ctc.push_to_hub(
+                f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
+                commit_message=f"Upload Wav2Vec2ForCTC after {self.trainer.current_epoch} epochs",
+            )
+            processor = Wav2Vec2Processor(
+                feature_extractor=self.trainer.datamodule.feature_extractor, tokenizer=self.trainer.datamodule.tokenizer
+            )
+            processor.push_to_hub(
+                f"Cnam-LMSSC/phonemizer_{self.trainer.datamodule.sensor}",
+                commit_message=f"Upload Wav2Vec2Processor after {self.trainer.current_epoch} epochs",
+            )
 
     def common_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         """
@@ -171,7 +174,9 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         return forward_result
 
-    def common_logging(self, stage: str, outputs: STEP_OUTPUT, batch: Any, batch_idx: int)-> None:
+    def common_logging(
+        self, stage: str, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
+    ) -> None:
         """
         Common logging for training, validation and test steps.
 
@@ -180,26 +185,24 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
             outputs(STEP_OUTPUT): Output of the {train,validation,test}_step method
             batch (Dict[str, torch.Tensor]): Dict with keys "audio", "phonemes_ids", "phonemes_str"
             batch_idx(int): Index of the batch
-
+            dataloader_idx(int): Index of the dataloader
         """
 
         # Log loss
-        self.log(f"{stage}/ctc_loss", outputs["loss"], sync_dist=True)
+        self.log(f"{stage}_{dataloader_idx}/ctc_loss", outputs["loss"], sync_dist=True)
 
         # Log metrics
         predicted_phonemes = self.get_phonemes_from_logits(outputs["logits"])
         target_phonemes = batch["phonemes_str"]
         metrics_to_log = self.metrics(predicted_phonemes, target_phonemes)
-        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
+        metrics_to_log = {f"{stage}_{dataloader_idx}/{k}": v for k, v in metrics_to_log.items()}
 
         self.log_dict(dictionary=metrics_to_log, sync_dist=True, prog_bar=True)
 
         # Log text
-        text_to_log = (
-            f"OUT: {predicted_phonemes[0]}" + "  \n" + f"GT:{target_phonemes[0]} "
-        )
+        text_to_log = f"OUT: {predicted_phonemes[0]}" + "  \n" + f"GT:{target_phonemes[0]} "
         self.logger.experiment.add_text(
-            tag=f"{stage}/predicted_vs_target__phonemes",
+            tag=f"{stage}_{dataloader_idx}/predicted_vs_target__phonemes",
             text_string=text_to_log,
             global_step=self.trainer.global_step + batch_idx,
         )
@@ -218,8 +221,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         # Get predicted phonemes
         predicted_ids = torch.argmax(model_logits, dim=2)
         predicted_phonemes = [
-            self.trainer.datamodule.tokenizer.decode(predicted_ids[i, :])
-            for i in range(predicted_ids.shape[0])
+            self.trainer.datamodule.tokenizer.decode(predicted_ids[i, :]) for i in range(predicted_ids.shape[0])
         ]
 
         return predicted_phonemes

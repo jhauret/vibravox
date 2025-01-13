@@ -1,7 +1,7 @@
-from typing import Dict, Any, Tuple, Union, List
+from typing import Dict, Union, List
 
 import torch
-from datasets import load_dataset, Audio
+from datasets import load_dataset, Audio, DatasetDict
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
@@ -9,10 +9,19 @@ from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
 
 class STPLightningDataModule(LightningDataModule):
 
+    LIST_OF_VIBRAVOX = [
+        "Cnam-LMSSC/vibravox",
+        "Cnam-LMSSC/vibravox2",
+        "Cnam-LMSSC/vibravox-test",
+        "Cnam-LMSSC/non_curated_vibravox",
+        "Cnam-LMSSC/vibravox_enhanced_by_EBEN",
+    ]
+
     def __init__(
         self,
         sample_rate: int = 16000,
-        dataset_name: str = "Cnam-LMSSC/vibravox",
+        dataset_name_principal: str = "Cnam-LMSSC/vibravox",
+        dataset_name_secondary: str = None,
         subset: str = "speech_clean",
         sensor: str = "headset_microphone",
         streaming: bool = False,
@@ -27,9 +36,10 @@ class STPLightningDataModule(LightningDataModule):
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
-            dataset_name (str, optional): Dataset name.
-                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
-                Defaults to "Cnam-LMSSC/vibravox".
+            dataset_name_principal (str, optional): Principal dataset name that is going to be used for train/validation and testing.
+                Default to "Cnam-LMSSC/vibravox".
+            dataset_name_secondary (str, optional): Secondary dataset name that is going to be used for validation and testing.
+                Default to None
             subset (str, optional): Subset. Defaults to "speech_clean"
             sensor (str, optional): Sensor. Defaults to "headset_microphone"
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
@@ -42,9 +52,15 @@ class STPLightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox-test", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
-            f"dataset_name {dataset_name} not supported."
-        self.dataset_name = dataset_name
+        self.dataset_name_principal = dataset_name_principal
+        assert (
+            dataset_name_principal in self.LIST_OF_VIBRAVOX
+        ), f"dataset_name_principal {dataset_name_principal} not supported."
+
+        self.dataset_name_secondary = dataset_name_secondary
+        assert (
+            dataset_name_secondary is None or dataset_name_secondary in self.LIST_OF_VIBRAVOX
+        ), f"dataset_name_secondary {dataset_name_secondary} not supported."
         self.subset = subset
         self.sensor = sensor
         self.streaming = streaming
@@ -65,26 +81,44 @@ class STPLightningDataModule(LightningDataModule):
             That is why it is necessary to define attributes here rather than in __init__.
         """
 
-        dataset_dict = load_dataset(
-            self.dataset_name, self.subset, streaming=self.streaming
-        )
+        dataset_dict_principal = load_dataset(self.dataset_name_principal, self.subset, streaming=self.streaming)
+        dataset_dict_principal = self.prepare_dataset_dict(dataset_dict_principal)
+
+        if self.dataset_name_secondary is not None:
+            dataset_dict_secondary = load_dataset(self.dataset_name_secondary, self.subset, streaming=self.streaming)
+            dataset_dict_secondary = self.prepare_dataset_dict(dataset_dict_secondary)
+
+        if stage == "fit" or stage is None:
+            self.train_dataset_principal = dataset_dict_principal["train"]
+            self.val_dataset_principal = dataset_dict_principal["validation"]
+            if self.dataset_name_secondary is not None:
+                self.val_dataset_secondary = dataset_dict_secondary["validation"]
+        elif stage == "test" or stage is None:
+            self.test_dataset_principal = dataset_dict_principal["test"]
+            if self.dataset_name_secondary is not None:
+                self.test_dataset_secondary = dataset_dict_secondary["test"]
+
+    def prepare_dataset_dict(self, dataset_dict: DatasetDict) -> DatasetDict:
+        """
+        Prepare the dataset dictionary.
+
+        Args:
+            dataset_dict (DatasetDict): Dataset dictionary.
+
+        Returns:
+            DatasetDict: Prepared dataset dictionary.
+        """
 
         dataset_dict = dataset_dict.rename_column(f"audio.{self.sensor}", "audio")
 
         dataset_dict = dataset_dict.select_columns(["audio", "phonemized_text"])
 
         # Resample the audio to the right sample rate
-        dataset_dict = dataset_dict.cast_column(
-            "audio", Audio(sampling_rate=self.sample_rate, mono=False)
-        )
+        dataset_dict = dataset_dict.cast_column("audio", Audio(sampling_rate=self.sample_rate, mono=False))
 
-        if stage == "fit" or stage is None:
-            self.train_dataset = dataset_dict.get("train", None)
-            self.val_dataset = dataset_dict.get("validation", None)
-        elif stage == "test" or stage is None:
-            self.test_dataset = dataset_dict.get("test", None)
+        return dataset_dict
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         """
         Train dataloader.
 
@@ -93,43 +127,67 @@ class STPLightningDataModule(LightningDataModule):
         """
 
         return DataLoader(
-            self.train_dataset,
+            self.train_dataset_principal,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=self.data_collator,
         )
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> Union[DataLoader, Dict[str, DataLoader]]:
         """
         Validation dataloader.
 
         Returns:
-            DataLoader
+             Union[DataLoader, Dict[str, DataLoader]]
         """
 
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
+        dataloader_principal = DataLoader(
+            self.val_dataset_principal,
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=self.data_collator,
         )
 
-    def test_dataloader(self):
+        if self.dataset_name_secondary is not None:
+            dataloader_secondary = DataLoader(
+                self.val_dataset_secondary,
+                batch_size=min(1, self.batch_size // 4),
+                num_workers=self.num_workers,
+                collate_fn=self.data_collator,
+            )
+            return {"principal": dataloader_principal, "secondary": dataloader_secondary}
+        else:
+            return dataloader_principal
+
+    def test_dataloader(self) -> Union[DataLoader, Dict[str, DataLoader]]:
         """
         Test dataloader.
 
         Returns:
-            DataLoader
+             Union[DataLoader, Dict[str, DataLoader]]
         """
 
-        return DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
+        dataloader_principal = DataLoader(
+            self.test_dataset_principal,
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
             collate_fn=self.data_collator,
         )
 
-    def data_collator(self, batch: Dict[str, Union[torch.Tensor, List[str]]]) -> Dict[str, Union[torch.Tensor, List[int], List[str]]]:
+        if self.dataset_name_secondary is not None:
+            dataloader_secondary = DataLoader(
+                self.test_dataset_secondary,
+                batch_size=min(1, self.batch_size // 4),
+                num_workers=self.num_workers,
+                collate_fn=self.data_collator,
+            )
+            return {"principal": dataloader_principal, "secondary": dataloader_secondary}
+        else:
+            return dataloader_principal
+
+    def data_collator(
+        self, batch: Dict[str, Union[torch.Tensor, List[str]]]
+    ) -> Dict[str, Union[torch.Tensor, List[int], List[str]]]:
         """
         Custom data collator function to dynamically pad the data.
 
@@ -137,7 +195,7 @@ class STPLightningDataModule(LightningDataModule):
             batch (Dict[str, Union[torch.Tensor, List[str]]]) : Dict from the dataset with the keys 'audio' and 'phonemes':
                 - 'audio' (torch.Tensor of dimension (sample_rate * duration))
                 - 'phonemes' (str)
-        
+
         Returns:
             Dict[str, Union[torch.Tensor, List[int], List[str]]]: A dictionary containing collated data with keys:
             - 'audio' (torch.Tensor of dimension (batch_size, sample_rate * duration)),
@@ -166,9 +224,7 @@ class STPLightningDataModule(LightningDataModule):
             # Because NVIDIA GeForce RTX 2080 Ti have 128 Concurrent Kernel Execution
         )
 
-        labels = labels_processed.input_ids.masked_fill(
-            labels_processed.attention_mask.ne(1), -100
-        )
+        labels = labels_processed.input_ids.masked_fill(labels_processed.attention_mask.ne(1), -100)
 
         return {
             "audio": audio_processed.input_values,
