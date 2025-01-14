@@ -3,7 +3,6 @@ This script is used to test all phonemizers on all microphones, thus creating a 
 """
 
 from collections import Counter
-import torchmetrics
 import transformers
 from datasets import load_dataset, Audio
 import torch
@@ -40,9 +39,9 @@ for dataset_idx, dataset_name in enumerate(DATASETS):
             model = AutoModelForCTC.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
             if CUDA_IS_AVAILABLE:
                 model.cuda()
-            preds, targets, editops_in_word, editops_before_space, editops_all = [], [], [], [], []
-            for sample in tqdm(test_dataset):
+            pers, editops_in_word, editops_before_space, editops_all = [], [], [], []
 
+            for sample in tqdm(test_dataset):
                 target_transcription = sample["phonemized_text"]
 
                 # Compute predicted transcription
@@ -57,20 +56,18 @@ for dataset_idx, dataset_name in enumerate(DATASETS):
                 # Get edit operations
                 raw_editops = Levenshtein.editops(predicted_transcription, target_transcription)
                 raw_editops_before_space, raw_editops_in_word, raw_editops_all = split_editops(predicted_transcription, target_transcription, raw_editops)
-
                 decoded_operations_in_word = decode_operations(predicted_transcription, target_transcription, raw_editops_in_word)
                 decoded_operations_before_space = decode_operations(predicted_transcription, target_transcription, raw_editops_before_space)
                 decoded_operations_all = decode_operations(predicted_transcription, target_transcription, raw_editops_all)
-
-                preds.append(predicted_transcription)
-                targets.append(target_transcription)
-
                 editops_in_word += decoded_operations_in_word
                 editops_before_space += decoded_operations_before_space
                 editops_all += decoded_operations_all
 
+                # Compute PER
+                pers.append(char_error_rate(predicted_transcription, target_transcription))
+
             # Save PER
-            per = char_error_rate(preds, targets)
+            per = sum(pers) / len(pers)
             print(f"Test PER of {phonemizer} on {microphone} for {dataset_name} subset: {per * 100:.2f}%")
             per_results[dataset_idx, microphone_idx, phonemizer_idx] = per
 
