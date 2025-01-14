@@ -121,17 +121,17 @@ def mix_speech_and_noise(
     speech_batch: torch.Tensor, noise_batch: torch.Tensor, snr: float = 5.0
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Mix speech and noise batches at a given Signal-to-Noise Ratio (SNR).
+    Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
 
     Args:
-        speech_batch (torch.Tensor): A batch of clean speech samples with shape (batch_size, 1, time).
-        noise_batch (torch.Tensor): A batch of noise samples with shape (noise_batch_size, 1, time_noise).
+        speech_batch (torch.Tensor): A clean speech sample with shape (time).
+        noise_batch (torch.Tensor): A noise sample with shape (time_noise).
         snr (float, optional): Desired signal-to-noise ratio in decibels. Defaults to 5.0.
 
     Returns:
         Tuple[torch.Tensor, torch.Tensor]: 
-            - corrupted_speech_batch: Mixed speech and noise with shape (batch_size, 1, time).
-            - noise_batch_scaled: Scaled noise used for mixing with shape (batch_size, 1, time).
+            - corrupted_speech_batch: Mixed speech and noise with shape (time).
+            - noise_batch_scaled: Scaled noise used for mixing with shape (time).
 
     Raises:
         TypeError: If either speech_batch or noise_batch is not a torch.Tensor.
@@ -147,53 +147,46 @@ def mix_speech_and_noise(
         raise TypeError(f"noise_batch must be a torch.Tensor, but got {type(noise_batch)}")
 
     # Check tensor dimensions
-    if speech_batch.dim() != 3:
-        raise ValueError(f"speech_batch must be a 3D tensor of shape (batch_size, 1, time), but got shape {speech_batch.shape}")
-    if noise_batch.dim() != 3:
-        raise ValueError(f"noise_batch must be a 3D tensor of shape (noise_batch_size, 1, time_noise), but got shape {noise_batch.shape}")
+    if speech_batch.dim() != 1:
+        raise ValueError(f"speech_batch must be a 1D tensor of shape (time), but got shape {speech_batch.shape}")
+    if noise_batch.dim() != 1:
+        raise ValueError(f"noise_batch must be a 1D tensor of shape (time_noise), but got shape {noise_batch.shape}")
 
-    batch_size, _, time_speech = speech_batch.size()
-    noise_batch_size, _, time_noise = noise_batch.size()
+    time_speech = speech_batch.size(0)
+    time_noise = noise_batch.size(0)
+
+    if time_noise < time_speech:
+        raise ValueError(f"noise_batch length ({time_noise}) must be >= speech_batch length ({time_speech}).")
 
     # -----------------------------
     # Align Time Sizes by Shuffling Chunks
     # -----------------------------
-    # For each speech sample, randomly select a noise sample and a random offset
-    device = speech_batch.device  # Ensure all tensors are on the same device
+    # Randomly select an offset
+    device = speech_batch.device  # Ensure tensors are on the same device
 
-    # Randomly select noise sample indices for each speech sample
-    noise_indices = torch.randint(0, noise_batch_size, (batch_size,), device=device)
-
-    # Calculate maximum possible offset
     max_offset = time_noise - time_speech
 
-    # Randomly select offsets for each speech sample
-    offsets = torch.randint(0, max_offset + 1, (batch_size,), device=device)
+    offset = torch.randint(0, max_offset + 1, (1,), device=device).item()
 
-    # Extract the corresponding noise slices
-    noise_slices = []
-    for i in range(batch_size):
-        noise_sample = noise_batch[noise_indices[i], :, offsets[i]:offsets[i] + time_speech]
-        noise_slices.append(noise_sample)
-    noise_slices = torch.stack(noise_slices, dim=0)  # Shape: (batch_size, 1, time_speech)
+    # Extract the noise slice
+    noise_slice = noise_batch[offset: offset + time_speech]
 
     # -----------------------------
     # Compute Power
     # -----------------------------
-    # Compute power (mean squared amplitude) for each sample in the batch
-    speech_power = torch.mean(speech_batch ** 2, dim=-1, keepdim=True)  # Shape: (batch_size, 1, 1)
-    noise_power = torch.mean(noise_slices ** 2, dim=-1, keepdim=True)    # Shape: (batch_size, 1, 1)
+    speech_power = torch.mean(speech_batch ** 2)
+    noise_power = torch.mean(noise_slice ** 2)
 
     # -----------------------------
     # Compute Scaling Factor
     # -----------------------------
     snr_linear = 10 ** (snr / 10.0)  # Convert SNR from dB to linear scale
-    scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))  # Shape: (batch_size, 1, 1)
+    scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
 
     # -----------------------------
     # Scale Noise and Mix
     # -----------------------------
-    noise_batch_scaled = noise_slices * scale_factor  # Scale noise to achieve desired SNR
+    noise_batch_scaled = noise_slice * scale_factor  # Scale noise to achieve desired SNR
     corrupted_speech_batch = speech_batch + noise_batch_scaled  # Mix scaled noise with speech
 
     return corrupted_speech_batch, noise_batch_scaled
