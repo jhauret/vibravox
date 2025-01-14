@@ -25,9 +25,7 @@ PHONEMIZERS = [f"phonemizer_{microphone}" for microphone in MICROPHONES]
 SAMPLE_RATE = 16_000
 DATASETS = ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"]
 CUDA_IS_AVAILABLE = torch.cuda.is_available()
-
-FEATURE_EXTRACTOR = transformers.Wav2Vec2FeatureExtractor()
-TOKENIZER = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
+tokenizer = transformers.Wav2Vec2CTCTokenizer.from_pretrained("Cnam-LMSSC/vibravox-phonemes-tokenizer")
 
 per_results = torch.empty((len(DATASETS), len(MICROPHONES), len(PHONEMIZERS)))
 editops_occurrences_results = {}
@@ -38,7 +36,7 @@ for dataset_idx, dataset_name in enumerate(DATASETS):
         test_dataset = test_dataset.cast_column(f"audio.{microphone}", Audio(sampling_rate=SAMPLE_RATE, mono=False))
         test_dataset = test_dataset.with_format("torch")
         for phonemizer_idx, phonemizer in enumerate(PHONEMIZERS):
-            processor = AutoProcessor.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
+            feature_extractor = transformers.Wav2Vec2FeatureExtractor.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
             model = AutoModelForCTC.from_pretrained(f"Cnam-LMSSC/{phonemizer}")
             if CUDA_IS_AVAILABLE:
                 model.cuda()
@@ -49,12 +47,12 @@ for dataset_idx, dataset_name in enumerate(DATASETS):
 
                 # Compute predicted transcription
                 audio_16kHz = sample[f"audio.{microphone}"]["array"]
-                inputs = processor(audio_16kHz, sampling_rate=16_000, return_tensors="pt")
+                inputs = feature_extractor(audio_16kHz, sampling_rate=16_000, return_tensors="pt")
                 if CUDA_IS_AVAILABLE:
                     inputs.input_values = inputs.input_values.cuda()
                 logits = model(inputs.input_values).logits
                 predicted_ids = torch.argmax(logits, dim=-1)
-                predicted_transcription = processor.batch_decode(predicted_ids)[0]
+                predicted_transcription = tokenizer.batch_decode(predicted_ids)[0]
 
                 # Get edit operations
                 raw_editops = Levenshtein.editops(predicted_transcription, target_transcription)
