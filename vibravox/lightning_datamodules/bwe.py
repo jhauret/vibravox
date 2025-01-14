@@ -200,7 +200,7 @@ class BWELightningDataModule(LightningDataModule):
 
         dataloader_principal = DataLoader(
             self.test_dataset_principal,
-            batch_size=min(1, self.batch_size // 4),
+            batch_size=1,
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
@@ -210,7 +210,7 @@ class BWELightningDataModule(LightningDataModule):
         if self.dataset_name_secondary is not None:
             dataloader_secondary = DataLoader(
                 self.test_dataset_secondary,
-                batch_size=min(1, self.batch_size // 4),
+                batch_size=1,
                 num_workers=self.num_workers,
                 collate_fn=lambda batch: self.data_collator(
                     batch, deterministic=True, collate_strategy=self.collate_strategy
