@@ -14,6 +14,7 @@ class SpeechNoiseDataset(Dataset):
         
         self.speech_dataset = speech_dataset
         self.noise_dataset = noise_dataset
+        self.len_noise: int = len(noise_dataset)
         
     def __len__(self) -> int:
         return len(self.speech_dataset)
@@ -21,7 +22,7 @@ class SpeechNoiseDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         
         speech_sample = self.speech_dataset[idx]
-        noise_sample = self.noise_dataset[idx]
+        noise_sample = self.noise_dataset[idx % self.len_noise] # because the noise dataset is smaller
         
         return {
             "audio_airborne": speech_sample["audio_airborne"],
