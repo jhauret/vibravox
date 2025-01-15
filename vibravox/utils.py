@@ -4,7 +4,7 @@ import torch
 from torchaudio.functional import lowpass_biquad
 
 
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 def pad_audio(audio: torch.Tensor, desired_samples: int) -> torch.Tensor:
     """
@@ -118,7 +118,7 @@ def remove_hf(
     return waveform
 
 def mix_speech_and_noise(
-    speech_batch: torch.Tensor, noise_batch: torch.Tensor, snr: float = 5.0
+    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr: float = 5.0
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
@@ -140,17 +140,15 @@ def mix_speech_and_noise(
     # -----------------------------
     # Input Validation with Assertions
     # -----------------------------
-    # Check if inputs are torch.Tensor
-    if not isinstance(speech_batch, torch.Tensor):
-        raise TypeError(f"speech_batch must be a torch.Tensor, but got {type(speech_batch)}")
-    if not isinstance(noise_batch, torch.Tensor):
-        raise TypeError(f"noise_batch must be a torch.Tensor, but got {type(noise_batch)}")
 
     # Check tensor dimensions
-    if speech_batch.dim() != 1:
+    if speech_batch[-1].dim() != 1:
         raise ValueError(f"speech_batch must be a 1D tensor of shape (time), but got shape {speech_batch.shape}")
-    if noise_batch.dim() != 1:
+    if noise_batch[-1].dim() != 1:
         raise ValueError(f"noise_batch must be a 1D tensor of shape (time_noise), but got shape {noise_batch.shape}")
+    
+    speech_batch = torch.cat(speech_batch, dim=0)
+    noise_batch = torch.cat(noise_batch, dim=0)
 
     time_speech = speech_batch.size(0)
     time_noise = noise_batch.size(0)
