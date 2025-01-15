@@ -151,6 +151,8 @@ class BWELightningDataModule(LightningDataModule):
         )
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
+        #TODO: rendre static et l'importer celle-ci dans noisybwelightningdatamodule (et bwelightningdatamodule)
+        #TODO: mettre dans utils, data_collator est 'généraliste'
         """
         Custom data collator function to dynamically pad the data.
 

@@ -188,9 +188,10 @@ class NoisyBWELightningDataModule(LightningDataModule):
         Custom data collator function to dynamically pad the data.
 
         Args:
-            - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys 'audio_body_conducted' and 'audio_airborne':
+            - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys :
                 - 'audio_body_conducted': (torch.Tensor of dimension (sample_rate * duration)),
                 - 'audio_airborne': (torch.Tensor of dimension (sample_rate * duration))
+                - 'audio_body_conducted_speechless_noisy': (torch.Tensor of dimension (sample_rate * noise_duration))
             - deterministic (bool): If True, always select the same part of the signal.
             - collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - 'pad': Pad the audio signals to the length of the longest signal in the batch,
@@ -201,14 +202,16 @@ class NoisyBWELightningDataModule(LightningDataModule):
                 - 'audio_body_conducted': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
                 - 'audio_airborne': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
         """
-
         body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
+        noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
+        
+        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch)
 
         if collate_strategy == "pad":
 
-            body_conducted_padded_batch = pad_sequence(
-                body_conducted_batch, batch_first=True, padding_value=0.0
+            speech_noisy_synthetic_padded_batch = pad_sequence(
+                speech_noisy_synthetic, batch_first=True, padding_value=0.0
             ).unsqueeze(1)
             air_conducted_padded_batch = pad_sequence(
                 air_conducted_batch, batch_first=True, padding_value=0.0
@@ -218,31 +221,32 @@ class NoisyBWELightningDataModule(LightningDataModule):
             ms_length = int(self.collate_strategy.split('-')[1])
             samples = int(self.sample_rate * ms_length / 1000)
 
-            body_conducted_padded_batch = []
+            speech_noisy_synthetic_padded_batch = []
             air_conducted_padded_batch = []
-            for body_conducted, air_conducted in zip(body_conducted_batch, air_conducted_batch):
+            for body_conducted, air_conducted in zip(speech_noisy_synthetic, air_conducted_batch):
                 body_conducted_padded, air_conducted_padded = set_audio_duration(
                     audio=body_conducted,
                     desired_samples=samples,
                     audio_bis=air_conducted,
                     deterministic=deterministic,
                 )
-                body_conducted_padded_batch.append(body_conducted_padded.unsqueeze(0))
+                speech_noisy_synthetic_padded_batch.append(body_conducted_padded.unsqueeze(0))
                 air_conducted_padded_batch.append(air_conducted_padded.unsqueeze(0))
-            body_conducted_padded_batch = torch.stack(body_conducted_padded_batch, dim=0)
+            speech_noisy_synthetic_padded_batch = torch.stack(speech_noisy_synthetic_padded_batch, dim=0)
             air_conducted_padded_batch = torch.stack(air_conducted_padded_batch, dim=0)
 
         # Apply data augmentation
         if deterministic is False:
             with torch.no_grad():
-                body_conducted_padded_batch, air_conducted_padded_batch = self.data_augmentation(body_conducted_padded_batch, air_conducted_padded_batch)        
+                speech_noisy_synthetic_padded_batch, air_conducted_padded_batch = self.data_augmentation(speech_noisy_synthetic_padded_batch, air_conducted_padded_batch)        
 
         return {
-            "audio_body_conducted": body_conducted_padded_batch,
+            "audio_body_conducted": speech_noisy_synthetic_padded_batch,
             "audio_airborne":  air_conducted_padded_batch,
         }
         
     def data_collator_for_test(self, batch: List[Dict[str, Audio]]) -> Dict[str, torch.Tensor]:
+        #TODO: temporaire, utiliser utils/data_collator généraliste
         """_summary_
 
         Args:
