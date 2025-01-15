@@ -93,25 +93,8 @@ class NoisyBWELightningDataModule(LightningDataModule):
         speech_noisy = load_dataset(
             self.dataset_name, self.subset_speech_noisy, streaming=self.streaming
         )
-
-        # Define datasets with their respective suffixes
-        # datasets = {
-        #     "speechclean": {
-        #         "dataset": dataset_dict_speechclean,
-        #         "suffix": None
-        #     },
-        #     "speechless_noisy": {
-        #         "dataset": dataset_dict_speechless_noisy,
-        #         "suffix": "speechless_noisy"
-        #     },
-        #     "speech_noisy": {
-        #         "dataset": dataset_dict_speech_noisy,
-        #         "suffix": None
-        #     }
-        # }
         
         # Process each dataset: rename columns, select columns, cast and format
-        
         speechclean = speechclean.rename_column("audio.headset_microphone", "audio_airborne")
         speechclean = speechclean.rename_column(f"audio.{self.sensor}", "audio_body_conducted")
         speechclean = speechclean.select_columns(["audio_airborne", "audio_body_conducted"])
@@ -136,26 +119,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
             "audio_body_conducted_speech_noisy", Audio(sampling_rate=self.sample_rate, mono=False)
         )
         speech_noisy = speech_noisy.with_format("torch")
-        
-        
-
-        # Process each dataset: rename columns, select columns, cast and format
-        # for key, value in datasets.items():
-        #     dataset = value["dataset"]
-        #     suffix = value["suffix"]
-        #     dataset = self._rename_column(dataset, suffix)
-        #     datasets[key]["dataset"] = dataset
-            
-        # datasets=self._add_noise_columns(datasets)
-        
-        # for key, value in datasets.items():
-        #     dataset = value["dataset"]
-        #     suffix = value["suffix"]
-        #     dataset = self._cast_column(dataset, suffix)
-        #     datasets[key]["dataset"] = dataset
-
-        # # Augment datasets
-        # datasets["speechclean"]["dataset"] = self.augment_dataset(datasets["speechclean"]["dataset"])
 
         # Assign datasets based on the stage
         if stage in ["fit", None]:
@@ -173,127 +136,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             # Concatenate speech_noisy splits
             speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
             
-            self.test_dataset = speech_noisy_real
-
-    # def _rename_column(self, dataset: Dataset, suffix: Union[str, None]) -> Dataset:
-    #     """
-    #     Helper function to rename, select, cast, and format audio columns in a dataset.
-
-    #     Args:
-    #         dataset (Dataset): The dataset to process.
-    #         suffix (str, optional): Suffix to append to the audio column names. Defaults to None.
-
-    #     Returns:
-    #         Dataset: The processed dataset.
-    #     """
-    #     # Define new column names
-    #     audio_airborne = "audio_airborne" + (f"_{suffix}" if suffix else "")
-    #     audio_body_conducted = "audio_body_conducted" + (f"_{suffix}" if suffix else "")
-
-    #     # Rename columns
-    #     dataset = dataset.rename_column("audio.headset_microphone", audio_airborne)
-    #     dataset = dataset.rename_column(f"audio.{self.sensor}", audio_body_conducted)
-
-    #     # Select relevant columns
-    #     dataset = dataset.select_columns([audio_airborne, audio_body_conducted])
-
-    #     return dataset
-    
-    # def _add_noise_columns(self, datasets: Dict[str, Dict[str, Dataset]]) -> Dict[str, Dict[str, Dataset]]:
-    #     """_summary_
-
-    #     Args:
-    #         datasets (Dict[str, Dict[str, Dataset]]): _description_
-
-    #     Returns:
-    #         Dict[str, Dict[str, Dataset]]: _description_
-    #     """
-    #     # Define column names
-    #     audio_airborne_speechless_noisy = "audio_airborne_speechless_noisy"
-    #     audio_body_conducted_speechless_noisy = "audio_body_conducted_speechless_noisy"
-        
-    #     # Add columns
-    #     for i in ["train", "validation"]:
-    #         datasets["speechclean"]["dataset"][i] = datasets["speechclean"]["dataset"][i].add_column(audio_airborne_speechless_noisy, datasets["speechless_noisy"]["dataset"][i][audio_airborne_speechless_noisy])
-    #         datasets["speechclean"]["dataset"][i] = datasets["speechclean"]["dataset"][i].add_column(audio_body_conducted_speechless_noisy, datasets["speechless_noisy"]["dataset"][i][audio_body_conducted_speechless_noisy])
-        
-    #     return datasets
-    
-    # def _cast_column(self, dataset: Dataset, suffix: Union[str, None]) -> Dataset:
-    #     """_summary_
-
-    #     Args:
-    #         dataset (Dataset): _description_
-    #         suffix (Union[str, None]): _description_
-
-    #     Returns:
-    #         Dataset: _description_
-    #     """
-    #     # Define new column names
-    #     audio_airborne = "audio_airborne" + (f"_{suffix}" if suffix else "")
-    #     audio_body_conducted = "audio_body_conducted" + (f"_{suffix}" if suffix else "")
-
-    #     # Cast audio columns
-    #     dataset = dataset.cast_column(
-    #         audio_airborne, Audio(sampling_rate=self.sample_rate, mono=False)
-    #     )
-    #     dataset = dataset.cast_column(
-    #         audio_body_conducted, Audio(sampling_rate=self.sample_rate, mono=False)
-    #     )
-
-    #     # Set format to torch
-    #     dataset = dataset.with_format("torch")
-
-    #     return dataset
-
-    # def augment_dataset(self, dataset: Union[Dataset, DatasetDict]) -> Union[Dataset, DatasetDict]:
-    #     """
-    #     Augment the speech dataset with noise by mixing audio samples.
-
-    #     Args:
-    #         dataset (Union[Dataset, DatasetDict]): The dataset to augment the data.
-
-    #     Returns:
-    #         Union[Dataset, DatasetDict]: The augmented dataset with mixed audio.
-    #     """
-        
-    #     _dataset = dataset
-        
-    #     def map_fn(audio_key: str, noise_key: str):
-    #         def _map(batch):
-    #             list1 = batch[audio_key]
-    #             list2 = batch[noise_key]
-    #             mixed_audio = []
-    #             noise_cycle = cycle(list2)
-    #             # Filter None values out of the lists
-    #             # list1 = list(filter(None, list1))
-    #             # noise_cycle = cycle(filter(None, list2))
-    #             for audio1 in list1:
-    #                 audio2 = next(noise_cycle)
-    #                 sample1 = audio1["array"]
-    #                 sample2 = audio2["array"]
-    #                 mixed, _ = mix_speech_and_noise(sample1, sample2)
-            
-    #                 audio_mixed = {'path': audio1['path'], 'array': mixed, 'sampling_rate': audio1['sampling_rate']}
-                    
-    #                 mixed_audio.append(audio_mixed)
-    #             return {audio_key: mixed_audio}
-    #         return _map
-
-    #     # Augment 'audio_airborne'
-    #     for i in ["train", "validation"]:
-    #         _dataset[i] = _dataset[i].map(
-    #             map_fn("audio_airborne", "audio_airborne_speechless_noisy"),
-    #             remove_columns=["audio_airborne_speechless_noisy"],
-    #             batched=True,
-    #         )
-    #         _dataset[i] = _dataset[i].map(
-    #             map_fn("audio_body_conducted", "audio_body_conducted_speechless_noisy"),
-    #             remove_columns=["audio_body_conducted_speechless_noisy"],
-    #             batched=True,
-    #         )
-
-    #     return _dataset
+            self.test_dataset = speech_noisy_real   
 
     def train_dataloader(self):
         """
@@ -337,7 +180,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             self.test_dataset,
             batch_size=4,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy="pad"),
+            collate_fn=lambda batch: self.data_collator_for_test(batch),
         )
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
@@ -397,4 +240,24 @@ class NoisyBWELightningDataModule(LightningDataModule):
         return {
             "audio_body_conducted": body_conducted_padded_batch,
             "audio_airborne":  air_conducted_padded_batch,
+        }
+        
+    def data_collator_for_test(self, batch: List[Dict[str, Audio]]) -> Dict[str, torch.Tensor]:
+        """_summary_
+
+        Args:
+            batch (List[Dict[str, Audio]]): _description_
+
+        Returns:
+            Dict[str, torch.Tensor] A dictionary containing collated data with keys:
+                - 'audio_body_conducted': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
+        """
+        body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
+        
+        body_conducted_padded_batch = pad_sequence(
+            body_conducted_batch, batch_first=True, padding_value=0.0
+        ).unsqueeze(1)
+
+        return {
+            "audio_body_conducted": body_conducted_padded_batch
         }
