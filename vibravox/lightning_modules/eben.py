@@ -263,19 +263,14 @@ class EBENLightningModule(LightningModule):
             self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
                                        commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
 
-    def validation_step(self, batch, batch_idx, stage):
+    def validation_step(self, batch, batch_idx):
         """
         Common evaluation step for validation.
 
         Args:
             batch (Any): Batch
             batch_idx (int): Index of the batch
-            stage (str): Stage of the validation
-
         """
-
-        assert stage == "validation", "stage must be validation"
-
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
         reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
@@ -297,7 +292,7 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_generator.items():
-            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+            self.log(f"validation/generator/{key}", value, sync_dist=True)
 
         atomic_losses_discriminator = self.compute_atomic_losses(
             network="discriminator",
@@ -308,23 +303,19 @@ class EBENLightningModule(LightningModule):
         )
 
         for key, value in atomic_losses_discriminator.items():
-            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
+            self.log(f"validation/discriminator/{key}", value, sync_dist=True)
 
         return outputs
     
-    def test_step(self, batch, batch_idx, stage):
+    def test_step(self, batch, batch_idx):
         """
         Common evaluation step for test.
 
         Args:
             batch (Any): Batch
             batch_idx (int): Index of the batch
-            stage (str): Stage of the test
 
         """
-
-        assert stage == "test", "stage must be test"
-
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
         # reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
@@ -346,7 +337,7 @@ class EBENLightningModule(LightningModule):
         # )
 
         # for key, value in atomic_losses_generator.items():
-        #     self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+        #     self.log(f"test/generator/{key}", value, sync_dist=True)
 
         # atomic_losses_discriminator = self.compute_atomic_losses(
         #     network="discriminator",
@@ -357,22 +348,19 @@ class EBENLightningModule(LightningModule):
         # )
 
         # for key, value in atomic_losses_discriminator.items():
-        #     self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
+        #     self.log(f"test/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
 
-    def validation_logging(self, stage, outputs, batch_idx):
+    def validation_logging(self, outputs, batch_idx):
         """
         Validation logging.
 
         Args:
-            stage (str): Stage of the validation.
             outputs (STEP_OUTPUT): Output of the validation step
             batch_idx (int): Index of the batch
         """
-
-        assert stage == "validation", "stage must be validation"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
         assert "reference" in outputs, "reference must be in outputs"
@@ -381,7 +369,7 @@ class EBENLightningModule(LightningModule):
         metrics_to_log = self.metrics(
             outputs["enhanced"], outputs["reference"]
         )
-        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
+        metrics_to_log = {f"validation/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
@@ -392,32 +380,29 @@ class EBENLightningModule(LightningModule):
         if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
-                tag=f"{stage}_{batch_idx}/enhanced",
+                tag=f"validation_{batch_idx}/enhanced",
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
                 self.log_audio(
                     audio_tensor=outputs["reference"],
-                    tag=f"{stage}_{batch_idx}/reference",
+                    tag=f"validation_{batch_idx}/reference",
                     global_step=self.num_val_runs,
                 )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
-                    tag=f"{stage}_{batch_idx}/corrupted",
+                    tag=f"validation_{batch_idx}/corrupted",
                     global_step=self.num_val_runs,
                 )
                 
-    def test_logging(self, stage, outputs, batch_idx):
+    def test_logging(self, outputs, batch_idx):
         """
         Evaluation logging.
 
         Args:
-            stage (str): Stage of the test.
             outputs (STEP_OUTPUT): Output of the test step
             batch_idx (int): Index of the batch
         """
-
-        assert stage == "test", "stage must be test"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
 
@@ -428,7 +413,7 @@ class EBENLightningModule(LightningModule):
         
         
         
-        # metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
+        # metrics_to_log = {f"test/{k}": v for k, v in metrics_to_log.items()}
         metrics_to_log = {f"test/torchsquim_stoi: {self.compute_stoi(outputs['enhanced'])}"}
         self.log_dict(
             dictionary=metrics_to_log,
@@ -439,12 +424,12 @@ class EBENLightningModule(LightningModule):
         # Log audio
         self.log_audio(
             audio_tensor=outputs["enhanced"],
-            tag=f"{stage}_{batch_idx}/enhanced",
+            tag=f"test_{batch_idx}/enhanced",
             global_step=self.num_val_runs,
         )
         self.log_audio(
             audio_tensor=outputs["corrupted"],
-            tag=f"{stage}_{batch_idx}/corrupted",
+            tag=f"test_{batch_idx}/corrupted",
             global_step=self.num_val_runs,
         )
 
