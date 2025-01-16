@@ -120,6 +120,7 @@ def remove_hf(
 def mix_speech_and_noise(
     speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr: float = 5.0
 ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+    #TODO: implémenter un snr par item de batch
     """
     Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
 
@@ -159,13 +160,23 @@ def mix_speech_and_noise(
 
         if time_noise < time_speech:
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
-
-        # Randomly select an offset
-        max_offset = time_noise - time_speech
-        offset = torch.randint(0, max_offset + 1, (1,)).item()
-
-        # Extract the noise slice
-        noise_slice = noise[offset: offset + time_speech]
+               
+        # Shuffle 10 equisegments of noise
+        number_segments = 10
+        q = len(noise)//number_segments
+        r = len(noise)%number_segments
+        
+        noise = noise[r:]
+        n = len(noise)
+        
+        noise = noise.view(number_segments, q)
+        
+        permutation = torch.randperm(number_segments)
+        
+        noise = noise[permutation]
+        noise = noise.view(n)
+        
+        noise_slice = noise[:time_speech]
 
         # Compute power
         speech_power = torch.mean(speech ** 2)
