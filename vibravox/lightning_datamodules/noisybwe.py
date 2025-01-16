@@ -207,6 +207,10 @@ class NoisyBWELightningDataModule(LightningDataModule):
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
         speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch)
+        
+        assert len(speech_noisy_synthetic) == len(body_conducted_batch), f"len(speech_noisy_synthetic)={len(speech_noisy_synthetic)} != len(body_conducted_batch)={len(body_conducted_batch)}"
+        
+        assert len(speech_noisy_synthetic) == len(air_conducted_batch), f"len(speech_noisy_synthetic)={len(speech_noisy_synthetic)} != len(air_conducted_batch)={len(air_conducted_batch)}"
 
         if collate_strategy == "pad":
 

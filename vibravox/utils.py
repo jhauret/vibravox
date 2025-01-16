@@ -119,7 +119,7 @@ def remove_hf(
 
 def mix_speech_and_noise(
     speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr: float = 5.0
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
     """
     Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
 
@@ -187,4 +187,4 @@ def mix_speech_and_noise(
     noise_batch_scaled = noise_slice * scale_factor  # Scale noise to achieve desired SNR
     corrupted_speech_batch = speech_batch + noise_batch_scaled  # Mix scaled noise with speech
 
-    return corrupted_speech_batch, noise_batch_scaled
+    return list(corrupted_speech_batch), list(noise_batch_scaled)
