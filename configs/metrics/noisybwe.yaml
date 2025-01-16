@@ -1,2 +1,2 @@
-# torchsquim_stoi:
-#   _target_: torchaudio.pipelines.SQUIM_OBJECTIVE.get_model
+torchsquim_stoi:
+  _target_: torchaudio.pipelines.SQUIM_OBJECTIVE.get_model

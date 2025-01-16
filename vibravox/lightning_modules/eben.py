@@ -5,6 +5,7 @@ import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
+from vibravox.lightning_datamodules.noisybwe import NoisyBWELightningDataModule
 
 
 class EBENLightningModule(LightningModule):
@@ -306,6 +307,7 @@ class EBENLightningModule(LightningModule):
         return outputs
 
     def common_eval_logging(self, stage, outputs, batch_idx):
+        #TODO: if self.trainer.lightning_datamodule.isinstance(noisybwe), skip outputs["reference"]
         """
         Common evaluation logging for validation and test.
 
@@ -318,7 +320,9 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        assert "reference" in outputs, "reference must be in outputs"
+        
+        if not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
+            assert "reference" in outputs, "reference must be in outputs"
 
         # Log metrics
         metrics_to_log = self.metrics(
