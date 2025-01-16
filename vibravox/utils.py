@@ -137,54 +137,49 @@ def mix_speech_and_noise(
         TypeError: If either speech_batch or noise_batch is not a torch.Tensor.
         ValueError: If tensors do not have the expected number of dimensions or incompatible shapes.
     """
-    # -----------------------------
-    # Input Validation with Assertions
-    # -----------------------------
+    # Input validation
+    if not isinstance(speech_batch, list) or not all(isinstance(t, torch.Tensor) for t in speech_batch):
+        raise TypeError("speech_batch must be a list of torch.Tensor")
+    if not isinstance(noise_batch, list) or not all(isinstance(t, torch.Tensor) for t in noise_batch):
+        raise TypeError("noise_batch must be a list of torch.Tensor")
+    if len(speech_batch) != len(noise_batch):
+        raise ValueError("speech_batch and noise_batch must have the same length")
 
-    # Check tensor dimensions
-    if speech_batch[-1].dim() != 1:
-        raise ValueError(f"speech_batch must be a 1D tensor of shape (time), but got shape {speech_batch.shape}")
-    if noise_batch[-1].dim() != 1:
-        raise ValueError(f"noise_batch must be a 1D tensor of shape (time_noise), but got shape {noise_batch.shape}")
-    
-    speech_batch = torch.cat(speech_batch, dim=0)
-    noise_batch = torch.cat(noise_batch, dim=0)
+    corrupted_speech_batch = []
+    noise_batch_scaled = []
 
-    time_speech = speech_batch.size(0)
-    time_noise = noise_batch.size(0)
+    for speech, noise in zip(speech_batch, noise_batch):
+        if speech.dim() != 1:
+            raise ValueError(f"Each speech sample must be a 1D tensor, but got shape {speech.shape}")
+        if noise.dim() != 1:
+            raise ValueError(f"Each noise sample must be a 1D tensor, but got shape {noise.shape}")
 
-    if time_noise < time_speech:
-        raise ValueError(f"noise_batch length ({time_noise}) must be >= speech_batch length ({time_speech}).")
+        time_speech = speech.size(0)
+        time_noise = noise.size(0)
 
-    # -----------------------------
-    # Align Time Sizes by Shuffling Chunks
-    # -----------------------------
-    # Randomly select an offset
-    device = speech_batch.device  # Ensure tensors are on the same device
+        if time_noise < time_speech:
+            raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
 
-    max_offset = time_noise - time_speech
+        # Randomly select an offset
+        max_offset = time_noise - time_speech
+        offset = torch.randint(0, max_offset + 1, (1,)).item()
 
-    offset = torch.randint(0, max_offset + 1, (1,), device=device).item()
+        # Extract the noise slice
+        noise_slice = noise[offset: offset + time_speech]
 
-    # Extract the noise slice
-    noise_slice = noise_batch[offset: offset + time_speech]
+        # Compute power
+        speech_power = torch.mean(speech ** 2)
+        noise_power = torch.mean(noise_slice ** 2)
 
-    # -----------------------------
-    # Compute Power
-    # -----------------------------
-    speech_power = torch.mean(speech_batch ** 2)
-    noise_power = torch.mean(noise_slice ** 2)
+        # Compute scaling factor
+        snr_linear = 10 ** (snr / 10.0)
+        scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
 
-    # -----------------------------
-    # Compute Scaling Factor
-    # -----------------------------
-    snr_linear = 10 ** (snr / 10.0)  # Convert SNR from dB to linear scale
-    scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
+        # Scale noise and mix
+        noise_scaled = noise_slice * scale_factor
+        corrupted_speech = speech + noise_scaled
 
-    # -----------------------------
-    # Scale Noise and Mix
-    # -----------------------------
-    noise_batch_scaled = noise_slice * scale_factor  # Scale noise to achieve desired SNR
-    corrupted_speech_batch = speech_batch + noise_batch_scaled  # Mix scaled noise with speech
+        corrupted_speech_batch.append(corrupted_speech)
+        noise_batch_scaled.append(noise_scaled)
 
-    return list(corrupted_speech_batch), list(noise_batch_scaled)
+    return corrupted_speech_batch, noise_batch_scaled
