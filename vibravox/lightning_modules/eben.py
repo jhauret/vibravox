@@ -377,13 +377,13 @@ class EBENLightningModule(LightningModule):
         )
 
         # Log audio
-        if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
+        if (batch_idx < 15 and self.logger and self.num_val_runs > 1):
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
                 tag=f"validation_{batch_idx}/enhanced",
                 global_step=self.num_val_runs,
             )
-            if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
+            if self.num_val_runs == 2:  # 2 because first one is a sanity check in lightning
                 self.log_audio(
                     audio_tensor=outputs["reference"],
                     tag=f"validation_{batch_idx}/reference",
