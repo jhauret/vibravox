@@ -119,23 +119,31 @@ def remove_hf(
 def mix_speech_and_noise(
     speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr_range: List[float] = [-3.0, 5.0]
 ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
-    #TODO: implémenter un snr par item de batch
     """
-    Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
+    Mixes clean speech samples with noise samples at randomized Signal-to-Noise Ratios (SNRs).
+
+    This function takes batches of clean speech and noise tensors, applies random SNRs within a specified range
+    to the noise, scales the noise accordingly, and mixes it with the speech to produce corrupted speech samples.
+    The SNR for each noise segment is sampled uniformly from the provided `snr_range`.
 
     Args:
-        speech_batch (torch.Tensor): A clean speech sample with shape (time).
-        noise_batch (torch.Tensor): A noise sample with shape (time_noise).
-        snr_range (List[float]): A list of two floats representing the range of SNR values in dB. Defaults to [-3.0, 5.0].
+        speech_batch (List[torch.Tensor]): 
+            A list of clean speech samples. Each tensor should be 1-dimensional with shape `(time,)`.
+        noise_batch (List[torch.Tensor]): 
+            A list of noise samples. Each tensor should be 1-dimensional with shape `(time_noise,)`.
+            The length of each noise sample must be greater than or equal to the corresponding speech sample.
+        snr_range (List[float], optional): 
+            A list containing two floats representing the minimum and maximum SNR values in decibels (dB).
+            Defaults to `[-3.0, 5.0]`.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: 
-            - corrupted_speech_batch: Mixed speech and noise with shape (time).
-            - noise_batch_scaled: Scaled noise used for mixing with shape (time).
-
-    Raises:
-        TypeError: If either speech_batch or noise_batch is not a torch.Tensor.
-        ValueError: If tensors do not have the expected number of dimensions or incompatible shapes.
+        Tuple[List[torch.Tensor], List[torch.Tensor]]:
+            - `corrupted_speech_batch`: 
+                A list of corrupted speech samples obtained by adding scaled noise to the clean speech.
+                Each tensor has the same shape as the corresponding input speech tensor `(time,)`.
+            - `noise_batch_scaled`: 
+                A list of scaled noise tensors used for mixing. Each tensor has the same shape as the 
+                corresponding input speech tensor `(time,)`.
     """
     # Input validation
     if not isinstance(speech_batch, list) or not all(isinstance(t, torch.Tensor) for t in speech_batch):
@@ -181,6 +189,7 @@ def mix_speech_and_noise(
         
         permutation = torch.randperm(number_segments)
         
+        # Sample SNRs
         snrs = torch.tensor([a+i*k for i in range(number_segments)])[permutation]
         
         noise = noise[permutation]
