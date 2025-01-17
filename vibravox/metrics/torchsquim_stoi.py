@@ -32,8 +32,8 @@ class TorchsquimSTOI(Metric):
         self._modules_backup = OrderedDict()
         self.register_load_state_dict_post_hook(self.reassign_modules)
 
-    def update(self, preds: torch.Tensor, **kwargs) -> None:
-        """Update state with predictions and ignore kwargs.
+    def update(self, preds: torch.Tensor, *args, **kwargs) -> None:
+        """Update state with predictions and ignore additional arguments.
 
         Args:
             preds (torch.Tensor): Predictions from model
@@ -42,7 +42,7 @@ class TorchsquimSTOI(Metric):
             self.sum_stoi.device
         )
 
-        self.sum_mos += stoi_batch.sum()
+        self.sum_stoi += stoi_batch.sum()
         self.total += stoi_batch.numel()
 
     def compute(self) -> torch.Tensor:
