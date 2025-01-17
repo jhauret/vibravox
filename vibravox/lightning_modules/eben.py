@@ -339,7 +339,12 @@ class EBENLightningModule(LightningModule):
             )
             metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         else:
-            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(outputs["enhanced"]).item()}
+            # torchsquim only has 2D tensors as input
+            #TODO: to refactor, write a Metric class for this
+            preds = outputs["enhanced"]
+            preds = preds.view(1, -1)
+            
+            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(preds).item()}
             
         self.log_dict(
                 dictionary=metrics_to_log,
