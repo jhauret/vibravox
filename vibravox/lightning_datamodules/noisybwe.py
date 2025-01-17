@@ -136,9 +136,16 @@ class NoisyBWELightningDataModule(LightningDataModule):
         if stage in ["test", None]:
             
             # Concatenate speech_noisy splits
-            speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
+            # speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
             
-            self.test_dataset = speech_noisy_real   
+            # self.test_dataset = speech_noisy_real   
+            
+            # for this PR, speech_noisy_synthetic is used instead of speech_noisy_real
+            #TODO: for next PR, use speech_noisy_real + speech_noisy_synthetic
+            speech_test = speechclean["test"]
+            noise_test = speechless_noisy["test"]
+            
+            self.test_dataset = SpeechNoiseDataset(speech_test, noise_test)
 
     def train_dataloader(self):
         """
@@ -180,9 +187,11 @@ class NoisyBWELightningDataModule(LightningDataModule):
 
         return DataLoader(
             self.test_dataset,
-            batch_size=4,
+            batch_size=1,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator_for_test(batch),
+            collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True, collate_strategy=self.collate_strategy
+                ),
         )
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
@@ -245,25 +254,4 @@ class NoisyBWELightningDataModule(LightningDataModule):
         return {
             "audio_body_conducted": speech_noisy_synthetic_padded_batch,
             "audio_airborne":  air_conducted_padded_batch,
-        }
-        
-    def data_collator_for_test(self, batch: List[Dict[str, Audio]]) -> Dict[str, torch.Tensor]:
-        #TODO: temporaire, utiliser utils/data_collator généraliste
-        """_summary_
-
-        Args:
-            batch (List[Dict[str, Audio]]): _description_
-
-        Returns:
-            Dict[str, torch.Tensor] A dictionary containing collated data with keys:
-                - 'audio_body_conducted': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
-        """
-        body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
-        
-        body_conducted_padded_batch = pad_sequence(
-            body_conducted_batch, batch_first=True, padding_value=0.0
-        ).unsqueeze(1)
-
-        return {
-            "audio_body_conducted": body_conducted_padded_batch
         }
