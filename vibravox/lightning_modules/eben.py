@@ -173,20 +173,60 @@ class EBENLightningModule(LightningModule):
                                                 and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
         """
-        # return self.common_eval_step(batch, batch_idx, "validation")
-        return self.validation_step(batch, batch_idx)
+        # Get tensors
+        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
+        enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
+
+        outputs = {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            }
+
+        atomic_losses_generator = self.compute_atomic_losses(
+            network="generator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
+
+        for key, value in atomic_losses_generator.items():
+            self.log(f"validation/generator/{key}", value, sync_dist=True)
+
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
+
+        for key, value in atomic_losses_discriminator.items():
+            self.log(f"validation/discriminator/{key}", value, sync_dist=True)
+
+        return outputs
 
     def test_step(self, batch, batch_idx):
         """
         Lightning testing step
 
         Args:
-            batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
-                                                and values of shape (batch_size, channels, samples)
+            batch (Dict[str, torch.Tensor]): Dict with key "audio_body_conducted" and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
         """
-        # return self.common_eval_step(batch, batch_idx, "test")
-        return self.test_step(batch, batch_idx)
+        # Get tensors
+        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+
+        outputs = {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+            }
+
+        return outputs
 
     def configure_optimizers(self):
         """
@@ -235,8 +275,6 @@ class EBENLightningModule(LightningModule):
             batch_idx (int): Index of the batch
             dataloader_idx (int): Index of the dataloader
         """
-
-        # self.common_eval_logging("validation", outputs, batch_idx)
         self.validation_logging(outputs, batch_idx)
 
     def on_test_batch_end(
@@ -251,8 +289,6 @@ class EBENLightningModule(LightningModule):
             batch_idx (int): Index of the batch
             dataloader_idx (int): Index of the dataloader
         """
-
-        # self.common_eval_logging("test", outputs, batch_idx)
         self.test_logging(outputs, batch_idx)
 
     def on_test_end(self) -> None:
@@ -262,96 +298,6 @@ class EBENLightningModule(LightningModule):
         if self.push_to_hub_after_testing:
             self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
                                        commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
-
-    def validation_step(self, batch, batch_idx):
-        """
-        Common evaluation step for validation.
-
-        Args:
-            batch (Any): Batch
-            batch_idx (int): Index of the batch
-        """
-        # Get tensors
-        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-        enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
-        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
-
-        outputs = {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-                f"reference": reference_speech,
-            }
-
-        atomic_losses_generator = self.compute_atomic_losses(
-            network="generator",
-            enhanced_speech=enhanced_speech,
-            reference_speech=reference_speech,
-            decomposed_enhanced_speech=decomposed_enhanced_speech,
-            decomposed_reference_speech=decomposed_reference_speech,
-        )
-
-        for key, value in atomic_losses_generator.items():
-            self.log(f"validation/generator/{key}", value, sync_dist=True)
-
-        atomic_losses_discriminator = self.compute_atomic_losses(
-            network="discriminator",
-            enhanced_speech=enhanced_speech,
-            reference_speech=reference_speech,
-            decomposed_enhanced_speech=decomposed_enhanced_speech,
-            decomposed_reference_speech=decomposed_reference_speech,
-        )
-
-        for key, value in atomic_losses_discriminator.items():
-            self.log(f"validation/discriminator/{key}", value, sync_dist=True)
-
-        return outputs
-    
-    def test_step(self, batch, batch_idx):
-        """
-        Common evaluation step for test.
-
-        Args:
-            batch (Any): Batch
-            batch_idx (int): Index of the batch
-
-        """
-        # Get tensors
-        corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        # reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-        enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
-        # decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
-
-        outputs = {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-                # f"reference": reference_speech,
-            }
-
-        # atomic_losses_generator = self.compute_atomic_losses(
-        #     network="generator",
-        #     enhanced_speech=enhanced_speech,
-        #     reference_speech=reference_speech,
-        #     decomposed_enhanced_speech=decomposed_enhanced_speech,
-        #     decomposed_reference_speech=decomposed_reference_speech,
-        # )
-
-        # for key, value in atomic_losses_generator.items():
-        #     self.log(f"test/generator/{key}", value, sync_dist=True)
-
-        # atomic_losses_discriminator = self.compute_atomic_losses(
-        #     network="discriminator",
-        #     enhanced_speech=enhanced_speech,
-        #     reference_speech=reference_speech,
-        #     decomposed_enhanced_speech=decomposed_enhanced_speech,
-        #     decomposed_reference_speech=decomposed_reference_speech,
-        # )
-
-        # for key, value in atomic_losses_discriminator.items():
-        #     self.log(f"test/discriminator/{key}", value, sync_dist=True)
-
-        return outputs
-
 
     def validation_logging(self, outputs, batch_idx):
         """
@@ -406,15 +352,7 @@ class EBENLightningModule(LightningModule):
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
 
-        # Log metrics
-        # metrics_to_log = self.metrics(
-        #     outputs["enhanced"], outputs["reference"]
-        # )
-        
-        
-        
-        # metrics_to_log = {f"test/{k}": v for k, v in metrics_to_log.items()}
-        metrics_to_log = {f"test/torchsquim_stoi: {self.compute_stoi(outputs['enhanced'])}"}
+        metrics_to_log = {f"test/torchsquim_stoi: {self.compute_stoi(outputs['enhanced']).item()}"}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
