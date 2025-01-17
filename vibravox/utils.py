@@ -159,7 +159,7 @@ def mix_speech_and_noise(
         
         # Compute power
         speech_power = torch.mean(speech ** 2)
-        noise_power = torch.mean(noise_slice ** 2)
+        noise_power = torch.mean(noise ** 2)
         
         if speech.dim() != 1:
             raise ValueError(f"Each speech sample must be a 1D tensor, but got shape {speech.shape}")
