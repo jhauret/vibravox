@@ -6,9 +6,6 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
-from vibravox.lightning_datamodules.noisybwe import NoisyBWELightningDataModule
-from torchaudio.pipelines import SQUIM_OBJECTIVE
-from torchaudio.models import SquimObjective
 
 class EBENLightningModule(LightningModule):
     def __init__(
@@ -82,7 +79,6 @@ class EBENLightningModule(LightningModule):
         self.update_discriminator_ratio = update_discriminator_ratio
 
         self.metrics: MetricCollection = metrics
-        self.torchsquim_stoi: SquimObjective = SQUIM_OBJECTIVE.get_model()
         self.description: str = description
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
@@ -274,45 +270,38 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
 
         # Get tensors
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-            decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            outputs = {
-                    f"corrupted": corrupted_speech,
-                    f"enhanced": enhanced_speech,
-                    f"reference": reference_speech,
-                }
-            atomic_losses_generator = self.compute_atomic_losses(
+        outputs = {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            }
+
+        atomic_losses_generator = self.compute_atomic_losses(
             network="generator",
             enhanced_speech=enhanced_speech,
             reference_speech=reference_speech,
             decomposed_enhanced_speech=decomposed_enhanced_speech,
             decomposed_reference_speech=decomposed_reference_speech,
-            )
+        )
 
-            for key, value in atomic_losses_generator.items():
-                self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+        for key, value in atomic_losses_generator.items():
+            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
 
-            atomic_losses_discriminator = self.compute_atomic_losses(
-                network="discriminator",
-                enhanced_speech=enhanced_speech,
-                reference_speech=reference_speech,
-                decomposed_enhanced_speech=decomposed_enhanced_speech,
-                decomposed_reference_speech=decomposed_reference_speech,
-            )
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-            for key, value in atomic_losses_discriminator.items():
-                self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
-                
-        else:
-            outputs = {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-            }
+        for key, value in atomic_losses_discriminator.items():
+            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
@@ -329,28 +318,18 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            assert "reference" in outputs, "reference must be in outputs"
+        assert "reference" in outputs, "reference must be in outputs"
 
-            # Log metrics
-            metrics_to_log = self.metrics(
-                outputs["enhanced"], outputs["reference"]
-            )
-            metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
-        else:
-            # torchsquim only has 2D tensors as input
-            #TODO: to refactor, write a Metric class for this
-            preds = outputs["enhanced"]
-            preds = preds.view(1, -1)
-            
-            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(preds)[0].item()} # [0] because it returns tuple (stoi_hyp, pesq_hyp, si_sdr_hyp)
-            
+        # Log metrics
+        metrics_to_log = self.metrics(
+            outputs["enhanced"], outputs["reference"]
+        )
+        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
-                dictionary=metrics_to_log,
-                sync_dist=True,
-                prog_bar=True,
-            )
+            dictionary=metrics_to_log,
+            sync_dist=True,
+            prog_bar=True,
+        )
 
         # Log audio
         if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
@@ -360,12 +339,11 @@ class EBENLightningModule(LightningModule):
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                if not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-                    self.log_audio(
-                        audio_tensor=outputs["reference"],
-                        tag=f"{stage}_{batch_idx}/reference",
-                        global_step=self.num_val_runs,
-                    )
+                self.log_audio(
+                    audio_tensor=outputs["reference"],
+                    tag=f"{stage}_{batch_idx}/reference",
+                    global_step=self.num_val_runs,
+                )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
                     tag=f"{stage}_{batch_idx}/corrupted",
