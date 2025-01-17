@@ -33,14 +33,14 @@ class NoisyBWELightningDataModule(LightningDataModule):
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
             dataset_name (str, optional): Dataset name.
-                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
+                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN".
                 Defaults to "Cnam-LMSSC/vibravox".
             subset (str, optional): Subset. Defaults to "speech_clean"
             sensor (str, optional): Sensor. Defaults to "headset_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
-            Defaults to "constant_length-3000-ms".
+            Defaults to "constant_length-2500-ms".
             data_augmentation (nn.Module, optional): Data augmentation module. Defaults to None.
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
@@ -74,9 +74,11 @@ class NoisyBWELightningDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.snr_range = snr_range
         
-    def setup(self, stage: str = None):
+    def setup(self, stage: str = None) -> None:
         """
-        Set up the datasets.
+        Sets up the datasets.
+        This method loads and processes the datasets for training, validation, and testing.
+        It renames, selects, casts, and formats the necessary columns as per the configuration.
 
         Args:
             stage (str): Pipeline stage among ['fit', 'validate', 'test', 'predict']. Defaults to None.
@@ -147,7 +149,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             
             self.test_dataset = SpeechNoiseDataset(speech_test, noise_test)
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         """
         Train dataloader.
 
@@ -162,7 +164,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy)
         )
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         """
         Validation dataloader.
 
@@ -177,7 +179,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
         )
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         """
         Test dataloader.
 
@@ -196,7 +198,11 @@ class NoisyBWELightningDataModule(LightningDataModule):
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
         """
-        Custom data collator function to dynamically pad the data.
+        Custom data collator function to mix speech and noise audios and dynamically pad the data.
+
+        This function processes a batch of data by mixing clean speech with noise at specified SNR ranges.
+        It then pads or trims the audio signals based on the collate strategy and applies data augmentation
+        if specified.
 
         Args:
             - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys :
