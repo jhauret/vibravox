@@ -1,5 +1,6 @@
 from typing import List, Any, Dict, Union
 from torch.utils.data import Dataset
+from random import randint
 
 class SpeechNoiseDataset(Dataset):
     """_summary_
@@ -22,7 +23,9 @@ class SpeechNoiseDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         
         speech_sample = self.speech_dataset[idx]
-        noise_sample = self.noise_dataset[idx % self.len_noise] # because the noise dataset is smaller
+        # Randomize the noise sample
+        idx = randint(0, self.len_noise-1)
+        noise_sample = self.noise_dataset[idx]
         
         return {
             "audio_airborne": speech_sample["audio_airborne"],
