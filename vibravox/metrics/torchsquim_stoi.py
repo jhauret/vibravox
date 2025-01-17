@@ -25,6 +25,14 @@ class TorchsquimSTOI(Metric):
         self,
         **kwargs,
     ) -> None:
+        """
+        Initialize the TorchsquimSTOI metric.
+
+        Sets up the STOI computation model and initializes the state variables.
+
+        Args:
+            **kwargs: Additional keyword arguments for the parent `Metric` class.
+        """
         super().__init__(**kwargs)
 
         self.compute_stoi = SQUIM_OBJECTIVE.get_model()
