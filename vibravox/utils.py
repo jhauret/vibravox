@@ -163,13 +163,12 @@ def mix_speech_and_noise(
                
         # Shuffle 10 equisegments of noise
         number_segments = 10
-        q = len(noise)//number_segments
         r = len(noise)%number_segments
         
         noise = noise[r:]
         n = len(noise)
         
-        noise = noise.view(number_segments, q)
+        noise = noise.view(number_segments, -1)
         
         permutation = torch.randperm(number_segments)
         

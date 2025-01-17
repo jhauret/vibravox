@@ -344,7 +344,7 @@ class EBENLightningModule(LightningModule):
             preds = outputs["enhanced"]
             preds = preds.view(1, -1)
             
-            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(preds)[0].item()} # [0] because it returns stoi tensor
+            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(preds)[0].item()} # [0] because it returns tuple (stoi_hyp, pesq_hyp, si_sdr_hyp)
             
         self.log_dict(
                 dictionary=metrics_to_log,
