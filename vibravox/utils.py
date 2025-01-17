@@ -153,12 +153,12 @@ def mix_speech_and_noise(
     if len(speech_batch) != len(noise_batch):
         raise ValueError("speech_batch and noise_batch must have the same length")
 
-    corrupted_speech_batch = []
-    noise_batch_scaled = []
+    corrupted_speech_batch: List[torch.Tensor] = []
+    noise_batch_scaled: List[torch.Tensor] = []
     
     a, b = snr_range
 
-    number_segments = 10
+    number_segments: int = 10
 
     k = (b - a)/number_segments
 
