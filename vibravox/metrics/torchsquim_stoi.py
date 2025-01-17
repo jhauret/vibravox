@@ -38,11 +38,9 @@ class TorchsquimSTOI(Metric):
         Args:
             preds (torch.Tensor): Predictions from model
         """
-        stoi_batch, _, _ = self.compute_stoi(preds.view(1, -1)).to(
-            self.sum_stoi.device
-        )
+        stoi_batch, _, _ = self.compute_stoi(preds.view(1, -1))
 
-        self.sum_stoi += stoi_batch.sum()
+        self.sum_stoi += stoi_batch.to(self.sum_stoi.device).sum()
         self.total += stoi_batch.numel()
 
     def compute(self) -> torch.Tensor:
