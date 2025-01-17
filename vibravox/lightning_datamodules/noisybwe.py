@@ -46,6 +46,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
+            snr_range (List[float], optional): SNR range for the noising. Defaults to [-3.0, 5.0].
         """
         super().__init__()
         
@@ -208,10 +209,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
-        #TODO: snr randomisé entre -3 et 5 dB pour chaque élément de batch
-        
-        
-        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch)
+        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch, self.snr_range)
         
         if collate_strategy == "pad":
 

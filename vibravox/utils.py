@@ -2,7 +2,7 @@
 
 import torch
 from torchaudio.functional import lowpass_biquad
-
+from random import sample
 
 from typing import List, Optional, Tuple
 
@@ -118,7 +118,7 @@ def remove_hf(
     return waveform
 
 def mix_speech_and_noise(
-    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr: float = 5.0
+    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr_range: List[float] = [-3.0, 5.0]
 ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
     #TODO: implémenter un snr par item de batch
     """
@@ -127,7 +127,7 @@ def mix_speech_and_noise(
     Args:
         speech_batch (torch.Tensor): A clean speech sample with shape (time).
         noise_batch (torch.Tensor): A noise sample with shape (time_noise).
-        snr (float, optional): Desired signal-to-noise ratio in decibels. Defaults to 5.0.
+        snr_range (List[float]): A list of two floats representing the range of SNR values in dB. Defaults to [-3.0, 5.0].
 
     Returns:
         Tuple[torch.Tensor, torch.Tensor]: 
@@ -148,8 +148,19 @@ def mix_speech_and_noise(
 
     corrupted_speech_batch = []
     noise_batch_scaled = []
+    
+    a, b = snr_range
+
+    number_segments = 10
+
+    k = (b - a)/number_segments
 
     for speech, noise in zip(speech_batch, noise_batch):
+        
+        # Compute power
+        speech_power = torch.mean(speech ** 2)
+        noise_power = torch.mean(noise_slice ** 2)
+        
         if speech.dim() != 1:
             raise ValueError(f"Each speech sample must be a 1D tensor, but got shape {speech.shape}")
         if noise.dim() != 1:
@@ -162,7 +173,6 @@ def mix_speech_and_noise(
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
                
         # Shuffle 10 equisegments of noise
-        number_segments = 10
         r = len(noise)%number_segments
         
         noise = noise[r:]
@@ -170,24 +180,24 @@ def mix_speech_and_noise(
         
         noise = noise.view(number_segments, -1)
         
+        snrs = torch.tensor(sample([a+i*k for i in range(number_segments+1)], number_segments))
+        
         permutation = torch.randperm(number_segments)
         
         noise = noise[permutation]
-        noise = noise.view(n)
         
-        noise_slice = noise[:time_speech]
-
-        # Compute power
-        speech_power = torch.mean(speech ** 2)
-        noise_power = torch.mean(noise_slice ** 2)
-
         # Compute scaling factor
-        snr_linear = 10 ** (snr / 10.0)
-        scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
+        snrs_linear = 10 ** (snrs / 10.0)
+        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear))
+        
+        noise_scaled = noise * scale_factor.view(-1, 1)
+        
+        noise_scaled = noise_scaled.view(n)
+        
+        noise_slice = noise_scaled[:time_speech]
 
         # Scale noise and mix
-        noise_scaled = noise_slice * scale_factor
-        corrupted_speech = speech + noise_scaled
+        corrupted_speech = speech + noise_slice
 
         corrupted_speech_batch.append(corrupted_speech)
         noise_batch_scaled.append(noise_scaled)
