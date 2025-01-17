@@ -115,10 +115,10 @@ class NoisyBWELightningDataModule(LightningDataModule):
         )
         speechless_noisy = speechless_noisy.with_format("torch")
             
-        speech_noisy = speech_noisy.rename_column(f"audio.{self.sensor}", "audio_body_conducted_speech_noisy")
-        speech_noisy = speech_noisy.select_columns(["audio_body_conducted_speech_noisy"])
+        speech_noisy = speech_noisy.rename_column(f"audio.{self.sensor}", "audio_body_conducted")
+        speech_noisy = speech_noisy.select_columns(["audio_body_conducted"])
         speech_noisy = speech_noisy.cast_column(
-            "audio_body_conducted_speech_noisy", Audio(sampling_rate=self.sample_rate, mono=False)
+            "audio_body_conducted", Audio(sampling_rate=self.sample_rate, mono=False)
         )
         speech_noisy = speech_noisy.with_format("torch")
 
