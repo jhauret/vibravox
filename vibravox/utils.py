@@ -2,7 +2,6 @@
 
 import torch
 from torchaudio.functional import lowpass_biquad
-from random import sample
 
 from typing import List, Optional, Tuple
 
@@ -180,9 +179,9 @@ def mix_speech_and_noise(
         
         noise = noise.view(number_segments, -1)
         
-        snrs = torch.tensor(sample([a+i*k for i in range(number_segments+1)], number_segments))
-        
         permutation = torch.randperm(number_segments)
+        
+        snrs = torch.tensor([a+i*k for i in range(number_segments)])[permutation]
         
         noise = noise[permutation]
         
