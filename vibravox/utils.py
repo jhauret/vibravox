@@ -173,8 +173,8 @@ def mix_speech_and_noise(
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
         
         # Randomize noise segment
-        offset = torch.randint(1, time_noise - time_speech, (1,)).item()
-        noise_slice = noise[offset: offset + time_speech]
+        start_time = torch.randint(1, time_noise - time_speech, (1,)).item()
+        noise_slice = noise[start_time: start_time + time_speech]
         
         # Compute scaling factor
         snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
