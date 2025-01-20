@@ -1,8 +1,8 @@
 import torch
 import re
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from lightning import LightningDataModule
-from datasets import Audio, load_dataset, concatenate_datasets
+from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from lightning import LightningDataModule
@@ -23,7 +23,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
-        snr_range: List[float] = [-3.0, 5.0],
+        snr_range: Tuple[float] = (-3.0, 5.0),
         **kwargs,
     ):
         """
@@ -43,7 +43,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
-            snr_range (List[float], optional): SNR range for the noising. Defaults to [-3.0, 5.0].
+            snr_range (Tuple[float], optional): SNR range for the noising. Defaults to [-3.0, 5.0].
         """
         super().__init__()
         

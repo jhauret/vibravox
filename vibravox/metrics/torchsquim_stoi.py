@@ -77,7 +77,7 @@ class TorchsquimSTOI(Metric):
         """
         return self.sum_stoi / self.total
 
-    # We do not want to have STOI in the state dict and trainable parameters
+    # We do not want to have TorchsquimSTOI in the state dict and trainable parameters
     def _load_from_state_dict(
         self,
         state_dict,
@@ -141,7 +141,7 @@ class TorchsquimSTOI(Metric):
         Returns:
             OrderedDict: The modified state dictionary.
         """
-        # We do not want to have NORESQA in the state dict and trainable parameters
+        # We do not want to have TorchsquimSTOI in the state dict and trainable parameters
         # So we add zeroes in the state_dict
         destination = super().state_dict(destination, prefix, keep_vars)
         for k in list(destination.keys()):
