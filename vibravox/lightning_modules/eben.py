@@ -272,37 +272,44 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
+        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+            reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
         decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        outputs = {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-                f"reference": reference_speech,
-            }
+        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+            outputs = {
+                    f"corrupted": corrupted_speech,
+                    f"enhanced": enhanced_speech,
+                    f"reference": reference_speech,
+                }
 
-        atomic_losses_generator = self.compute_atomic_losses(
-            network="generator",
-            enhanced_speech=enhanced_speech,
-            reference_speech=reference_speech,
-            decomposed_enhanced_speech=decomposed_enhanced_speech,
-            decomposed_reference_speech=decomposed_reference_speech,
-        )
+            atomic_losses_generator = self.compute_atomic_losses(
+                network="generator",
+                enhanced_speech=enhanced_speech,
+                reference_speech=reference_speech,
+                decomposed_enhanced_speech=decomposed_enhanced_speech,
+                decomposed_reference_speech=decomposed_reference_speech,
+            )
 
-        for key, value in atomic_losses_generator.items():
-            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+            for key, value in atomic_losses_generator.items():
+                self.log(f"{stage}/generator/{key}", value, sync_dist=True)
 
-        atomic_losses_discriminator = self.compute_atomic_losses(
-            network="discriminator",
-            enhanced_speech=enhanced_speech,
-            reference_speech=reference_speech,
-            decomposed_enhanced_speech=decomposed_enhanced_speech,
-            decomposed_reference_speech=decomposed_reference_speech,
-        )
+            atomic_losses_discriminator = self.compute_atomic_losses(
+                network="discriminator",
+                enhanced_speech=enhanced_speech,
+                reference_speech=reference_speech,
+                decomposed_enhanced_speech=decomposed_enhanced_speech,
+                decomposed_reference_speech=decomposed_reference_speech,
+            )
 
-        for key, value in atomic_losses_discriminator.items():
-            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
+            for key, value in atomic_losses_discriminator.items():
+                self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
+        else:
+            outputs = {
+                    f"corrupted": corrupted_speech,
+                    f"enhanced": enhanced_speech,
+                }
 
         return outputs
 
@@ -320,8 +327,11 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        assert "reference" in outputs, "reference must be in outputs"
-
+        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+            assert "reference" in outputs, "reference must be in outputs"        
+        else:
+            metrics_to_log = {k: v for k, v in self.metrics.items() if k == 'torchsquim_stoi'}
+            
         # Log metrics
         metrics_to_log = self.metrics(
             outputs["enhanced"], outputs["reference"]
@@ -331,6 +341,7 @@ class EBENLightningModule(LightningModule):
             dictionary=metrics_to_log,
             sync_dist=True,
             prog_bar=True,
+            add_dataloader_idx=False,
         )
 
         # Log audio
@@ -341,11 +352,12 @@ class EBENLightningModule(LightningModule):
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                self.log_audio(
-                    audio_tensor=outputs["reference"],
-                    tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
-                    global_step=self.num_val_runs,
-                )
+                if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+                    self.log_audio(
+                        audio_tensor=outputs["reference"],
+                        tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
+                        global_step=self.num_val_runs,
+                    )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
                     tag=f"{stage}_{dataloader_idx}_{batch_idx}/corrupted",
