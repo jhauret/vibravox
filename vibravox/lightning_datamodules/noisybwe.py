@@ -17,7 +17,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         self,
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
-        subset: str = "speech_clean",
         sensor: str = "headset_microphone",
         collate_strategy: str = "constant_length-2500-ms",
         data_augmentation: torch.nn.Module = None,
@@ -35,7 +34,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
             dataset_name (str, optional): Dataset name.
                 Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN".
                 Defaults to "Cnam-LMSSC/vibravox".
-            subset (str, optional): Subset. Defaults to "speech_clean"
             sensor (str, optional): Sensor. Defaults to "headset_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
@@ -53,9 +51,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox-test", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
             f"dataset_name {dataset_name} not supported."
         self.dataset_name = dataset_name
-        self.subset = subset
-        self.subset_speechless_noisy = "speechless_noisy" # for distribution change 
-        self.subset_speech_noisy = "speech_noisy" # for test set
         self.sensor = sensor
 
         assert collate_strategy == "pad" or re.match(r"constant_length-\d+-ms", collate_strategy), \
@@ -89,13 +84,13 @@ class NoisyBWELightningDataModule(LightningDataModule):
         """
         # Load datasets
         speechclean = load_dataset(
-            self.dataset_name, self.subset, streaming=self.streaming
+            self.dataset_name, "speech_clean", streaming=self.streaming
         )
         speechless_noisy = load_dataset(
-            self.dataset_name, self.subset_speechless_noisy, streaming=self.streaming
+            self.dataset_name, "speechless_noisy", streaming=self.streaming
         )
         speech_noisy = load_dataset(
-            self.dataset_name, self.subset_speech_noisy, streaming=self.streaming
+            self.dataset_name, "speech_noisy", streaming=self.streaming
         )
         
         # Process each dataset: rename columns, select columns, cast and format
