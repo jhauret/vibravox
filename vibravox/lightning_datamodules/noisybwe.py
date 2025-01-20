@@ -127,23 +127,18 @@ class NoisyBWELightningDataModule(LightningDataModule):
             noise_train = speechless_noisy["train"]
             noise_validation = speechless_noisy["validation"]
             
-            self.train_dataset = SpeechNoiseDataset(speech_train, noise_train)
-            self.val_dataset = SpeechNoiseDataset(speech_validation, noise_validation)
+            self.train_dataset_synthetic = SpeechNoiseDataset(speech_train, noise_train)
+            self.val_dataset_synthetic = SpeechNoiseDataset(speech_validation, noise_validation)
             
-        if stage in ["test", None]:
-
-            # Concatenate speech_noisy splits
-            # speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
+            self.val_dataset_real = speech_noisy["validation"]
             
-            # self.test_dataset = speech_noisy_real   
-            
-            # for this PR, speech_noisy_synthetic is used instead of speech_noisy_real
-            #TODO: for next PR, use speech_noisy_real + speech_noisy_synthetic
-            
+        if stage in ["test", None]:            
             speech_test = speechclean["test"]
             noise_test = speechless_noisy["test"]
             
-            self.test_dataset = SpeechNoiseDataset(speech_test, noise_test)
+            self.test_dataset_synthetic = SpeechNoiseDataset(speech_test, noise_test)
+            
+            self.test_dataset_real = speech_noisy["test"]
 
     def train_dataloader(self) -> DataLoader:
         """
@@ -154,43 +149,63 @@ class NoisyBWELightningDataModule(LightningDataModule):
         """
 
         return DataLoader(
-            self.train_dataset,
+            self.train_dataset_synthetic,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy)
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> Dict[str, DataLoader]:
         """
-        Validation dataloader.
+        Validation dataloaders.
 
         Returns:
-            DataLoader
-        """
-
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
+            Dict[str, DataLoader]
+        """        
+        dataloader_synthetic = DataLoader(
+            self.val_dataset_synthetic,
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
+        )
+        dataloader_real = DataLoader(
+            self.val_dataset_real,
+            batch_size=min(1, self.batch_size // 4),
+            num_workers=self.num_workers,
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
         )
 
-    def test_dataloader(self) -> DataLoader:
+        return {"synthetic": dataloader_synthetic, "real": dataloader_real}
+
+    def test_dataloader(self) -> Dict[str, DataLoader]:
         """
-        Test dataloader.
+        Test dataloaders.
 
         Returns:
-            DataLoader
-        """
-
-        return DataLoader(
-            self.test_dataset,
+            Dict[str, DataLoader]
+        """    
+        dataloader_synthetic = DataLoader(
+            self.test_dataset_synthetic,
             batch_size=1,
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
-                    batch, deterministic=True, collate_strategy=self.collate_strategy
-                ),
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
         )
+        dataloader_real = DataLoader(
+            self.test_dataset_real,
+            batch_size=1,
+            num_workers=self.num_workers,
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
+        )
+
+        return {"synthetic": dataloader_synthetic, "real": dataloader_real}
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
         """
