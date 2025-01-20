@@ -28,7 +28,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         **kwargs,
     ):
         """
-        LightningDataModule for data-augmented Bandwidth Extension (BWE)
+        LightningDataModule for Noisy Bandwidth Extension (BWE)
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
