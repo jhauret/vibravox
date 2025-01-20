@@ -1,6 +1,6 @@
-from typing import List, Any, Dict, Union
+from typing import Dict
+import torch
 from torch.utils.data import Dataset
-from random import randint
 
 class SpeechNoiseDataset(Dataset):
     """
@@ -31,7 +31,7 @@ class SpeechNoiseDataset(Dataset):
         """
         return len(self.speech_dataset)
     
-    def __getitem__(self, idx: int) -> Dict[str, Any]:
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         """
         Retrieve the paired speech and noise samples at the specified index.
 
@@ -42,14 +42,14 @@ class SpeechNoiseDataset(Dataset):
             idx (int): The index of the speech sample to retrieve.
 
         Returns:
-            Dict[str, Any]: A dictionary containing:
-                - 'audio_airborne': The airborne audio speech sample.
-                - 'audio_body_conducted': The body-conducted audio speech sample.
-                - 'audio_body_conducted_speechless_noisy': The body-conducted noisy speech sample.
+            Dict[str, torch.Tensor]: A dictionary containing:
+                - 'audio_airborne': The airborne audio speech sample of dimension (sample_rate * duration).
+                - 'audio_body_conducted': The body-conducted audio speech sample of dimension (sample_rate * duration).
+                - 'audio_body_conducted_speechless_noisy': The body-conducted noisy speech sample of dimension (sample_rate * noise_duration).
         """
         speech_sample = self.speech_dataset[idx]
         # Randomize the noise sample
-        idx = randint(0, self.len_noise-1)
+        idx = torch.randint(0, self.len_noise, (1,)).item()
         noise_sample = self.noise_dataset[idx]
         
         return {
