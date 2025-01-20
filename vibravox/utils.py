@@ -116,7 +116,9 @@ def remove_hf(
     return waveform
 
 def mix_speech_and_noise(
-    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr_range: List[float] = [-3.0, 5.0]
+    speech_batch: List[torch.Tensor],
+    noise_batch: List[torch.Tensor],
+    snr_range: Tuple[float] = (-3.0, 5.0)
 ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
     """
     Mixes clean speech samples with noise samples at randomized Signal-to-Noise Ratios (SNRs).
