@@ -155,12 +155,8 @@ def mix_speech_and_noise(
 
     corrupted_speech_batch: List[torch.Tensor] = []
     noise_batch_scaled: List[torch.Tensor] = []
-    
-    a, b = snr_range
 
     number_segments: int = 10
-
-    k = (b - a)/number_segments
 
     for speech, noise in zip(speech_batch, noise_batch):
         
@@ -179,33 +175,23 @@ def mix_speech_and_noise(
         if time_noise < time_speech:
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
                
-        # Shuffle 10 equisegments of noise
-        r = len(noise)%number_segments
+        # Trim noise to fit into equal segments
+        total_length = (len(noise) // number_segments) * number_segments
+        noise = noise[:total_length].view(number_segments, -1)
         
-        noise = noise[r:]
-        n = len(noise)
-        
-        noise = noise.view(number_segments, -1)
-        
+        # Randomize segment order and SNRs
         permutation = torch.randperm(number_segments)
-        
-        # Sample SNRs
-        snrs = torch.tensor([a+i*k for i in range(number_segments)])[permutation]
-        
-        noise = noise[permutation]
+        snrs = torch.empty(number_segments).uniform_(snr_range[0], snr_range[1])
         
         # Compute scaling factor
         snrs_linear = 10 ** (snrs / 10.0)
-        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear))
+        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear)).unsqueeze(1)
         
-        noise_scaled = noise * scale_factor.view(-1, 1)
-        
-        noise_scaled = noise_scaled.view(n)
-        
-        noise_slice = noise_scaled[:time_speech]
+        noise_scaled = noise[permutation] * scale_factor
+        mixed_noise = noise_scaled.flatten()[:time_speech]
 
         # Scale noise and mix
-        corrupted_speech = speech + noise_slice
+        corrupted_speech = speech + mixed_noise
 
         corrupted_speech_batch.append(corrupted_speech)
         noise_batch_scaled.append(noise_scaled)
