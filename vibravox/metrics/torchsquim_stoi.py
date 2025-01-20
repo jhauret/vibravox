@@ -6,16 +6,21 @@ from torchmetrics import Metric
 
 
 class TorchsquimSTOI(Metric):
-    """A wrapper for https://pytorch.org/audio/main/generated/torchaudio.models.SquimObjective.html
+    """Wrapper for the SquimObjective model from Torchaudio to compute STOI.
 
-    Forward accepts:
+    This metric calculates the Short-Time Objective Intelligibility (STOI) score,
+    which is used to evaluate the intelligibility of speech signals. It leverages
+    the SquimObjective model provided by Torchaudio to process prediction tensors.
 
-    - ``preds``: ``shape [...,time]``
+    Args:
+        **kwargs: Additional keyword arguments for the parent `Metric` class.
 
-    Returns:
-        (torch.Tensor) 
+    Example:
+        >>> metric = TorchsquimSTOI()
+        >>> preds = torch.randn(1, 16000)
+        >>> metric.update(preds)
+        >>> stoi_score = metric.compute()
     """
-
     def __init__(
         self,
         **kwargs,
@@ -33,10 +38,18 @@ class TorchsquimSTOI(Metric):
         self.register_load_state_dict_post_hook(self.reassign_modules)
 
     def update(self, preds: torch.Tensor, *args, **kwargs) -> None:
-        """Update state with predictions and ignore additional arguments.
+        """Accumulates STOI scores from model predictions.
+
+        Processes the input predictions to compute the STOI score and updates
+        the internal state for averaging.
 
         Args:
-            preds (torch.Tensor): Predictions from model
+            preds (torch.Tensor): Model predictions with shape [..., time].
+            *args: Additional positional arguments (ignored).
+            **kwargs: Additional keyword arguments (ignored).
+
+        Example:
+            >>> metric.update(preds)
         """
         stoi_batch, _, _ = self.compute_stoi(preds.view(1, -1))
 
@@ -44,10 +57,19 @@ class TorchsquimSTOI(Metric):
         self.total += stoi_batch.numel()
 
     def compute(self) -> torch.Tensor:
-        """Computes average STOI"""
+        """Calculates the average STOI score.
+
+        Computes the mean STOI score accumulated over all updates.
+
+        Returns:
+            torch.Tensor: The average STOI score.
+
+        Example:
+            >>> stoi_score = metric.compute()
+        """
         return self.sum_stoi / self.total
 
-    # We do not want to have NORESQA in the state dict and trainable parameters
+    # We do not want to have STOI in the state dict and trainable parameters
     def _load_from_state_dict(
         self,
         state_dict,
@@ -57,7 +79,22 @@ class TorchsquimSTOI(Metric):
         missing_keys,
         unexpected_keys,
         error_msgs,
-    ):
+    ) -> None:
+        """Loads the state dictionary, excluding the `compute_stoi` module.
+
+        This method overrides the default `_load_from_state_dict` to prevent
+        the `compute_stoi` module from being loaded as a trainable parameter.
+
+        Args:
+            state_dict (dict): The state dictionary to load.
+            prefix (str): Prefix for state_dict keys.
+            local_metadata (dict): Metadata associated with the state_dict.
+            strict (bool): Whether to strictly enforce that the keys in state_dict
+                match the keys returned by this module's `state_dict` function.
+            missing_keys (list): List of missing keys.
+            unexpected_keys (list): List of unexpected keys.
+            error_msgs (list): List of error messages.
+        """
         # Reloading state_dict that is intialized and static
         state_dict[prefix + "compute_stoi"] = self.compute_stoi.state_dict(
             prefix=prefix + "compute_stoi."
@@ -82,7 +119,20 @@ class TorchsquimSTOI(Metric):
         destination,
         prefix: str = "",
         keep_vars: bool = False,
-    ):
+    ) -> OrderedDict:
+        """Generates the state dictionary, excluding the `compute_stoi` module.
+
+        This method overrides the default `state_dict` to exclude the
+        `compute_stoi` module by setting its entries to zero.
+
+        Args:
+            destination (dict): Destination dictionary.
+            prefix (str, optional): Prefix for keys in the state dictionary.
+            keep_vars (bool, optional): Whether to keep variables.
+
+        Returns:
+            OrderedDict: The modified state dictionary.
+        """
         # We do not want to have NORESQA in the state dict and trainable parameters
         # So we add zeroes in the state_dict
         destination = super().state_dict(destination, prefix, keep_vars)
@@ -91,6 +141,16 @@ class TorchsquimSTOI(Metric):
                 destination[k] = torch.Tensor([0.0])
         return destination
 
-    def reassign_modules(self, module, incompatible_keys):
+    def reassign_modules(self, module, incompatible_keys) -> None:
+        """Reassigns the original modules after state dictionary operations.
+
+        This method restores the original modules from the backup after the state
+        dictionary has been loaded to ensure that `compute_stoi` is not included
+        as a trainable parameter.
+
+        Args:
+            module (torch.nn.Module): The module being loaded.
+            incompatible_keys (dict): Dictionary of incompatible keys.
+        """
         self._modules = deepcopy(self._modules_backup)
         self._modules_backup = OrderedDict()
