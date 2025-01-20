@@ -7,7 +7,7 @@ from vibravox.lightning_datamodules.stp import STPLightningDataModule
 class TestSTPLightningDataModule:
     def test_dataset_return_type(self, stp_lightning_datamodule_instance):
         stp_lightning_datamodule_instance.setup(stage="test")
-        test_dataset = stp_lightning_datamodule_instance.test_dataset
+        test_dataset = stp_lightning_datamodule_instance.test_dataset_principal
         dataset_sample = next(iter(test_dataset))
 
         assert isinstance(dataset_sample["audio"]["array"], np.ndarray)
@@ -30,7 +30,7 @@ class TestSTPLightningDataModule:
         self, stp_lightning_datamodule_instance
     ):
         stp_lightning_datamodule_instance.setup(stage="test")
-        test_dataset = stp_lightning_datamodule_instance.test_dataset
+        test_dataset = stp_lightning_datamodule_instance.test_dataset_principal
         dataset_sample = next(iter(test_dataset))
         phonemes = dataset_sample["phonemized_text"]
         tokenized_phonemes = stp_lightning_datamodule_instance.tokenizer(

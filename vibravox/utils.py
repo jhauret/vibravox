@@ -2,8 +2,7 @@
 
 import torch
 from torchaudio.functional import lowpass_biquad
-
-from typing import List, Optional, Tuple
+from typing import List, Tuple, Optional
 
 def pad_audio(audio: torch.Tensor, desired_samples: int) -> torch.Tensor:
     """
@@ -197,3 +196,80 @@ def mix_speech_and_noise(
         noise_batch_scaled.append(noise_scaled)
 
     return corrupted_speech_batch, noise_batch_scaled
+
+def decode_operations(predicted_chr: str,
+                      label_chr: str,
+                      editops: List[Tuple[str, int, int]]) -> List[Tuple[str, str, str]]:
+    """
+    Decode the operations based on the edit operations.
+
+    Args:
+        predicted_chr (str): The predicted character.
+        label_chr (str): The label character.
+        editops (List[Tuple[str, int, int]]): The list of edit operations.
+
+    Returns:
+        List[Tuple[str, str, str]]: The list of decoded operations.
+    """
+    ops = []
+    for editop in editops:
+        op, pred_idx, label_idx = editop
+
+        if op == "insert":
+            label_token = label_chr[label_idx]
+            ops.append((op, label_token, label_token))
+        elif op == "delete":
+            pred_token = predicted_chr[pred_idx]
+            ops.append((op, pred_token, pred_token))
+        else:
+            label_token = label_chr[label_idx]
+            pred_token = predicted_chr[pred_idx]
+            ops.append((op, pred_token, label_token))
+
+    return ops
+
+
+def get_space_indices(string: str) -> List[int]:
+    """
+    Get the positions of spaces in a string.
+
+    Args:
+        string (str): The input string.
+
+    Returns:
+        List[int]: The list of space indices.
+    """
+    return [i for i, x in enumerate(string) if x == ' ']
+
+
+def split_editops(pred: str,
+                  target: str,
+                  editops: List[Tuple[str, int, int]])\
+        -> Tuple[List[Tuple[str, int, int]], List[Tuple[str, int, int]], List[Tuple[str, int, int]]]:
+    """
+    Split the edit operations into three categories: before space, in word, and all.
+
+    Args:
+        pred (str): The predicted string.
+        target (str): The target string.
+        editops (List[Tuple[str, int, int]]): The list of edit operations.
+
+    Returns:
+        Tuple[List[Tuple[str, int, int]], List[Tuple[str, int, int]], List[Tuple[str, int, int]]]: The split edit operations.
+    """
+    pred_space_idx = get_space_indices(pred)
+    target_space_idx = get_space_indices(target)
+
+    raw_editops_before_space = []
+    raw_editops_in_word = []
+    for editop in editops:
+        op, pred_idx, label_idx = editop
+
+        if ((op == 'replace' and ((pred_idx+1) in pred_space_idx or (label_idx + 1) in target_space_idx)) or
+            (op == 'delete' and (pred_idx+1) in pred_space_idx) or
+            (op == 'insert' and (label_idx + 1) in target_space_idx)):
+            raw_editops_before_space.append(editop)
+        else:
+            raw_editops_in_word.append(editop)
+
+    return raw_editops_before_space, raw_editops_in_word, editops
