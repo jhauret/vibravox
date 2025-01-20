@@ -231,18 +231,18 @@ class NoisyBWELightningDataModule(LightningDataModule):
                 - 'audio_airborne': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
         """
         body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
+        
+        if not "audio_airborne" in batch[0]:
+            # collate strategy pad for noisy real data
+            speech_noisy_real_padded_batch = pad_sequence(
+                body_conducted_batch, batch_first=True, padding_value=0.0
+            ).unsqueeze(1)
+            return {"audio_body_conducted": speech_noisy_real_padded_batch}
+        
+        air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
         speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch, self.snr_range)
-        
-        if "audio_airborne" in batch[0]:
-            air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
-        else:
-            # collate strategy pad for noisy real data
-            speech_noisy_synthetic_padded_batch = pad_sequence(
-                speech_noisy_synthetic, batch_first=True, padding_value=0.0
-            ).unsqueeze(1)
-            return {"audio_body_conducted": speech_noisy_synthetic_padded_batch}
         
         if collate_strategy == "pad":
 
