@@ -1,9 +1,8 @@
 import torch
 import re
-from typing import Dict, List, Union
-from itertools import cycle
+from typing import Dict, List
 from lightning import LightningDataModule
-from datasets import Audio, load_dataset, Dataset, DatasetDict, concatenate_datasets
+from datasets import Audio, load_dataset, concatenate_datasets
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from lightning import LightningDataModule
@@ -18,7 +17,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         self,
         sample_rate: int = 16000,
         dataset_name: str = "Cnam-LMSSC/vibravox",
-        subset: str = "speech_clean",
         sensor: str = "headset_microphone",
         collate_strategy: str = "constant_length-2500-ms",
         data_augmentation: torch.nn.Module = None,
@@ -29,23 +27,23 @@ class NoisyBWELightningDataModule(LightningDataModule):
         **kwargs,
     ):
         """
-        LightningDataModule for data-augmented Bandwidth Extension (BWE)
+        LightningDataModule for Noisy Bandwidth Extension (BWE)
 
         Args:
             sample_rate (int, optional): Sample rate at which the dataset is output. Defaults to 16000.
             dataset_name (str, optional): Dataset name.
-                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp".
+                Must be one of "Cnam-LMSSC/vibravox" or "Cnam-LMSSC/vibravox_enhanced_by_EBEN".
                 Defaults to "Cnam-LMSSC/vibravox".
-            subset (str, optional): Subset. Defaults to "speech_clean"
             sensor (str, optional): Sensor. Defaults to "headset_microphone"
             collate_strategy (str, optional): What strategy to use to collate the data. One of:
                 - "pad": Pad the audio signals to the length of the longest signal in the batch.
                 - "constant_length-XXX-ms": Cut or pad the audio signals to XXXms.
-            Defaults to "constant_length-3000-ms".
+            Defaults to "constant_length-2500-ms".
             data_augmentation (nn.Module, optional): Data augmentation module. Defaults to None.
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
+            snr_range (List[float], optional): SNR range for the noising. Defaults to [-3.0, 5.0].
         """
         super().__init__()
         
@@ -53,9 +51,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox-test", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
             f"dataset_name {dataset_name} not supported."
         self.dataset_name = dataset_name
-        self.subset = subset
-        self.subset_speechless_noisy = "speechless_noisy" # for distribution change 
-        self.subset_speech_noisy = "speech_noisy" # for test set
         self.sensor = sensor
 
         assert collate_strategy == "pad" or re.match(r"constant_length-\d+-ms", collate_strategy), \
@@ -74,9 +69,11 @@ class NoisyBWELightningDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.snr_range = snr_range
         
-    def setup(self, stage: str = None):
+    def setup(self, stage: str = None) -> None:
         """
-        Set up the datasets.
+        Sets up the datasets.
+        This method loads and processes the datasets for training, validation, and testing.
+        It renames, selects, casts, and formats the necessary columns as per the configuration.
 
         Args:
             stage (str): Pipeline stage among ['fit', 'validate', 'test', 'predict']. Defaults to None.
@@ -87,13 +84,13 @@ class NoisyBWELightningDataModule(LightningDataModule):
         """
         # Load datasets
         speechclean = load_dataset(
-            self.dataset_name, self.subset, streaming=self.streaming
+            self.dataset_name, "speech_clean", streaming=self.streaming
         )
         speechless_noisy = load_dataset(
-            self.dataset_name, self.subset_speechless_noisy, streaming=self.streaming
+            self.dataset_name, "speechless_noisy", streaming=self.streaming
         )
         speech_noisy = load_dataset(
-            self.dataset_name, self.subset_speech_noisy, streaming=self.streaming
+            self.dataset_name, "speech_noisy", streaming=self.streaming
         )
         
         # Process each dataset: rename columns, select columns, cast and format
@@ -143,12 +140,12 @@ class NoisyBWELightningDataModule(LightningDataModule):
             # for this PR, speech_noisy_synthetic is used instead of speech_noisy_real
             #TODO: for next PR, use speech_noisy_real + speech_noisy_synthetic
             
-            # Concatenate speech_noisy splits
-            speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
+            speech_test = speechclean["test"]
+            noise_test = speechless_noisy["test"]
             
-            self.test_dataset = speech_noisy_real   
+            self.test_dataset = SpeechNoiseDataset(speech_test, noise_test)
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         """
         Train dataloader.
 
@@ -163,7 +160,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy)
         )
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         """
         Validation dataloader.
 
@@ -178,7 +175,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
         )
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         """
         Test dataloader.
 
@@ -188,14 +185,20 @@ class NoisyBWELightningDataModule(LightningDataModule):
 
         return DataLoader(
             self.test_dataset,
-            batch_size=4,
+            batch_size=1,
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator_for_test(batch),
+            collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True, collate_strategy=self.collate_strategy
+                ),
         )
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
         """
-        Custom data collator function to dynamically pad the data.
+        Custom data collator function to mix speech and noise audios and dynamically pad the data.
+
+        This function processes a batch of data by mixing clean speech with noise at specified SNR ranges.
+        It then pads or trims the audio signals based on the collate strategy and applies data augmentation
+        if specified.
 
         Args:
             - batch (List[Dict[str, Audio]]): Dict from the dataset with the keys :
@@ -216,10 +219,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
-        #TODO: snr randomisé entre -3 et 5 dB pour chaque élément de batch
-        
-        
-        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch)
+        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch, self.snr_range)
         
         if collate_strategy == "pad":
 
@@ -256,25 +256,4 @@ class NoisyBWELightningDataModule(LightningDataModule):
         return {
             "audio_body_conducted": speech_noisy_synthetic_padded_batch,
             "audio_airborne":  air_conducted_padded_batch,
-        }
-        
-    def data_collator_for_test(self, batch: List[Dict[str, Audio]]) -> Dict[str, torch.Tensor]:
-        #TODO: temporaire, utiliser utils/data_collator généraliste
-        """_summary_
-
-        Args:
-            batch (List[Dict[str, Audio]]): _description_
-
-        Returns:
-            Dict[str, torch.Tensor] A dictionary containing collated data with keys:
-                - 'audio_body_conducted': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
-        """
-        body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
-        
-        body_conducted_padded_batch = pad_sequence(
-            body_conducted_batch, batch_first=True, padding_value=0.0
-        ).unsqueeze(1)
-
-        return {
-            "audio_body_conducted": body_conducted_padded_batch
         }

@@ -8,3 +8,6 @@ torchmetrics_si_sdr:
 torchmetrics_stoi:
   _target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
   fs: ${sample_rate}
+
+torchsquim_stoi:
+  _target_: vibravox.metrics.torchsquim_stoi.TorchsquimSTOI

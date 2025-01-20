@@ -3,25 +3,50 @@ from torch.utils.data import Dataset
 from random import randint
 
 class SpeechNoiseDataset(Dataset):
-    """_summary_
+    """
+    A dataset that pairs speech samples with randomized noise samples.
+
+    This dataset takes a speech dataset and a noise dataset, and for each speech sample,
+    it randomly selects a noise sample to mix with, providing a combination of clean speech 
+    and noisy speech samples.
 
     Args:
-        Dataset (_type_): _description_
+        speech_dataset (Dataset): The dataset containing clean speech samples.
+        noise_dataset (Dataset): The dataset containing noise samples.
     """
     
     def __init__(self, speech_dataset: Dataset, noise_dataset: Dataset):
-        
         super().__init__()
         
-        self.speech_dataset = speech_dataset
-        self.noise_dataset = noise_dataset
+        self.speech_dataset: Dataset = speech_dataset
+        self.noise_dataset: Dataset = noise_dataset
         self.len_noise: int = len(noise_dataset)
         
     def __len__(self) -> int:
+        """
+        Return the total number of speech samples in the dataset.
+
+        Returns:
+            int: The number of speech samples.
+        """
         return len(self.speech_dataset)
     
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        
+        """
+        Retrieve the paired speech and noise samples at the specified index.
+
+        This method fetches a speech sample from the speech dataset using the provided index.
+        It then randomly selects a noise sample from the noise dataset to pair with the speech sample.
+
+        Args:
+            idx (int): The index of the speech sample to retrieve.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - 'audio_airborne': The airborne audio speech sample.
+                - 'audio_body_conducted': The body-conducted audio speech sample.
+                - 'audio_body_conducted_speechless_noisy': The body-conducted noisy speech sample.
+        """
         speech_sample = self.speech_dataset[idx]
         # Randomize the noise sample
         idx = randint(0, self.len_noise-1)

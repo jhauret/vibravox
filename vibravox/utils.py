@@ -2,9 +2,7 @@
 
 import torch
 from torchaudio.functional import lowpass_biquad
-
-
-from typing import List, Optional, Tuple
+from typing import List, Tuple, Optional
 
 def pad_audio(audio: torch.Tensor, desired_samples: int) -> torch.Tensor:
     """
@@ -118,25 +116,33 @@ def remove_hf(
     return waveform
 
 def mix_speech_and_noise(
-    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr: float = 5.0
+    speech_batch: List[torch.Tensor], noise_batch: List[torch.Tensor], snr_range: List[float] = [-3.0, 5.0]
 ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
-    #TODO: implémenter un snr par item de batch
     """
-    Mix speech and noise at a given Signal-to-Noise Ratio (SNR).
+    Mixes clean speech samples with noise samples at randomized Signal-to-Noise Ratios (SNRs).
+
+    This function takes batches of clean speech and noise tensors, applies random SNRs within a specified range
+    to the noise, scales the noise accordingly, and mixes it with the speech to produce corrupted speech samples.
+    The SNR for each noise segment is sampled uniformly from the provided `snr_range`.
 
     Args:
-        speech_batch (torch.Tensor): A clean speech sample with shape (time).
-        noise_batch (torch.Tensor): A noise sample with shape (time_noise).
-        snr (float, optional): Desired signal-to-noise ratio in decibels. Defaults to 5.0.
+        speech_batch (List[torch.Tensor]): 
+            A list of clean speech samples. Each tensor should be 1-dimensional with shape `(time,)`.
+        noise_batch (List[torch.Tensor]): 
+            A list of noise samples. Each tensor should be 1-dimensional with shape `(time_noise,)`.
+            The length of each noise sample must be greater than or equal to the corresponding speech sample.
+        snr_range (List[float], optional): 
+            A list containing two floats representing the minimum and maximum SNR values in decibels (dB).
+            Defaults to `[-3.0, 5.0]`.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor]: 
-            - corrupted_speech_batch: Mixed speech and noise with shape (time).
-            - noise_batch_scaled: Scaled noise used for mixing with shape (time).
-
-    Raises:
-        TypeError: If either speech_batch or noise_batch is not a torch.Tensor.
-        ValueError: If tensors do not have the expected number of dimensions or incompatible shapes.
+        Tuple[List[torch.Tensor], List[torch.Tensor]]:
+            - `corrupted_speech_batch`: 
+                A list of corrupted speech samples obtained by adding scaled noise to the clean speech.
+                Each tensor has the same shape as the corresponding input speech tensor `(time,)`.
+            - `noise_batch_scaled`: 
+                A list of scaled noise tensors used for mixing. Each tensor has the same shape as the 
+                corresponding input speech tensor `(time,)`.
     """
     # Input validation
     if not isinstance(speech_batch, list) or not all(isinstance(t, torch.Tensor) for t in speech_batch):
@@ -146,10 +152,17 @@ def mix_speech_and_noise(
     if len(speech_batch) != len(noise_batch):
         raise ValueError("speech_batch and noise_batch must have the same length")
 
-    corrupted_speech_batch = []
-    noise_batch_scaled = []
+    corrupted_speech_batch: List[torch.Tensor] = []
+    noise_batch_scaled: List[torch.Tensor] = []
+
+    number_segments: int = 10
 
     for speech, noise in zip(speech_batch, noise_batch):
+        
+        # Compute power
+        speech_power = torch.mean(speech ** 2)
+        noise_power = torch.mean(noise ** 2)
+        
         if speech.dim() != 1:
             raise ValueError(f"Each speech sample must be a 1D tensor, but got shape {speech.shape}")
         if noise.dim() != 1:
@@ -160,36 +173,101 @@ def mix_speech_and_noise(
 
         if time_noise < time_speech:
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
-               
-        # Shuffle 10 equisegments of noise
-        number_segments = 10
-        r = len(noise)%number_segments
         
-        noise = noise[r:]
-        n = len(noise)
+        # Randomize noise segment
+        offset = torch.randint(1, number_segments, (1,)).item()
+        noise_slice = noise[offset*len(noise)//number_segments:]
+        if len(noise_slice) < time_speech:
+            noise_slice = noise_slice[time_speech:]
         
-        noise = noise.view(number_segments, -1)
-        
-        permutation = torch.randperm(number_segments)
-        
-        noise = noise[permutation]
-        noise = noise.view(n)
-        
-        noise_slice = noise[:time_speech]
-
-        # Compute power
-        speech_power = torch.mean(speech ** 2)
-        noise_power = torch.mean(noise_slice ** 2)
-
         # Compute scaling factor
-        snr_linear = 10 ** (snr / 10.0)
-        scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
+        snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
+        snrs_linear = 10 ** (snrs / 10.0)
+        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear))
+        noise_scaled = noise_slice * scale_factor
+        mixed_noise = noise_scaled[:time_speech]
 
         # Scale noise and mix
-        noise_scaled = noise_slice * scale_factor
-        corrupted_speech = speech + noise_scaled
+        corrupted_speech = speech + mixed_noise
 
         corrupted_speech_batch.append(corrupted_speech)
         noise_batch_scaled.append(noise_scaled)
 
     return corrupted_speech_batch, noise_batch_scaled
+
+def decode_operations(predicted_chr: str,
+                      label_chr: str,
+                      editops: List[Tuple[str, int, int]]) -> List[Tuple[str, str, str]]:
+    """
+    Decode the operations based on the edit operations.
+
+    Args:
+        predicted_chr (str): The predicted character.
+        label_chr (str): The label character.
+        editops (List[Tuple[str, int, int]]): The list of edit operations.
+
+    Returns:
+        List[Tuple[str, str, str]]: The list of decoded operations.
+    """
+    ops = []
+    for editop in editops:
+        op, pred_idx, label_idx = editop
+
+        if op == "insert":
+            label_token = label_chr[label_idx]
+            ops.append((op, label_token, label_token))
+        elif op == "delete":
+            pred_token = predicted_chr[pred_idx]
+            ops.append((op, pred_token, pred_token))
+        else:
+            label_token = label_chr[label_idx]
+            pred_token = predicted_chr[pred_idx]
+            ops.append((op, pred_token, label_token))
+
+    return ops
+
+
+def get_space_indices(string: str) -> List[int]:
+    """
+    Get the positions of spaces in a string.
+
+    Args:
+        string (str): The input string.
+
+    Returns:
+        List[int]: The list of space indices.
+    """
+    return [i for i, x in enumerate(string) if x == ' ']
+
+
+def split_editops(pred: str,
+                  target: str,
+                  editops: List[Tuple[str, int, int]])\
+        -> Tuple[List[Tuple[str, int, int]], List[Tuple[str, int, int]], List[Tuple[str, int, int]]]:
+    """
+    Split the edit operations into three categories: before space, in word, and all.
+
+    Args:
+        pred (str): The predicted string.
+        target (str): The target string.
+        editops (List[Tuple[str, int, int]]): The list of edit operations.
+
+    Returns:
+        Tuple[List[Tuple[str, int, int]], List[Tuple[str, int, int]], List[Tuple[str, int, int]]]: The split edit operations.
+    """
+    pred_space_idx = get_space_indices(pred)
+    target_space_idx = get_space_indices(target)
+
+    raw_editops_before_space = []
+    raw_editops_in_word = []
+    for editop in editops:
+        op, pred_idx, label_idx = editop
+
+        if ((op == 'replace' and ((pred_idx+1) in pred_space_idx or (label_idx + 1) in target_space_idx)) or
+            (op == 'delete' and (pred_idx+1) in pred_space_idx) or
+            (op == 'insert' and (label_idx + 1) in target_space_idx)):
+            raw_editops_before_space.append(editop)
+        else:
+            raw_editops_in_word.append(editop)
+
+    return raw_editops_before_space, raw_editops_in_word, editops

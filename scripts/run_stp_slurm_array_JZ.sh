@@ -22,6 +22,7 @@ module load pytorch-gpu/py3/2.2.0
 export HF_DATASETS_CACHE=$WORK/huggingface_cache/datasets
 export HUGGINGFACE_HUB_CACHE=$WORK/huggingface_cache/hub
 export HF_DATASETS_OFFLINE=1
+export HF_HUB_OFFLINE=1
 
 # Specify the path to the config file
 array_config=./configs/slurm_array/stp.txt

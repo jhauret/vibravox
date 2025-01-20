@@ -6,9 +6,6 @@ from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
-from vibravox.lightning_datamodules.noisybwe import NoisyBWELightningDataModule
-from torchaudio.pipelines import SQUIM_OBJECTIVE
-from torchaudio.models import SquimObjective
 
 class EBENLightningModule(LightningModule):
     def __init__(
@@ -82,7 +79,6 @@ class EBENLightningModule(LightningModule):
         self.update_discriminator_ratio = update_discriminator_ratio
 
         self.metrics: MetricCollection = metrics
-        self.torchsquim_stoi: SquimObjective = SQUIM_OBJECTIVE.get_model()
         self.description: str = description
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
@@ -165,7 +161,7 @@ class EBENLightningModule(LightningModule):
 
         return outputs
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
         """
         Lightning validation step
 
@@ -173,10 +169,11 @@ class EBENLightningModule(LightningModule):
             batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
                                                 and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
-        return self.common_eval_step(batch, batch_idx, "validation")
+        return self.common_eval_step(batch, batch_idx, "validation", dataloader_idx)
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
         """
         Lightning testing step
 
@@ -184,8 +181,9 @@ class EBENLightningModule(LightningModule):
             batch (Dict[str, torch.Tensor]): Dict with keys "audio_body_conducted", "audio_airborne"
                                                 and values of shape (batch_size, channels, samples)
             batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
-        return self.common_eval_step(batch, batch_idx, "test")
+        return self.common_eval_step(batch, batch_idx, "test", dataloader_idx)
 
     def configure_optimizers(self):
         """
@@ -206,7 +204,7 @@ class EBENLightningModule(LightningModule):
         - Logs the description in tensorboard.
         """
         self.check_datamodule_parameter()
-        self.logger.experiment.add_text(tag='description', text_string=self.description)
+        self.logger.experiment.add_text(tag="description", text_string=self.description)
 
     def on_validation_start(self) -> None:
         """
@@ -235,11 +233,9 @@ class EBENLightningModule(LightningModule):
             dataloader_idx (int): Index of the dataloader
         """
 
-        self.common_eval_logging("validation", outputs, batch_idx)
+        self.common_eval_logging("validation", outputs, batch_idx, dataloader_idx)
 
-    def on_test_batch_end(
-        self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
-    ) -> None:
+    def on_test_batch_end(self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
         """
         Called at the end of the test batch. Logs the metrics and audio in tensorboard.
 
@@ -250,7 +246,7 @@ class EBENLightningModule(LightningModule):
             dataloader_idx (int): Index of the dataloader
         """
 
-        self.common_eval_logging("test", outputs, batch_idx)
+        self.common_eval_logging("test", outputs, batch_idx, dataloader_idx)
 
     def on_test_end(self) -> None:
         """
@@ -260,7 +256,7 @@ class EBENLightningModule(LightningModule):
             self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
                                        commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
 
-    def common_eval_step(self, batch, batch_idx, stage):
+    def common_eval_step(self, batch, batch_idx, stage, dataloader_idx):
         """
         Common evaluation step for validation and test.
 
@@ -268,55 +264,49 @@ class EBENLightningModule(LightningModule):
             batch (Any): Batch
             batch_idx (int): Index of the batch
             stage (str): Stage of the evaluation. One of {"validation", "test"}
+            dataloader_idx (int): Index of the dataloader
 
         """
 
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
 
         # Get tensors
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-            decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            outputs = {
-                    f"corrupted": corrupted_speech,
-                    f"enhanced": enhanced_speech,
-                    f"reference": reference_speech,
-                }
-            atomic_losses_generator = self.compute_atomic_losses(
+        outputs = {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            }
+
+        atomic_losses_generator = self.compute_atomic_losses(
             network="generator",
             enhanced_speech=enhanced_speech,
             reference_speech=reference_speech,
             decomposed_enhanced_speech=decomposed_enhanced_speech,
             decomposed_reference_speech=decomposed_reference_speech,
-            )
+        )
 
-            for key, value in atomic_losses_generator.items():
-                self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+        for key, value in atomic_losses_generator.items():
+            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
 
-            atomic_losses_discriminator = self.compute_atomic_losses(
-                network="discriminator",
-                enhanced_speech=enhanced_speech,
-                reference_speech=reference_speech,
-                decomposed_enhanced_speech=decomposed_enhanced_speech,
-                decomposed_reference_speech=decomposed_reference_speech,
-            )
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-            for key, value in atomic_losses_discriminator.items():
-                self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
-                
-        else:
-            outputs = {
-                f"corrupted": corrupted_speech,
-                f"enhanced": enhanced_speech,
-            }
+        for key, value in atomic_losses_discriminator.items():
+            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
-    def common_eval_logging(self, stage, outputs, batch_idx):
+    def common_eval_logging(self, stage, outputs, batch_idx, dataloader_idx):
         """
         Common evaluation logging for validation and test.
 
@@ -324,51 +314,41 @@ class EBENLightningModule(LightningModule):
             stage (str): Stage of the evaluation. One of {"validation", "test"}
             outputs (STEP_OUTPUT): Output of the validation step
             batch_idx (int): Index of the batch
+            dataloader_idx (int): Index of the dataloader
         """
 
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        
-        if stage == "validation" or not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-            assert "reference" in outputs, "reference must be in outputs"
+        assert "reference" in outputs, "reference must be in outputs"
 
-            # Log metrics
-            metrics_to_log = self.metrics(
-                outputs["enhanced"], outputs["reference"]
-            )
-            metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
-        else:
-            # torchsquim only has 2D tensors as input
-            #TODO: to refactor, write a Metric class for this
-            preds = outputs["enhanced"]
-            preds = preds.view(1, -1)
-            
-            metrics_to_log = {f"test/torchsquim_stoi": self.torchsquim_stoi(preds)[0].item()} # [0] because it returns tuple (stoi_hyp, pesq_hyp, si_sdr_hyp)
-            
+        # Log metrics
+        metrics_to_log = self.metrics(
+            outputs["enhanced"], outputs["reference"]
+        )
+        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
-                dictionary=metrics_to_log,
-                sync_dist=True,
-                prog_bar=True,
-            )
+            dictionary=metrics_to_log,
+            sync_dist=True,
+            prog_bar=True,
+        )
 
         # Log audio
         if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
-                tag=f"{stage}_{batch_idx}/enhanced",
+                tag=f"{stage}_{dataloader_idx}_{batch_idx}/enhanced",
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                if not isinstance(self.trainer.datamodule, NoisyBWELightningDataModule):
-                    self.log_audio(
-                        audio_tensor=outputs["reference"],
-                        tag=f"{stage}_{batch_idx}/reference",
-                        global_step=self.num_val_runs,
-                    )
+                self.log_audio(
+                    audio_tensor=outputs["reference"],
+                    tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
+                    global_step=self.num_val_runs,
+                )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
-                    tag=f"{stage}_{batch_idx}/corrupted",
+                    tag=f"{stage}_{dataloader_idx}_{batch_idx}/corrupted",
                     global_step=self.num_val_runs,
                 )
 
