@@ -177,6 +177,8 @@ def mix_speech_and_noise(
         # Randomize noise segment
         offset = torch.randint(1, number_segments, (1,)).item()
         noise_slice = noise[offset*len(noise)//number_segments:]
+        if len(noise_slice) < time_speech:
+            noise_slice = noise_slice[time_speech:]
         
         # Compute scaling factor
         snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
