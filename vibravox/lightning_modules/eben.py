@@ -272,8 +272,6 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        for k, v in self.trainer.datamodule.state_dict().items():
-            print(k, v)
         if "audio_airborne" in batch: 
             reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
             decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
