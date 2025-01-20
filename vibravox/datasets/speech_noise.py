@@ -16,13 +16,6 @@ class SpeechNoiseDataset(Dataset):
     """
     
     def __init__(self, speech_dataset: Dataset, noise_dataset: Dataset):
-        """
-        Initializes the SpeechNoiseDataset.
-
-        Args:
-            speech_dataset (Dataset): The VibraVox dataset containing clean speech samples.
-            noise_dataset (Dataset): The VibraVox dataset containing noise samples.
-        """
         super().__init__()
         
         self.speech_dataset: Dataset = speech_dataset
