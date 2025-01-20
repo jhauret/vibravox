@@ -256,7 +256,7 @@ class EBENLightningModule(LightningModule):
             self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
                                        commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
 
-    def common_eval_step(self, batch, batch_idx, stage, dataloader_idx):
+    def common_eval_step(self, batch: Any, batch_idx: int, stage: str, dataloader_idx: int) -> STEP_OUTPUT:
         """
         Common evaluation step for validation and test.
 
@@ -272,12 +272,12 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+        if not dataloader_idx == "real": 
             reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
         decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+        if not dataloader_idx == "real":
             outputs = {
                     f"corrupted": corrupted_speech,
                     f"enhanced": enhanced_speech,
@@ -313,7 +313,7 @@ class EBENLightningModule(LightningModule):
 
         return outputs
 
-    def common_eval_logging(self, stage, outputs, batch_idx, dataloader_idx):
+    def common_eval_logging(self, stage: str, outputs: STEP_OUTPUT, batch_idx: int, dataloader_idx: int) -> None:
         """
         Common evaluation logging for validation and test.
 
@@ -327,7 +327,7 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+        if not dataloader_idx == "real":
             assert "reference" in outputs, "reference must be in outputs"        
         else:
             metrics_to_log = {k: v for k, v in self.metrics.items() if k == 'torchsquim_stoi'}
@@ -352,7 +352,7 @@ class EBENLightningModule(LightningModule):
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                if not self.trainer.datamodule.dataset_name == "speech_noisy": # test_dataset_real
+                if not dataloader_idx == "real":
                     self.log_audio(
                         audio_tensor=outputs["reference"],
                         tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
