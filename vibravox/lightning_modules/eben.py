@@ -272,12 +272,12 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        for k, v in self.trainer.datamodule.dataloader.items():
+        for k, v in self.trainer.datamodule.state_dict().items():
             print(k, v)
         if "audio_airborne" in batch: 
             reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
+            decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
-        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
         if "audio_airborne" in batch: 
             outputs = {
@@ -330,14 +330,14 @@ class EBENLightningModule(LightningModule):
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
         if "reference" in outputs: 
-            assert "reference" in outputs, "reference must be in outputs"        
+            assert "reference" in outputs, "reference must be in outputs" 
+            # Log metrics
+            metrics_to_log = self.metrics(
+                outputs["enhanced"], outputs["reference"]
+            )      
         else:
-            metrics_to_log = {k: v for k, v in self.metrics.items() if k == 'torchsquim_stoi'}
-            
-        # Log metrics
-        metrics_to_log = self.metrics(
-            outputs["enhanced"], outputs["reference"]
-        )
+            metrics_to_log = {'torchsquim_stoi_real': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
+                 
         metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
