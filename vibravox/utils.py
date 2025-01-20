@@ -168,28 +168,27 @@ def mix_speech_and_noise(
         if noise.dim() != 1:
             raise ValueError(f"Each noise sample must be a 1D tensor, but got shape {noise.shape}")
 
-        time_speech = speech.size(0)
-        time_noise = noise.size(0)
+        speech_samples = speech.size(0)
+        noise_samples = noise.size(0)
 
-        if time_noise < time_speech:
+        if noise_samples < speech_samples:
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
         
         # Randomize noise segment
-        start_time = torch.randint(1, time_noise - time_speech, (1,)).item()
-        noise_slice = noise[start_time: start_time + time_speech]
+        start_time = torch.randint(0, noise_samples - speech_samples, (1,)).item()
+        noise_sliced = noise[start_time: start_time + speech_samples]
         
         # Compute scaling factor
-        snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
-        snrs_linear = 10 ** (snrs / 10.0)
-        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear))
-        noise_scaled = noise_slice * scale_factor
-        mixed_noise = noise_scaled[:time_speech]
+        snr = torch.empty(1).uniform_(snr_range[0], snr_range[1])
+        snr_linear = 10 ** (snr / 10.0)
+        scale_factor = torch.sqrt(speech_power / (noise_power * snr_linear))
+        noise_sliced = noise_sliced * scale_factor
 
         # Scale noise and mix
-        corrupted_speech = speech + mixed_noise
+        corrupted_speech = speech + noise_sliced
 
         corrupted_speech_batch.append(corrupted_speech)
-        noise_batch_scaled.append(noise_scaled)
+        noise_batch_scaled.append(noise_sliced)
 
     return corrupted_speech_batch, noise_batch_scaled
 
