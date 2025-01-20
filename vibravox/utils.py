@@ -173,21 +173,17 @@ def mix_speech_and_noise(
 
         if time_noise < time_speech:
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
-               
-        # Trim noise to fit into equal segments
-        total_length = (len(noise) // number_segments) * number_segments
-        noise = noise[:total_length].view(number_segments, -1)
         
-        # Randomize segment order and SNRs
-        permutation = torch.randperm(number_segments)
-        snrs = torch.empty(number_segments).uniform_(snr_range[0], snr_range[1])
+        # Randomize noise segment
+        offset = torch.randint(1, number_segments, (1,)).item()
+        noise_slice = noise[offset*len(noise)//number_segments:]
         
         # Compute scaling factor
+        snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
         snrs_linear = 10 ** (snrs / 10.0)
-        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear)).unsqueeze(1)
-        
-        noise_scaled = noise[permutation] * scale_factor
-        mixed_noise = noise_scaled.flatten()[:time_speech]
+        scale_factor = torch.sqrt(speech_power / (noise_power * snrs_linear))
+        noise_scaled = noise_slice * scale_factor
+        mixed_noise = noise_scaled[:time_speech]
 
         # Scale noise and mix
         corrupted_speech = speech + mixed_noise
