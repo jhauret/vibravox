@@ -155,8 +155,6 @@ def mix_speech_and_noise(
     corrupted_speech_batch: List[torch.Tensor] = []
     noise_batch_scaled: List[torch.Tensor] = []
 
-    number_segments: int = 10
-
     for speech, noise in zip(speech_batch, noise_batch):
         
         # Compute power
@@ -175,10 +173,8 @@ def mix_speech_and_noise(
             raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
         
         # Randomize noise segment
-        offset = torch.randint(1, number_segments, (1,)).item()
-        noise_slice = noise[offset*len(noise)//number_segments:]
-        if len(noise_slice) < time_speech:
-            noise_slice = noise_slice[time_speech:]
+        offset = torch.randint(1, time_noise - time_speech, (1,)).item()
+        noise_slice = noise[offset: offset + time_speech]
         
         # Compute scaling factor
         snrs = torch.empty(1).uniform_(snr_range[0], snr_range[1])
