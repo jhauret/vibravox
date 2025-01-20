@@ -134,6 +134,14 @@ class NoisyBWELightningDataModule(LightningDataModule):
             self.val_dataset = SpeechNoiseDataset(speech_validation, noise_validation)
             
         if stage in ["test", None]:
+
+            # Concatenate speech_noisy splits
+            # speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
+            
+            # self.test_dataset = speech_noisy_real   
+            
+            # for this PR, speech_noisy_synthetic is used instead of speech_noisy_real
+            #TODO: for next PR, use speech_noisy_real + speech_noisy_synthetic
             
             # Concatenate speech_noisy splits
             speech_noisy_real = concatenate_datasets([speech_noisy["train"], speech_noisy["validation"], speech_noisy["test"]])
