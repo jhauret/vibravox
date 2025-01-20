@@ -1,0 +1,21 @@
+_target_: vibravox.lightning_datamodules.noisybwe.NoisyBWELightningDataModule
+
+sample_rate: ${sample_rate}
+dataset_name: "Cnam-LMSSC/vibravox"
+subset: "speech_clean"
+sensor: "rigid_in_ear_microphone"
+collate_strategy: "constant_length-2500-ms"
+streaming: False
+batch_size: 32
+num_workers: 4
+snr_range:
+  _target_: builtins.tuple
+  _args_:
+    - [-3.0, 5.0]
+
+# This is not used in the actual classes, but just for the description and hydra run directory
+id: ${lightning_datamodule.sensor}
+
+defaults:
+  - data_augmentation: null
+  - _self_ # priority is given to bwe.yaml for overrides
