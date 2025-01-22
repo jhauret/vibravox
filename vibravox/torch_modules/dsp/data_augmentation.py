@@ -54,18 +54,18 @@ class WaveformDataAugmentation(torch.nn.Module):
                 speed_perturbation = T.SpeedPerturbation(orig_freq=self.sample_rate, factors=[speed_perturbation_factor])
                 # This is tricky but SpeedPerturbation returns two values even when lengths is None
                 waveform_1, _ = speed_perturbation(waveform_1)
-                waveform_2, _ = speed_perturbation(waveform_2) if waveform_2 is not None else (None, None)
+                if waveform_2 is not None: waveform_2, _ = speed_perturbation(waveform_2)
             if torch.rand(1) < self.p_pitch_shift:
                 # Apply pitch shift
                 pitch_shift_step = self.pitch_shift_steps[torch.randint(len(self.pitch_shift_steps), size=(1,)).item()]
                 pitch_shift = T.PitchShift(self.sample_rate, n_steps=pitch_shift_step)
                 waveform_1 = pitch_shift(waveform_1)
-                waveform_2 = pitch_shift(waveform_2) if waveform_2 is not None else (None, None)
+                if waveform_2 is not None: waveform_2 = pitch_shift(waveform_2)
             if torch.rand(1) < self.p_time_masking:
                 # Apply time masking
                 time_masking_percentage = self.time_masking_percentage[torch.randint(len(self.time_masking_percentage), size=(1,)).item()]
                 time_masking = TimeMaskingBlockWaveform(masking_percentage=time_masking_percentage)
                 waveform_1 = time_masking(waveform_1)
-                waveform_2 = time_masking(waveform_2) if waveform_2 is not None else (None, None)
+                if waveform_2 is not None: waveform_2 = time_masking(waveform_2)
 
         return waveform_1, waveform_2
