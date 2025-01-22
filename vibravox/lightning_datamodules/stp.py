@@ -227,6 +227,11 @@ class STPLightningDataModule(LightningDataModule):
 
         audios = [sample["audio"]["array"] for sample in batch]
         phonemes = [sample["phonemized_text"] for sample in batch]
+        
+        # Apply data augmentation
+        if deterministic is False:
+            with torch.no_grad():
+                audio_processed, _ = self.data_augmentation(audio_processed, None)
 
         audio_processed = self.feature_extractor(
             raw_speech=audios,
@@ -247,11 +252,6 @@ class STPLightningDataModule(LightningDataModule):
         )
 
         labels = labels_processed.input_ids.masked_fill(labels_processed.attention_mask.ne(1), -100)
-        
-        # Apply data augmentation
-        if deterministic is False:
-            with torch.no_grad():
-                audio_processed, _ = self.data_augmentation(audio_processed, torch.Tensor(None))
 
         return {
             "audio": audio_processed.input_values,
