@@ -231,7 +231,7 @@ class STPLightningDataModule(LightningDataModule):
         # Apply data augmentation
         if deterministic is False:
             with torch.no_grad():
-                audio_processed, _ = self.data_augmentation(audio_processed, None)
+                audios, _ = self.data_augmentation(audios, None)
 
         audio_processed = self.feature_extractor(
             raw_speech=audios,
