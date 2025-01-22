@@ -3,7 +3,7 @@ _target_: vibravox.lightning_datamodules.stp.STPLightningDataModule
 sample_rate: ${sample_rate}
 dataset_name_principal: "Cnam-LMSSC/vibravox"
 #dataset_name_secondary: "Cnam-LMSSC/vibravox-test"
-subset: "speech_clean"
+subset: "speech_noisy"
 sensor: "headset_microphone"
 streaming: False
 batch_size: 8
@@ -23,3 +23,7 @@ tokenizer:
 
 # This is not used in the actual classes, but just for the hydra run directory
 id: ${lightning_datamodule.sensor}
+
+defaults:
+  - data_augmentation: agressive
+  - _self_ # priority is given to bwe.yaml for overrides
