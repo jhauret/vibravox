@@ -5,6 +5,7 @@ from datasets import load_dataset, Audio, DatasetDict
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2CTCTokenizer
+from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 
 
 class STPLightningDataModule(LightningDataModule):
@@ -29,6 +30,7 @@ class STPLightningDataModule(LightningDataModule):
         num_workers: int = 4,
         feature_extractor: Wav2Vec2FeatureExtractor = None,
         tokenizer: Wav2Vec2CTCTokenizer = None,
+        data_augmentation: torch.nn.Module = None,
         **kwargs,
     ):
         """
@@ -47,6 +49,7 @@ class STPLightningDataModule(LightningDataModule):
             num_workers (int, optional): Number of workers. Defaults to 4.
             feature_extractor (Wav2Vec2FeatureExtractor): Feature extractor. Defaults to None.
             tokenizer (Wav2Vec2CTCTokenizer): Tokenizer. Defaults to None.
+            data_augmentation (nn.Module, optional): Data augmentation module. Defaults to None.
         """
 
         super().__init__()
@@ -68,6 +71,14 @@ class STPLightningDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.feature_extractor = feature_extractor
         self.tokenizer = tokenizer
+        
+        if data_augmentation is None:
+            data_augmentation = WaveformDataAugmentation(sample_rate)
+        assert isinstance(
+            data_augmentation, WaveformDataAugmentation
+        ), "data_augmentation must be a WaveformDataAugmentation"
+
+        self.data_augmentation = data_augmentation
 
     def setup(self, stage=None):
         """
@@ -130,7 +141,9 @@ class STPLightningDataModule(LightningDataModule):
             self.train_dataset_principal,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            collate_fn=self.data_collator,
+            collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=False
+                ),
         )
 
     def val_dataloader(self) -> Union[DataLoader, Dict[str, DataLoader]]:
@@ -145,7 +158,9 @@ class STPLightningDataModule(LightningDataModule):
             self.val_dataset_principal,
             batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
-            collate_fn=self.data_collator,
+            collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True
+                ),
         )
 
         if self.dataset_name_secondary is not None:
@@ -153,7 +168,9 @@ class STPLightningDataModule(LightningDataModule):
                 self.val_dataset_secondary,
                 batch_size=min(1, self.batch_size // 4),
                 num_workers=self.num_workers,
-                collate_fn=self.data_collator,
+                collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True
+                ),
             )
             return {"principal": dataloader_principal, "secondary": dataloader_secondary}
         else:
@@ -171,7 +188,9 @@ class STPLightningDataModule(LightningDataModule):
             self.test_dataset_principal,
             batch_size=1,
             num_workers=self.num_workers,
-            collate_fn=self.data_collator,
+            collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True
+                ),
         )
 
         if self.dataset_name_secondary is not None:
@@ -179,14 +198,16 @@ class STPLightningDataModule(LightningDataModule):
                 self.test_dataset_secondary,
                 batch_size=1,
                 num_workers=self.num_workers,
-                collate_fn=self.data_collator,
+                collate_fn=lambda batch: self.data_collator(
+                    batch, deterministic=True
+                ),
             )
             return {"principal": dataloader_principal, "secondary": dataloader_secondary}
         else:
             return dataloader_principal
 
     def data_collator(
-        self, batch: Dict[str, Union[torch.Tensor, List[str]]]
+        self, batch: Dict[str, Union[torch.Tensor, List[str]]], deterministic: bool
     ) -> Dict[str, Union[torch.Tensor, List[int], List[str]]]:
         """
         Custom data collator function to dynamically pad the data.
@@ -195,6 +216,7 @@ class STPLightningDataModule(LightningDataModule):
             batch (Dict[str, Union[torch.Tensor, List[str]]]) : Dict from the dataset with the keys 'audio' and 'phonemes':
                 - 'audio' (torch.Tensor of dimension (sample_rate * duration))
                 - 'phonemes' (str)
+            deterministic (bool): If True, always select the same part of the signal.
 
         Returns:
             Dict[str, Union[torch.Tensor, List[int], List[str]]]: A dictionary containing collated data with keys:
@@ -225,6 +247,11 @@ class STPLightningDataModule(LightningDataModule):
         )
 
         labels = labels_processed.input_ids.masked_fill(labels_processed.attention_mask.ne(1), -100)
+        
+        # Apply data augmentation
+        if deterministic is False:
+            with torch.no_grad():
+                audio_processed, _ = self.data_augmentation(audio_processed, torch.Tensor(None))
 
         return {
             "audio": audio_processed.input_values,
