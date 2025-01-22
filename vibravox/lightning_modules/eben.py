@@ -272,12 +272,12 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        if "audio_airborne" in batch: 
+        if "audio_airborne" in batch: # {val, test}_dataset_real does not have any reference audio
             reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
             decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
 
-        if "audio_airborne" in batch: 
+        if "audio_airborne" in batch: # {val, test}_dataset_real does not have any reference audio
             outputs = {
                     f"corrupted": corrupted_speech,
                     f"enhanced": enhanced_speech,
@@ -327,7 +327,7 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        if "reference" in outputs: 
+        if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
             assert "reference" in outputs, "reference must be in outputs" 
             # Log metrics
             metrics_to_log = self.metrics(
@@ -336,12 +336,14 @@ class EBENLightningModule(LightningModule):
         else:
             metrics_to_log = {'torchsquim_stoi_real': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
                  
+        # TODO: how to log metrics according to the dataloader_idx? access to state_dict? dict datalaoder?
+                 
         metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
             prog_bar=True,
-            add_dataloader_idx=False,
+            add_dataloader_idx=True,
         )
 
         # Log audio
@@ -352,7 +354,7 @@ class EBENLightningModule(LightningModule):
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                if "reference" in outputs:
+                if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
                     self.log_audio(
                         audio_tensor=outputs["reference"],
                         tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
