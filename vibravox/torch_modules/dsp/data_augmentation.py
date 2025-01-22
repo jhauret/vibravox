@@ -35,12 +35,12 @@ class WaveformDataAugmentation(torch.nn.Module):
         self.pitch_shift_steps = pitch_shift_steps
         self.time_masking_percentage = time_masking_percentage
 
-    def forward(self, waveform_1: torch.Tensor, waveform_2: torch.Tensor) -> Tuple[torch.Tensor]:
+    def forward(self, waveform_1: torch.Tensor, waveform_2: torch.Tensor = None) -> Tuple[torch.Tensor]:
 
         """
         Args:
             waveform_1:  first input waveform tensor of shape (..., time)
-            waveform_2:  second input waveform tensor of shape (..., time)
+            waveform_2:  second input waveform tensor of shape (..., time), can be ignored
 
         Returns:
             Tuple[torch.Tensor]: first and second augmented waveform tensor of shape (..., time)
@@ -54,18 +54,18 @@ class WaveformDataAugmentation(torch.nn.Module):
                 speed_perturbation = T.SpeedPerturbation(orig_freq=self.sample_rate, factors=[speed_perturbation_factor])
                 # This is tricky but SpeedPerturbation returns two values even when lengths is None
                 waveform_1, _ = speed_perturbation(waveform_1)
-                waveform_2, _ = speed_perturbation(waveform_2)
+                waveform_2, _ = speed_perturbation(waveform_2) if waveform_2 is not None else (None, None)
             if torch.rand(1) < self.p_pitch_shift:
                 # Apply pitch shift
                 pitch_shift_step = self.pitch_shift_steps[torch.randint(len(self.pitch_shift_steps), size=(1,)).item()]
                 pitch_shift = T.PitchShift(self.sample_rate, n_steps=pitch_shift_step)
                 waveform_1 = pitch_shift(waveform_1)
-                waveform_2 = pitch_shift(waveform_2)
+                waveform_2 = pitch_shift(waveform_2) if waveform_2 is not None else (None, None)
             if torch.rand(1) < self.p_time_masking:
                 # Apply time masking
                 time_masking_percentage = self.time_masking_percentage[torch.randint(len(self.time_masking_percentage), size=(1,)).item()]
                 time_masking = TimeMaskingBlockWaveform(masking_percentage=time_masking_percentage)
                 waveform_1 = time_masking(waveform_1)
-                waveform_2 = time_masking(waveform_2)
+                waveform_2 = time_masking(waveform_2) if waveform_2 is not None else (None, None)
 
         return waveform_1, waveform_2
