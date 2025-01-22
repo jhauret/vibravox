@@ -3,7 +3,7 @@ _target_: vibravox.lightning_datamodules.stp.STPLightningDataModule
 sample_rate: ${sample_rate}
 dataset_name_principal: "Cnam-LMSSC/vibravox"
 #dataset_name_secondary: "Cnam-LMSSC/vibravox-test"
-subset: "speech_noisy"
+subset: "speech_clean"
 sensor: "headset_microphone"
 streaming: False
 batch_size: 8
@@ -25,5 +25,5 @@ tokenizer:
 id: ${lightning_datamodule.sensor}
 
 defaults:
-  - data_augmentation: aggressive
+  - data_augmentation: null
   - _self_ # priority is given to bwe.yaml for overrides
