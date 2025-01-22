@@ -25,5 +25,5 @@ tokenizer:
 id: ${lightning_datamodule.sensor}
 
 defaults:
-  - data_augmentation: agressive
+  - data_augmentation: aggressive
   - _self_ # priority is given to bwe.yaml for overrides
