@@ -86,7 +86,7 @@ class EBENLightningModule(LightningModule):
         self.num_val_runs: int = 0
         
         self.dataloader_names: List[str] = None
-        self.first_sample: torch.Tensor = self.trainer.datamodule.train_dataloader()[0]
+        self.first_sample: torch.Tensor = None
 
     def training_step(self, batch):
         """
@@ -337,10 +337,13 @@ class EBENLightningModule(LightningModule):
             # Log metrics
             metrics_to_log = self.metrics(
                 outputs["enhanced"], outputs["reference"]
-            )      
+            )     
+            #Get first sample
+            if self.first_sample is None:
+                self.first_sample = outputs["reference"] 
         else:
             metrics_to_log = {'torchsquim_stoi': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
-            metrics_to_log.update({'noresqa_mos': self.metrics['noresqa_mos'](outputs["enhanced"], self.first_sample)})
+            if self.first_sample is not None: metrics_to_log.update({'noresqa_mos': self.metrics['noresqa_mos'](outputs["enhanced"], self.first_sample)})
                  
         metrics_to_log = {f"{stage}/{k}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}": v for k, v in metrics_to_log.items()}
         self.log_dict(
