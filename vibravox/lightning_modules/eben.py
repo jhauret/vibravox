@@ -207,13 +207,13 @@ class EBENLightningModule(LightningModule):
         """
         self.check_datamodule_parameter()
         self.logger.experiment.add_text(tag="description", text_string=self.description)
+        if isinstance(self.trainer.datamodule.val_dataloader(), dict): self.dataloader_names = list(self.trainer.datamodule.val_dataloader().keys())
 
     def on_validation_start(self) -> None:
         """
         Called when the validation loop begins.
         """
         self.num_val_runs += 1
-        if isinstance(self.trainer.datamodule.val_dataloader(), dict): self.dataloader_names = list(self.trainer.datamodule.val_dataloader().keys())
 
     def on_test_start(self) -> None:
         """
