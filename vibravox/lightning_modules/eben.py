@@ -338,7 +338,7 @@ class EBENLightningModule(LightningModule):
             metrics_to_log = self.metrics(
                 outputs["enhanced"], outputs["reference"]
             )     
-            #Get first sample
+            #We need to get a airborne speech_clean sample in order to make noresqa_mos metric work in speech_noisy_real use case.
             if self.first_sample is None:
                 self.first_sample = outputs["reference"] 
         else:
