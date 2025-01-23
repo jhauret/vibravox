@@ -71,21 +71,22 @@ class EBENLightningModule(LightningModule):
         self.adversarial_loss_fn: torch.nn.Module = adversarial_loss_fn
 
         assert dynamic_loss_balancing in {None, "simple", "ema"}, "dynamic_loss_balancing must be in {None, 'simple', 'ema'}"
-        self.dynamic_loss_balancing = dynamic_loss_balancing
+        self.dynamic_loss_balancing: str = dynamic_loss_balancing
         self.atomic_norms_old = None  # For dynamic loss balancing
-        self.beta_ema = beta_ema
+        self.beta_ema: float = beta_ema
 
         assert 0 <= update_discriminator_ratio <= 1, "update_discriminator_ratio must be in [0, 1]"
-        self.update_discriminator_ratio = update_discriminator_ratio
+        self.update_discriminator_ratio: float = update_discriminator_ratio
 
         self.metrics: MetricCollection = metrics
         self.description: str = description
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
-        self.automatic_optimization = False
-        self.num_val_runs = 0
+        self.automatic_optimization: float = False
+        self.num_val_runs: int = 0
         
-        self.dataloader_names = None
+        self.dataloader_names: List[str] = None
+        self.first_sample: torch.Tensor = self.trainer.datamodule.train_dataloader()[0]
 
     def training_step(self, batch):
         """
@@ -339,6 +340,7 @@ class EBENLightningModule(LightningModule):
             )      
         else:
             metrics_to_log = {'torchsquim_stoi': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
+            metrics_to_log.update({'noresqa_mos': self.metrics['noresqa_mos'](outputs["enhanced"], self.first_sample)})
                  
         metrics_to_log = {f"{stage}/{k}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}": v for k, v in metrics_to_log.items()}
         self.log_dict(
