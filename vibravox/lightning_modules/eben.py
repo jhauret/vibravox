@@ -213,7 +213,7 @@ class EBENLightningModule(LightningModule):
         Called when the validation loop begins.
         """
         self.num_val_runs += 1
-        if isinstance(self.val_dataloader(), dict): self.dataloader_names = list(self.val_dataloader().keys())
+        if isinstance(self.trainer.datamodule.val_dataloader(), dict): self.dataloader_names = list(self.trainer.datamodule.val_dataloader().keys())
 
     def on_test_start(self) -> None:
         """
@@ -222,7 +222,7 @@ class EBENLightningModule(LightningModule):
         - Checks the consistency of the DataModule's parameters
         """
         self.check_datamodule_parameter()
-        if isinstance(self.test_dataloader(), dict): self.dataloader_names = list(self.test_dataloader().keys())
+        if isinstance(self.trainer.datamodule.test_dataloader(), dict): self.dataloader_names = list(self.trainer.datamodule.test_dataloader().keys())
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
@@ -297,7 +297,7 @@ class EBENLightningModule(LightningModule):
             )
 
             for key, value in atomic_losses_generator.items():
-                self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+                self.log(f"{stage}/generator/{key}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}", value, sync_dist=True, add_dataloader_idx=False)
 
             atomic_losses_discriminator = self.compute_atomic_losses(
                 network="discriminator",
@@ -308,7 +308,7 @@ class EBENLightningModule(LightningModule):
             )
 
             for key, value in atomic_losses_discriminator.items():
-                self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
+                self.log(f"{stage}/discriminator/{key}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}", value, sync_dist=True, add_dataloader_idx=False)
         else:
             outputs = {
                     f"corrupted": corrupted_speech,
@@ -338,9 +338,7 @@ class EBENLightningModule(LightningModule):
                 outputs["enhanced"], outputs["reference"]
             )      
         else:
-            metrics_to_log = {'torchsquim_stoi_real': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
-                 
-        # TODO: how to log metrics according to the dataloader_idx? access to state_dict? dict datalaoder?
+            metrics_to_log = {'torchsquim_stoi': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
                  
         metrics_to_log = {f"{stage}/{k}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}": v for k, v in metrics_to_log.items()}
         self.log_dict(
