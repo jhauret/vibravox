@@ -84,6 +84,8 @@ class EBENLightningModule(LightningModule):
 
         self.automatic_optimization = False
         self.num_val_runs = 0
+        
+        self.dataloader_names = None
 
     def training_step(self, batch):
         """
@@ -211,6 +213,7 @@ class EBENLightningModule(LightningModule):
         Called when the validation loop begins.
         """
         self.num_val_runs += 1
+        if isinstance(self.val_dataloader(), dict): self.dataloader_names = list(self.val_dataloader().keys())
 
     def on_test_start(self) -> None:
         """
@@ -219,6 +222,7 @@ class EBENLightningModule(LightningModule):
         - Checks the consistency of the DataModule's parameters
         """
         self.check_datamodule_parameter()
+        if isinstance(self.test_dataloader(), dict): self.dataloader_names = list(self.test_dataloader().keys())
 
     def on_validation_batch_end(
         self, outputs: STEP_OUTPUT, batch: Any, batch_idx: int, dataloader_idx: int = 0
@@ -338,12 +342,12 @@ class EBENLightningModule(LightningModule):
                  
         # TODO: how to log metrics according to the dataloader_idx? access to state_dict? dict datalaoder?
                  
-        metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
+        metrics_to_log = {f"{stage}/{k}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
             prog_bar=True,
-            add_dataloader_idx=True,
+            add_dataloader_idx=False,
         )
 
         # Log audio
