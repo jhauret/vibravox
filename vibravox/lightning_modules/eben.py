@@ -256,7 +256,7 @@ class EBENLightningModule(LightningModule):
             self.generator.push_to_hub(f"Cnam-LMSSC/EBEN_{self.trainer.datamodule.sensor}",
                                        commit_message=f"Upload EBENGenerator after {self.trainer.current_epoch} epochs")
 
-    def common_eval_step(self, batch: Any, batch_idx: int, stage: str, dataloader_idx: int) -> STEP_OUTPUT:
+    def common_eval_step(self, batch, batch_idx, stage, dataloader_idx):
         """
         Common evaluation step for validation and test.
 
@@ -272,48 +272,41 @@ class EBENLightningModule(LightningModule):
 
         # Get tensors
         corrupted_speech = self.generator.cut_to_valid_length(batch["audio_body_conducted"])
-        if "audio_airborne" in batch: # {val, test}_dataset_real does not have any reference audio
-            reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
-            decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
+        reference_speech = self.generator.cut_to_valid_length(batch["audio_airborne"])
         enhanced_speech, decomposed_enhanced_speech = self.generator(corrupted_speech)
+        decomposed_reference_speech = self.generator.pqmf.forward(reference_speech, "analysis")
 
-        if "audio_airborne" in batch: # {val, test}_dataset_real does not have any reference audio
-            outputs = {
-                    f"corrupted": corrupted_speech,
-                    f"enhanced": enhanced_speech,
-                    f"reference": reference_speech,
-                }
+        outputs = {
+                f"corrupted": corrupted_speech,
+                f"enhanced": enhanced_speech,
+                f"reference": reference_speech,
+            }
 
-            atomic_losses_generator = self.compute_atomic_losses(
-                network="generator",
-                enhanced_speech=enhanced_speech,
-                reference_speech=reference_speech,
-                decomposed_enhanced_speech=decomposed_enhanced_speech,
-                decomposed_reference_speech=decomposed_reference_speech,
-            )
+        atomic_losses_generator = self.compute_atomic_losses(
+            network="generator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-            for key, value in atomic_losses_generator.items():
-                self.log(f"{stage}/generator/{key}", value, sync_dist=True)
+        for key, value in atomic_losses_generator.items():
+            self.log(f"{stage}/generator/{key}", value, sync_dist=True)
 
-            atomic_losses_discriminator = self.compute_atomic_losses(
-                network="discriminator",
-                enhanced_speech=enhanced_speech,
-                reference_speech=reference_speech,
-                decomposed_enhanced_speech=decomposed_enhanced_speech,
-                decomposed_reference_speech=decomposed_reference_speech,
-            )
+        atomic_losses_discriminator = self.compute_atomic_losses(
+            network="discriminator",
+            enhanced_speech=enhanced_speech,
+            reference_speech=reference_speech,
+            decomposed_enhanced_speech=decomposed_enhanced_speech,
+            decomposed_reference_speech=decomposed_reference_speech,
+        )
 
-            for key, value in atomic_losses_discriminator.items():
-                self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
-        else:
-            outputs = {
-                    f"corrupted": corrupted_speech,
-                    f"enhanced": enhanced_speech,
-                }
+        for key, value in atomic_losses_discriminator.items():
+            self.log(f"{stage}/discriminator/{key}", value, sync_dist=True)
 
         return outputs
 
-    def common_eval_logging(self, stage: str, outputs: STEP_OUTPUT, batch_idx: int, dataloader_idx: int) -> None:
+    def common_eval_logging(self, stage, outputs, batch_idx, dataloader_idx):
         """
         Common evaluation logging for validation and test.
 
@@ -327,23 +320,17 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
-            assert "reference" in outputs, "reference must be in outputs" 
-            # Log metrics
-            metrics_to_log = self.metrics(
-                outputs["enhanced"], outputs["reference"]
-            )      
-        else:
-            metrics_to_log = {'torchsquim_stoi_real': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
-                 
-        # TODO: how to log metrics according to the dataloader_idx? access to state_dict? dict datalaoder?
-                 
+        assert "reference" in outputs, "reference must be in outputs"
+
+        # Log metrics
+        metrics_to_log = self.metrics(
+            outputs["enhanced"], outputs["reference"]
+        )
         metrics_to_log = {f"{stage}/{k}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
             prog_bar=True,
-            add_dataloader_idx=True,
         )
 
         # Log audio
@@ -354,12 +341,11 @@ class EBENLightningModule(LightningModule):
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
-                if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
-                    self.log_audio(
-                        audio_tensor=outputs["reference"],
-                        tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
-                        global_step=self.num_val_runs,
-                    )
+                self.log_audio(
+                    audio_tensor=outputs["reference"],
+                    tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
+                    global_step=self.num_val_runs,
+                )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
                     tag=f"{stage}_{dataloader_idx}_{batch_idx}/corrupted",

@@ -172,7 +172,7 @@ def mix_speech_and_noise(
         noise_samples = noise.size(0)
 
         if noise_samples < speech_samples:
-            raise ValueError(f"noise_sample length ({noise_samples}) must be >= speech_sample length ({speech_samples})")
+            raise ValueError(f"noise_sample length ({time_noise}) must be >= speech_sample length ({time_speech})")
         
         # Randomize noise segment
         start_time = torch.randint(0, noise_samples - speech_samples, (1,)).item()
