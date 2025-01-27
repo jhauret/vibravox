@@ -115,7 +115,7 @@ def remove_hf(
 
     return waveform
 
-def mix_speech_and_noise(
+def mix_speech_and_noise_with_rescaling(
     speech_batch: List[torch.Tensor],
     noise_batch: List[torch.Tensor],
     snr_range: Tuple[float] = (-3.0, 5.0)
@@ -191,6 +191,67 @@ def mix_speech_and_noise(
         noise_batch_scaled.append(noise_sliced)
 
     return corrupted_speech_batch, noise_batch_scaled
+
+def mix_speech_and_noise_without_rescaling(
+    speech_batch: List[torch.Tensor],
+    noise_batch: List[torch.Tensor]
+) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+    """
+    Simpler alternative to mix_speech_and_noise_with_rescaling that does not rescale the noise.
+
+    This function takes batches of clean speech and noise tensors and adds it to the speech to produce corrupted speech samples.
+
+    Args:
+        speech_batch (List[torch.Tensor]): 
+            A list of clean speech samples. Each tensor should be 1-dimensional with shape `(time,)`.
+        noise_batch (List[torch.Tensor]): 
+            A list of noise samples. Each tensor should be 1-dimensional with shape `(time_noise,)`.
+            The length of each noise sample must be greater than or equal to the corresponding speech sample.
+
+    Returns:
+        Tuple[List[torch.Tensor], List[torch.Tensor]]:
+            - `corrupted_speech_batch`: 
+                A list of corrupted speech samples obtained by adding non-scaled noise to the clean speech.
+                Each tensor has the same shape as the corresponding input speech tensor `(time,)`.
+            - `noise_batch`: 
+                A list of non-scaled noise tensors used for mixing. Each tensor has the same shape as the 
+                corresponding input speech tensor `(time,)`.
+    """
+    # Input validation
+    if not isinstance(speech_batch, list) or not all(isinstance(t, torch.Tensor) for t in speech_batch):
+        raise TypeError("speech_batch must be a list of torch.Tensor")
+    if not isinstance(noise_batch, list) or not all(isinstance(t, torch.Tensor) for t in noise_batch):
+        raise TypeError("noise_batch must be a list of torch.Tensor")
+    if len(speech_batch) != len(noise_batch):
+        raise ValueError("speech_batch and noise_batch must have the same length")
+
+    corrupted_speech_batch: List[torch.Tensor] = []
+    noise_batch: List[torch.Tensor] = []
+
+    for speech, noise in zip(speech_batch, noise_batch):
+        
+        if speech.dim() != 1:
+            raise ValueError(f"Each speech sample must be a 1D tensor, but got shape {speech.shape}")
+        if noise.dim() != 1:
+            raise ValueError(f"Each noise sample must be a 1D tensor, but got shape {noise.shape}")
+
+        speech_samples = speech.size(0)
+        noise_samples = noise.size(0)
+
+        if noise_samples < speech_samples:
+            raise ValueError(f"noise_sample length ({noise_samples}) must be >= speech_sample length ({speech_samples})")
+        
+        # Randomize noise segment
+        start_time = torch.randint(0, noise_samples - speech_samples, (1,)).item()
+        noise_sliced = noise[start_time: start_time + speech_samples]
+
+        # Add noise to speech
+        corrupted_speech = speech + noise_sliced
+
+        corrupted_speech_batch.append(corrupted_speech)
+        noise_batch.append(noise_sliced)
+
+    return corrupted_speech_batch, noise_batch
 
 def decode_operations(predicted_chr: str,
                       label_chr: str,
