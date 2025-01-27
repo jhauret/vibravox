@@ -226,7 +226,7 @@ def mix_speech_and_noise_without_rescaling(
         raise ValueError("speech_batch and noise_batch must have the same length")
 
     corrupted_speech_batch: List[torch.Tensor] = []
-    noise_batch: List[torch.Tensor] = []
+    non_scaled_noise_batch: List[torch.Tensor] = []
 
     for speech, noise in zip(speech_batch, noise_batch):
         
@@ -249,9 +249,9 @@ def mix_speech_and_noise_without_rescaling(
         corrupted_speech = speech + noise_sliced
 
         corrupted_speech_batch.append(corrupted_speech)
-        noise_batch.append(noise_sliced)
+        non_scaled_noise_batch.append(noise_sliced)
 
-    return corrupted_speech_batch, noise_batch
+    return corrupted_speech_batch, non_scaled_noise_batch
 
 def decode_operations(predicted_chr: str,
                       label_chr: str,
