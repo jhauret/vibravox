@@ -127,15 +127,18 @@ class NoisyBWELightningDataModule(LightningDataModule):
             noise_train = speechless_noisy["train"]
             noise_validation = speechless_noisy["validation"]
             
-            self.train_dataset = SpeechNoiseDataset(speech_train, noise_train)
-            self.val_dataset = SpeechNoiseDataset(speech_validation, noise_validation)
+            self.train_dataset_synthetic = SpeechNoiseDataset(speech_train, noise_train)
+            self.val_dataset_synthetic = SpeechNoiseDataset(speech_validation, noise_validation)
             
-        if stage in ["test", None]:
+            self.val_dataset_real = speech_noisy["validation"]
             
+        if stage in ["test", None]:            
             speech_test = speechclean["test"]
             noise_test = speechless_noisy["test"]
             
-            self.test_dataset = SpeechNoiseDataset(speech_test, noise_test)
+            self.test_dataset_synthetic = SpeechNoiseDataset(speech_test, noise_test)
+            
+            self.test_dataset_real = speech_noisy["test"]
 
     def train_dataloader(self) -> DataLoader:
         """
@@ -146,43 +149,63 @@ class NoisyBWELightningDataModule(LightningDataModule):
         """
 
         return DataLoader(
-            self.train_dataset,
+            self.train_dataset_synthetic,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(batch, deterministic=False, collate_strategy=self.collate_strategy)
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> Dict[str, DataLoader]:
         """
-        Validation dataloader.
+        Validation dataloaders.
 
         Returns:
-            DataLoader
-        """
-
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
+            Dict[str, DataLoader]
+        """        
+        dataloader_synthetic = DataLoader(
+            self.val_dataset_synthetic,
+            batch_size=min(1, self.batch_size // 4),
             num_workers=self.num_workers,
-            collate_fn=lambda batch: self.data_collator(batch, deterministic=True, collate_strategy=self.collate_strategy),
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
+        )
+        dataloader_real = DataLoader(
+            self.val_dataset_real,
+            batch_size=min(1, self.batch_size // 4),
+            num_workers=self.num_workers,
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
         )
 
-    def test_dataloader(self) -> DataLoader:
+        return {"synthetic": dataloader_synthetic, "real": dataloader_real}
+
+    def test_dataloader(self) -> Dict[str, DataLoader]:
         """
-        Test dataloader.
+        Test dataloaders.
 
         Returns:
-            DataLoader
-        """
-
-        return DataLoader(
-            self.test_dataset,
+            Dict[str, DataLoader]
+        """    
+        dataloader_synthetic = DataLoader(
+            self.test_dataset_synthetic,
             batch_size=1,
             num_workers=self.num_workers,
             collate_fn=lambda batch: self.data_collator(
-                    batch, deterministic=True, collate_strategy=self.collate_strategy
-                ),
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
         )
+        dataloader_real = DataLoader(
+            self.test_dataset_real,
+            batch_size=1,
+            num_workers=self.num_workers,
+            collate_fn=lambda batch: self.data_collator(
+                batch, deterministic=True, collate_strategy=self.collate_strategy
+            ),
+        )
+
+        return {"synthetic": dataloader_synthetic, "real": dataloader_real}
 
     def data_collator(self, batch: List[Dict[str, Audio]], deterministic: bool, collate_strategy: str) -> Dict[str, torch.Tensor]:
         """
@@ -208,6 +231,14 @@ class NoisyBWELightningDataModule(LightningDataModule):
                 - 'audio_airborne': (torch.Tensor of dimension (batch_size, 1, sample_rate * duration))
         """
         body_conducted_batch = [item["audio_body_conducted"]["array"] for item in batch]
+        
+        if not "audio_airborne" in batch[0]:
+            # collate strategy pad for noisy real data
+            speech_noisy_real_padded_batch = pad_sequence(
+                body_conducted_batch, batch_first=True, padding_value=0.0
+            ).unsqueeze(1)
+            return {"audio_body_conducted": speech_noisy_real_padded_batch}
+        
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
