@@ -357,19 +357,19 @@ class EBENLightningModule(LightningModule):
         if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
-                tag=f"{stage}_{dataloader_idx}_{batch_idx}/enhanced",
+                tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/enhanced",
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
                 if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
                     self.log_audio(
                         audio_tensor=outputs["reference"],
-                        tag=f"{stage}_{dataloader_idx}_{batch_idx}/reference",
+                        tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/reference",
                         global_step=self.num_val_runs,
                     )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
-                    tag=f"{stage}_{dataloader_idx}_{batch_idx}/corrupted",
+                    tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/corrupted",
                     global_step=self.num_val_runs,
                 )
 
