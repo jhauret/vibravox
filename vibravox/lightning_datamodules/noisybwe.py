@@ -208,7 +208,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         """
         Custom data collator function to mix speech and noise audios and dynamically pad the data.
 
-        This function processes a batch of data by mixing clean speech with noise at specified SNR ranges.
+        This function processes a batch of data by mixing clean speech with noise.
         It then pads or trims the audio signals based on the collate strategy and applies data augmentation
         if specified.
 
