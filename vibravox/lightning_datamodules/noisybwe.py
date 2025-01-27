@@ -6,7 +6,7 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from lightning import LightningDataModule
-from vibravox.utils import mix_speech_and_noise_with_rescaling
+from vibravox.utils import mix_speech_and_noise_without_rescaling
 from vibravox.utils import set_audio_duration
 from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.datasets.speech_noise import SpeechNoiseDataset
@@ -23,7 +23,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
-        snr_range: Tuple[float] = (-3.0, 5.0),
         **kwargs,
     ):
         """
@@ -43,7 +42,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
-            snr_range (Tuple[float], optional): SNR range for the noising. Defaults to [-3.0, 5.0].
         """
         super().__init__()
         
@@ -67,7 +65,6 @@ class NoisyBWELightningDataModule(LightningDataModule):
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.snr_range = snr_range
         
     def setup(self, stage: str = None) -> None:
         """
@@ -242,7 +239,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
-        speech_noisy_synthetic, _ = mix_speech_and_noise_with_rescaling(body_conducted_batch, noise_batch, self.snr_range)
+        speech_noisy_synthetic, _ = mix_speech_and_noise_without_rescaling(body_conducted_batch, noise_batch)
         
         if collate_strategy == "pad":
 
