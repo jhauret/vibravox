@@ -6,7 +6,7 @@ from datasets import Audio, load_dataset
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from lightning import LightningDataModule
-from vibravox.utils import mix_speech_and_noise
+from vibravox.utils import mix_speech_and_noise_with_rescaling
 from vibravox.utils import set_audio_duration
 from vibravox.torch_modules.dsp.data_augmentation import WaveformDataAugmentation
 from vibravox.datasets.speech_noise import SpeechNoiseDataset
@@ -242,7 +242,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
         air_conducted_batch = [item["audio_airborne"]["array"] for item in batch]
         noise_batch = [item["audio_body_conducted_speechless_noisy"]["array"] for item in batch] # len(noise_batch) > len(body_conducted_batch)
         
-        speech_noisy_synthetic, _ = mix_speech_and_noise(body_conducted_batch, noise_batch, self.snr_range)
+        speech_noisy_synthetic, _ = mix_speech_and_noise_with_rescaling(body_conducted_batch, noise_batch, self.snr_range)
         
         if collate_strategy == "pad":
 
