@@ -298,7 +298,7 @@ class EBENLightningModule(LightningModule):
             )
 
             for key, value in atomic_losses_generator.items():
-                self.log(f"{stage}/generator/{key}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}", value, sync_dist=True, add_dataloader_idx=False)
+                self.log(f"{stage}/generator/{key}/{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}", value, sync_dist=True, add_dataloader_idx=False)
 
             atomic_losses_discriminator = self.compute_atomic_losses(
                 network="discriminator",
@@ -309,7 +309,7 @@ class EBENLightningModule(LightningModule):
             )
 
             for key, value in atomic_losses_discriminator.items():
-                self.log(f"{stage}/discriminator/{key}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}", value, sync_dist=True, add_dataloader_idx=False)
+                self.log(f"{stage}/discriminator/{key}/{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}", value, sync_dist=True, add_dataloader_idx=False)
         else:
             outputs = {
                     f"corrupted": corrupted_speech,
@@ -345,7 +345,7 @@ class EBENLightningModule(LightningModule):
             metrics_to_log = {'torchsquim_stoi': self.metrics['torchsquim_stoi'](outputs["enhanced"])}
             if self.first_sample is not None: metrics_to_log.update({'noresqa_mos': self.metrics['noresqa_mos'](outputs["enhanced"], self.first_sample)})
                  
-        metrics_to_log = {f"{stage}/{k}{"/"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}": v for k, v in metrics_to_log.items()}
+        metrics_to_log = {f"{stage}/{k}/{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}": v for k, v in metrics_to_log.items()}
         self.log_dict(
             dictionary=metrics_to_log,
             sync_dist=True,
@@ -357,19 +357,19 @@ class EBENLightningModule(LightningModule):
         if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or stage == "test":
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
-                tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/enhanced",
+                tag=f"{stage}_{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}_{batch_idx}/enhanced",
                 global_step=self.num_val_runs,
             )
             if self.num_val_runs == 2 or stage == "test":  # 2 because first one is a sanity check in lightning
                 if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
                     self.log_audio(
                         audio_tensor=outputs["reference"],
-                        tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/reference",
+                        tag=f"{stage}_{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}_{batch_idx}/reference",
                         global_step=self.num_val_runs,
                     )
                 self.log_audio(
                     audio_tensor=outputs["corrupted"],
-                    tag=f"{stage}{"_"+self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ""}_{batch_idx}/corrupted",
+                    tag=f"{stage}_{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}_{batch_idx}/corrupted",
                     global_step=self.num_val_runs,
                 )
 
