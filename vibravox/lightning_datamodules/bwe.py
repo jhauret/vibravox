@@ -33,6 +33,7 @@ class BWELightningDataModule(LightningDataModule):
         streaming: bool = False,
         batch_size: int = 32,
         num_workers: int = 4,
+        pin_memory: bool = True,
         **kwargs,
     ):
         """
@@ -54,6 +55,7 @@ class BWELightningDataModule(LightningDataModule):
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
+            pin_memory (bool, optional): If True, the data loader will copy Tensors into CUDA pinned memory before returning them. Defaults to True.
         """
         super().__init__()
 
@@ -89,6 +91,7 @@ class BWELightningDataModule(LightningDataModule):
         self.streaming = streaming
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.pin_memory = pin_memory
 
     def setup(self, stage=None):
         """
@@ -158,6 +161,7 @@ class BWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=False, collate_strategy=self.collate_strategy
             ),
+            pin_memory=self.pin_memory,
         )
 
     def val_dataloader(self) -> Union[DataLoader, Dict[str, DataLoader]]:
@@ -175,6 +179,7 @@ class BWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
             ),
+            pin_memory=self.pin_memory,
         )
         if self.dataset_name_secondary is not None:
             dataloader_secondary = DataLoader(
@@ -184,6 +189,7 @@ class BWELightningDataModule(LightningDataModule):
                 collate_fn=lambda batch: self.data_collator(
                     batch, deterministic=True, collate_strategy=self.collate_strategy
                 ),
+                pin_memory=self.pin_memory,
             )
 
             return {"principal": dataloader_principal, "secondary": dataloader_secondary}
@@ -205,6 +211,7 @@ class BWELightningDataModule(LightningDataModule):
             collate_fn=lambda batch: self.data_collator(
                 batch, deterministic=True, collate_strategy=self.collate_strategy
             ),
+            pin_memory=self.pin_memory,
         )
 
         if self.dataset_name_secondary is not None:
@@ -215,6 +222,7 @@ class BWELightningDataModule(LightningDataModule):
                 collate_fn=lambda batch: self.data_collator(
                     batch, deterministic=True, collate_strategy=self.collate_strategy
                 ),
+                pin_memory=self.pin_memory,
             )
 
             return {"principal": dataloader_principal, "secondary": dataloader_secondary}
