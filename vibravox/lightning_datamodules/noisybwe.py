@@ -43,7 +43,7 @@ class NoisyBWELightningDataModule(LightningDataModule):
             streaming (bool, optional): If True, the audio files are dynamically downloaded. Defaults to False.
             batch_size (int, optional): Batch size. Defaults to 32.
             num_workers (int, optional): Number of workers. Defaults to 4.
-            pin_memory (bool, optional): If True, the data loader will copy Tensors into CUDA pinned memory before returning them.
+            pin_memory (bool, optional): If True, the data loader will copy Tensors into CUDA pinned memory before returning them. Defaults to True.
         """
         super().__init__()
         
