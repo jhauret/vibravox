@@ -4,10 +4,10 @@ sample_rate: ${sample_rate}
 dynamic_loss_balancing: "ema"
 beta_ema: 0.9
 update_discriminator_ratio: 1
-description: "${description} || EBEN(M=${lightning_module.generator.m},P=${lightning_module.generator.p},Q=${lightning_module.discriminator.q}) || + multi_stft * 10.0"
+description: "${description} || EBEN(M=${lightning_module.generator.m},P=${lightning_module.generator.p},Q=${lightning_module.discriminator.q}) || + loss l1"
 # || + multi_stft * 10.0
-# + loss l1
-# + loss l1 || + multi_stft * 3.0
+# || + loss l1
+# || + loss l1 + multi_stft * 3.0
 push_to_hub_after_testing: False
 
 
@@ -18,6 +18,6 @@ defaults:
   - optimizer@generator_optimizer: adam
   - optimizer@discriminator_optimizer: adam
   - loss_module@reconstructive_loss_freq_fn: multi_stft
-#  - loss_module@reconstructive_loss_time_fn: l1
+  - loss_module@reconstructive_loss_time_fn: l1
   - loss_module@feature_matching_loss_fn: feature_loss_for_melgan_multiscales
   - loss_module@adversarial_loss_fn: hinge_loss_for_melgan_multiscales
