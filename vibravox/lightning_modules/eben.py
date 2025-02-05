@@ -508,11 +508,8 @@ class EBENLightningModule(LightningModule):
 
         lambdas = self.compute_lambdas(atomic_losses, self.get_loss_adjustment_layer(), self.beta_ema)
         for key, lambda_ in zip(atomic_losses.keys(), lambdas):
-            if key == "multi_stft": 
-                atomic_losses[key] = 3.0 * atomic_losses[key]
-                print(f"multi_stft: {atomic_losses[key]}")
-            else:
-                atomic_losses[key] = lambda_ * atomic_losses[key]
+            if key == "multi_stft": lambda_ = 3.0 * lambda_
+            atomic_losses[key] = lambda_ * atomic_losses[key]
 
         return atomic_losses
 
