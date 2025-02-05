@@ -354,7 +354,7 @@ class EBENLightningModule(LightningModule):
         )
 
         # Log audio
-        if (batch_idx < 15 and self.logger and self.num_val_runs > 1) or (stage == "test" and batch_idx < 15):
+        if batch_idx < 15 and ((self.logger and self.num_val_runs > 1) or stage == "test"):
             self.log_audio(
                 audio_tensor=outputs["enhanced"],
                 tag=f"{stage}_{self.dataloader_names[dataloader_idx] if self.dataloader_names is not None else ''}_{batch_idx}/enhanced",
