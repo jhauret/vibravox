@@ -37,7 +37,7 @@ python run.py lightning_datamodule=bwe lightning_datamodule.sensor=throat_microp
 
 - Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension _with Noise_
 ```
-python run.py lightning_datamodule=noisybwe lightning_datamodule.sensor=throat_microphone lightning_module=eben  ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=500
+python run.py lightning_datamodule=noisybwe lightning_datamodule.sensor=throat_microphone lightning_module=eben ++callbacks=bwe_checkpoint 'checkpoint.monitor=validation\/torchmetrics_stoi\/synthetic' ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=500
 ```
 
 - Train [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
