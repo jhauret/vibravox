@@ -103,10 +103,8 @@ class TorchsquimSTOI(Metric):
             unexpected_keys (list): List of unexpected keys.
             error_msgs (list): List of error messages.
         """
-        # Reloading state_dict that is intialized and static
-        state_dict[prefix + "compute_stoi"] = self.compute_stoi.state_dict(
-            prefix=prefix + "compute_stoi."
-        )
+        # Remove compute_stoi keys if present to avoid unexpected key errors.
+        state_dict.pop(prefix + "compute_stoi", None)
 
         super()._load_from_state_dict(
             state_dict,
@@ -121,33 +119,6 @@ class TorchsquimSTOI(Metric):
         self._modules_backup = deepcopy(self._modules)
         self._modules = OrderedDict()
         # This is restored in the reassign_modules hook right after (called by load_state_dict)
-
-    def state_dict(
-        self,
-        destination,
-        prefix: str = "",
-        keep_vars: bool = False,
-    ) -> OrderedDict:
-        """Generates the state dictionary, excluding the `compute_stoi` module.
-
-        This method overrides the default `state_dict` to exclude the
-        `compute_stoi` module by setting its entries to zero.
-
-        Args:
-            destination (dict): Destination dictionary.
-            prefix (str, optional): Prefix for keys in the state dictionary.
-            keep_vars (bool, optional): Whether to keep variables.
-
-        Returns:
-            OrderedDict: The modified state dictionary.
-        """
-        # We do not want to have TorchsquimSTOI in the state dict and trainable parameters
-        # So we add zeroes in the state_dict
-        destination = super().state_dict(destination, prefix, keep_vars)
-        for k in list(destination.keys()):
-            if "compute_stoi" in k:
-                destination[k] = torch.Tensor([0.0])
-        return destination
 
     def reassign_modules(self, module, incompatible_keys) -> None:
         """Reassigns the original modules after state dictionary operations.
