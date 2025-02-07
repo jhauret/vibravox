@@ -69,6 +69,21 @@ class NoresqaMOS(Metric):
         unexpected_keys,
         error_msgs,
     ):
+        """Loads the state dictionary, excluding the `compute_stoi` module.
+
+        This method overrides the default `_load_from_state_dict` to prevent
+        the `compute_stoi` module from being loaded as a trainable parameter.
+
+        Args:
+            state_dict (dict): The state dictionary to load.
+            prefix (str): Prefix for state_dict keys.
+            local_metadata (dict): Metadata associated with the state_dict.
+            strict (bool): Whether to strictly enforce that the keys in state_dict
+                match the keys returned by this module's `state_dict` function.
+            missing_keys (list): List of missing keys.
+            unexpected_keys (list): List of unexpected keys.
+            error_msgs (list): List of error messages.
+        """
         # Remove compute_mos keys if present to avoid unexpected key errors.
         state_dict.pop(prefix + "compute_mos", None)
 
@@ -87,5 +102,15 @@ class NoresqaMOS(Metric):
         # This is restored in the reassign_modules hook right after (called by load_state_dict)
 
     def reassign_modules(self, module, incompatible_keys):
+        """Reassigns the original modules after state dictionary operations.
+
+        This method restores the original modules from the backup after the state
+        dictionary has been loaded to ensure that `compute_stoi` is not included
+        as a trainable parameter.
+
+        Args:
+            module (torch.nn.Module): The module being loaded.
+            incompatible_keys (dict): Dictionary of incompatible keys.
+        """
         self._modules = deepcopy(self._modules_backup)
         self._modules_backup = OrderedDict()
