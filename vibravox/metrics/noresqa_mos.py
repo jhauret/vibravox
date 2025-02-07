@@ -86,20 +86,6 @@ class NoresqaMOS(Metric):
         self._modules = OrderedDict()
         # This is restored in the reassign_modules hook right after (called by load_state_dict)
 
-    def state_dict(
-        self,
-        destination,
-        prefix: str = "",
-        keep_vars: bool = False,
-    ):
-        # We do not want to have NORESQA in the state dict and trainable parameters
-        # So we add zeroes in the state_dict
-        destination = super().state_dict(destination, prefix, keep_vars)
-        for k in list(destination.keys()):
-            if "compute_mos" in k:
-                destination[k] = torch.Tensor([0.0])
-        return destination
-
     def reassign_modules(self, module, incompatible_keys):
         self._modules = deepcopy(self._modules_backup)
         self._modules_backup = OrderedDict()
