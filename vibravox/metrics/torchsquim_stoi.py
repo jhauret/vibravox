@@ -103,10 +103,8 @@ class TorchsquimSTOI(Metric):
             unexpected_keys (list): List of unexpected keys.
             error_msgs (list): List of error messages.
         """
-        # Reloading state_dict that is intialized and static
-        state_dict[prefix + "compute_stoi"] = self.compute_stoi.state_dict(
-            prefix=prefix + "compute_stoi."
-        )
+        # Remove compute_stoi keys if present to avoid unexpected key errors.
+        state_dict.pop(prefix + "compute_stoi", None)
 
         super()._load_from_state_dict(
             state_dict,

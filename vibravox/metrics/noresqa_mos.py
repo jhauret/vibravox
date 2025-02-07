@@ -69,10 +69,8 @@ class NoresqaMOS(Metric):
         unexpected_keys,
         error_msgs,
     ):
-        # Reloading state_dict that is intialized and static
-        state_dict[prefix + "compute_mos"] = self.compute_mos.state_dict(
-            prefix=prefix + "compute_mos."
-        )
+        # Remove compute_mos keys if present to avoid unexpected key errors.
+        state_dict.pop(prefix + "compute_mos", None)
 
         super()._load_from_state_dict(
             state_dict,
