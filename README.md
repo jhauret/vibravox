@@ -49,7 +49,9 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       lightning_datamodule.sensor=throat_microphone \
       lightning_module=eben \
       lightning_module.generator=[eben_generator_from_pretrained] \
+      lightning_module.generator.pretrained_model_name_or_path="Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone" \
       lightning_module.discriminator=[eben_discriminator_from_pretrained] \
+      lightning_module.discriminator.pretrained_model_name_or_path="Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone" \
       +callbacks=[bwe_checkpoint] \
       ++callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic \
       ++trainer.check_val_every_n_epoch=15 \
