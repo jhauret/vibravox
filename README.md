@@ -48,14 +48,17 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       lightning_datamodule=noisybwe \
       lightning_datamodule.sensor=throat_microphone \
       lightning_module=eben \
-      lightning_module.generator=[eben_generator_from_pretrained] \
-      lightning_module.generator.pretrained_model_name_or_path="Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone" \
-      lightning_module.discriminator=[eben_discriminator_from_pretrained] \
-      lightning_module.discriminator.pretrained_model_name_or_path="Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone" \
+      lightning_module.description=from_pretrained-throat_microphone \
+      ++lightning_module.generator=dummy \
+      ++lightning_module.generator._target_=vibravox.torch_modules.dnn.eben_generator.EBENGenerator.from_pretrained \
+      ++lightning_module.generator.pretrained_model_name_or_path=Cnam-LMSSC/EBEN_throat_microphone \
+      ++lightning_module.discriminator=dummy \
+      ++lightning_module.discriminator._target_=vibravox.torch_modules.dnn.eben_discriminator.DiscriminatorEBENMultiScales.from_pretrained \
+      ++lightning_module.discriminator.pretrained_model_name_or_path=Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone \
       +callbacks=[bwe_checkpoint] \
       ++callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic \
       ++trainer.check_val_every_n_epoch=15 \
-      ++trainer.max_epochs=500
+      ++trainer.max_epochs=500 --cfg job
      ```
 
 - Train and Test  [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
