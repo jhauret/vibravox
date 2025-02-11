@@ -4,7 +4,7 @@ push_to_hub_after_testing: False
 
 defaults:
   - optimizer: adam
-  - dnn_module@wav2vec2_for_ctc: wav2vec2_for_ctc
+  - dnn_module@wav2vec2_for_ctc: wav2vec2_for_ctc_from_pretrained
 
 
 

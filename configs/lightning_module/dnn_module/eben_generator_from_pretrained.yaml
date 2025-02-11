@@ -1,2 +1,0 @@
-_target_: vibravox.torch_modules.dnn.eben_generator.EBENGenerator.from_pretrained
-pretrained_model_name_or_path: "Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone"
