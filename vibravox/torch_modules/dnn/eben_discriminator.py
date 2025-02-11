@@ -5,9 +5,9 @@ from torch import nn
 
 from vibravox.torch_modules.dnn.melgan_discriminator import DiscriminatorMelGAN
 from vibravox.torch_modules.utils import normalized_conv1d
+from huggingface_hub import PyTorchModelHubMixin
 
-
-class DiscriminatorEBENMultiScales(nn.Module):
+class DiscriminatorEBENMultiScales(nn.Module, PyTorchModelHubMixin):
     """
     Multi-scales discriminators of composed of 3 scales pqmf discriminators refining q bands and one 1 full scale Melgan
 
