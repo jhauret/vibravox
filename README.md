@@ -58,7 +58,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       +callbacks=[bwe_checkpoint] \
       ++callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic \
       ++trainer.check_val_every_n_epoch=15 \
-      ++trainer.max_epochs=500 --cfg job
+      ++trainer.max_epochs=500
      ```
 
 - Train and Test  [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
