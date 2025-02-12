@@ -10,8 +10,8 @@ push_to_hub_after_testing: False
 
 
 defaults:
-  - dnn_module@generator: eben_generator
-  - dnn_module@discriminator: eben_discriminator
+  - dnn_module@generator: eben_generator_from_scratch
+  - dnn_module@discriminator: eben_discriminator_from_scratch
   - optimizer@generator_optimizer: adam
   - optimizer@discriminator_optimizer: adam
   - loss_module@reconstructive_loss_freq_fn: multi_stft
