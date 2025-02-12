@@ -332,13 +332,13 @@ class EBENLightningModule(LightningModule):
         assert stage in ["validation", "test"], "stage must be in ['validation', 'test']"
         assert "corrupted" in outputs, "corrupted must be in outputs"
         assert "enhanced" in outputs, "enhanced must be in outputs"
-        if "reference" in outputs: # {val, test}_dataset_real does not have any reference audio
+        if "reference" in outputs:  # When using "speech_noisy" subset, there is no reference audio
             assert "reference" in outputs, "reference must be in outputs" 
             # Log metrics
             metrics_to_log = self.metrics(
                 outputs["enhanced"], outputs["reference"]
             )     
-            #We need to get a airborne speech_clean sample in order to make noresqa_mos metric work in speech_noisy_real use case.
+            # We pick a clean airborne sample to be used as the non-matching reference for the noresqa_mos metric in "speech_noisy"
             if self.first_sample is None:
                 self.first_sample = outputs["reference"] 
         else:
