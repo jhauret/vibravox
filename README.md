@@ -28,6 +28,19 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 ## Requirements
 ```pip install -r requirements.txt```
 
+## Available sensors
+
+<p align="center">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/6390fc80e6d656eb421bab69/P-_IWM3IMED5RBS3Lhydc.png" style="object-fit:contain; width:250px; height:250px; border: solid 1px #CCC">
+</p>
+
+
+- 🟣:`headset_microphone` ( Not available for Bandwidth Extension as it is the reference mic )
+- 🟡:`throat_microphone`
+- 🟢: `forehead_accelerometer`
+- 🔵:`rigid_in_ear_microphone`
+- 🔴:`soft_in_ear_microphone`
+- 🧊:`temple_vibration_pickup`
 ## Run some models
 
 - [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
