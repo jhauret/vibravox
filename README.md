@@ -31,7 +31,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 ## Run some models
 
 - [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
-    - Train and test on `speech_clean`, for recordings in a quiet environment:
+  - Train and test on `speech_clean`, for recordings in a quiet environment:
     ```
     python run.py \
       lightning_datamodule=bwe \
@@ -42,7 +42,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       ++trainer.check_val_every_n_epoch=15 \
       ++trainer.max_epochs=500
     ```
-    - (Experimental) Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment:
+  - (Experimental) Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment:
     ```
     python run.py \
       lightning_datamodule=noisybwe \
@@ -61,30 +61,30 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       ++trainer.max_epochs=200
      ```
 
-  - [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
-    - Train and Test on `speech_clean`, for recordings in a quiet environment:  (weights initialized from [facebook/wav2vec2-base-fr-voxpopuli](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli) )
+- [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
+  - Train and test on `speech_clean`, for recordings in a quiet environment:  (weights initialized from [facebook/wav2vec2-base-fr-voxpopuli](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli) )
+  ```
+  python run.py \
+    lightning_datamodule=stp \
+    lightning_datamodule.sensor=throat_microphone \
+    lightning_module=wav2vec2_for_stp \
+    lightning_module.optimizer.lr=1e-5 \
+    ++trainer.max_epochs=10
+  ```
+  -  Train and test on `speech_noisy`, for recordings in a noisy environment:  (weights initialized from [vibravox_phonemizers](https://huggingface.co/Cnam-LMSSC/vibravox_phonemizers) )
     ```
-    python run.py \
-      lightning_datamodule=stp \
-      lightning_datamodule.sensor=throat_microphone \
-      lightning_module=wav2vec2_for_stp \
-      lightning_module.optimizer.lr=1e-5 \
-      ++trainer.max_epochs=10
-    ```
-    -  Train and test on `speech_noisy`, for recordings in a noisy environment:  (weights initialized from [vibravox_phonemizers](https://huggingface.co/Cnam-LMSSC/vibravox_phonemizers) )
-      ```
-    python run.py \
-      lightning_datamodule=stp \
-      lightning_datamodule.sensor=throat_microphone \
-      lightning_datamodule.subset=speech_noisy \
-      lightning_datamodule/data_augmentation=aggressive \
-      lightning_module=wav2vec2_for_stp \
-      lightning_module.wav2vec2_for_ctc.pretrained_model_name_or_path=Cnam-LMSSC/phonemizer_throat_microphone \
-      lightning_module.optimizer.lr=1e-6 \
-      ++trainer.max_epochs=30
-    ```
+  python run.py \
+    lightning_datamodule=stp \
+    lightning_datamodule.sensor=throat_microphone \
+    lightning_datamodule.subset=speech_noisy \
+    lightning_datamodule/data_augmentation=aggressive \
+    lightning_module=wav2vec2_for_stp \
+    lightning_module.wav2vec2_for_ctc.pretrained_model_name_or_path=Cnam-LMSSC/phonemizer_throat_microphone \
+    lightning_module.optimizer.lr=1e-6 \
+    ++trainer.max_epochs=30
+  ```
 
-- Test [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification
+- Test [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification on `speech_clean`:
 ```
 python run.py \
   lightning_datamodule=spkv \
