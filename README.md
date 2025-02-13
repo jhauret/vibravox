@@ -32,7 +32,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 <p align="center">
   <img src="https://cdn-uploads.huggingface.co/production/uploads/6390fc80e6d656eb421bab69/P-_IWM3IMED5RBS3Lhydc.png" 
-       style="max-width:150px; max-height:150px; width:auto; height:auto; border: solid 1px #CCC">
+       style="max-width:50px; max-height:50px; width:auto; height:auto; border: solid 1px #CCC">
 </p>
 
 
