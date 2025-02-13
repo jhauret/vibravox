@@ -30,22 +30,53 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 ## Run some models
 
-- Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
-```
-python run.py lightning_datamodule=bwe lightning_datamodule.sensor=throat_microphone lightning_module=eben +callbacks=[bwe_checkpoint] lightning_module.generator.p=2 ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=500
-```
+- [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
+    - Train and test on `speech_clean`, for recordings in a quiet environment:
+    ```
+    python run.py \
+      lightning_datamodule=bwe \
+      lightning_datamodule.sensor=throat_microphone \
+      lightning_module=eben \
+      lightning_module.generator.p=2 \
+      +callbacks=[bwe_checkpoint] \
+      ++trainer.check_val_every_n_epoch=15 \
+      ++trainer.max_epochs=500
+    ```
+    - Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment:
+    ```
+    python run.py \
+      lightning_datamodule=noisybwe \
+      lightning_datamodule.sensor=throat_microphone \
+      lightning_module=eben \
+      lightning_module.description=from_pretrained-throat_microphone \
+      ++lightning_module.generator=dummy \
+      ++lightning_module.generator._target_=vibravox.torch_modules.dnn.eben_generator.EBENGenerator.from_pretrained \
+      ++lightning_module.generator.pretrained_model_name_or_path=Cnam-LMSSC/EBEN_throat_microphone \
+      ++lightning_module.discriminator=dummy \
+      ++lightning_module.discriminator._target_=vibravox.torch_modules.dnn.eben_discriminator.DiscriminatorEBENMultiScales.from_pretrained \
+      ++lightning_module.discriminator.pretrained_model_name_or_path=Cnam-LMSSC/DiscriminatorEBENMultiScales_throat_microphone \
+      +callbacks=[bwe_checkpoint] \
+      ++callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic \
+      ++trainer.check_val_every_n_epoch=15 \
+      ++trainer.max_epochs=500
+     ```
 
-- Train [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension _with Noise_
+- Train and Test  [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
 ```
-python run.py lightning_datamodule=noisybwe lightning_datamodule.sensor=throat_microphone lightning_module=eben +callbacks=[bwe_checkpoint] ++"callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic" ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=500
-```
-
-- Train [wav2vec2](https://huggingface.co/facebook/wav2vec2-base-fr-voxpopuli-v2) for Speech to Phoneme  
-```
-python run.py lightning_datamodule=stp lightning_datamodule.sensor=headset_microphone lightning_module=wav2vec2_for_stp lightning_module.optimizer.lr=1e-5 ++trainer.max_epochs=10
+python run.py \
+  lightning_datamodule=stp \
+  lightning_datamodule.sensor=headset_microphone \
+  lightning_module=wav2vec2_for_stp \
+  lightning_module.optimizer.lr=1e-5 \
+  ++trainer.max_epochs=10
 ```
 
 - Test [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification
 ```
-python run.py lightning_datamodule=spkv lightning_module=ecapa2 logging=csv ++trainer.limit_train_batches=0 ++trainer.limit_val_batches=0
+python run.py \
+  lightning_datamodule=spkv \
+  lightning_module=ecapa2 \
+  logging=csv \
+  ++trainer.limit_train_batches=0 \
+  ++trainer.limit_val_batches=0
 ```
