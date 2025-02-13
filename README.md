@@ -77,7 +77,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       lightning_datamodule=stp \
       lightning_datamodule.sensor=throat_microphone \
       lightning_datamodule.subset=speech_noisy \
-      lightning_datamodule.data_augmentation=aggressive \
+      lightning_datamodule/data_augmentation=aggressive \
       lightning_module=wav2vec2_for_stp \
       lightning_module.wav2vec2_for_ctc.pretrained_model_name_or_path=Cnam-LMSSC/phonemizer_throat_microphone \
       lightning_module.optimizer.lr=1e-6 \
