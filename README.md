@@ -31,7 +31,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 ## Available sensors
 
 <p align="center">
-  <img src="https://cdn-uploads.huggingface.co/production/uploads/6390fc80e6d656eb421bab69/P-_IWM3IMED5RBS3Lhydc.png" width="400">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/6390fc80e6d656eb421bab69/P-_IWM3IMED5RBS3Lhydc.png" width="500">
 </p>
 
 
