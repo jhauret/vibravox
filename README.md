@@ -37,7 +37,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 - 🟣:`headset_microphone` ( Not available for Bandwidth Extension as it is the reference mic )
 - 🟡:`throat_microphone`
-- 🟢: `forehead_accelerometer`
+- 🟢:`forehead_accelerometer`
 - 🔵:`rigid_in_ear_microphone`
 - 🔴:`soft_in_ear_microphone`
 - 🧊:`temple_vibration_pickup`
