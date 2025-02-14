@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=bwe_array_job
+#SBATCH --job-name=noisy_bwe_array_job
 #SBATCH --output=slurm-%A_%a.out
 #SBATCH --error=slurm-%A_%a.err
 #SBATCH --constraint=v100-16g
@@ -32,4 +32,18 @@ sensor=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $2}' $a
 p=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $3}' $array_config)
 
 set -x
-srun python -u run.py lightning_datamodule=bwe lightning_datamodule.sensor="$sensor" lightning_module=eben lightning_module.generator.p="$p"  ++trainer.check_val_every_n_epoch=15 ++trainer.max_epochs=600 +callbacks=bwe_checkpoint
+srun python -u run.py \
+  lightning_datamodule=noisybwe \
+  lightning_datamodule.sensor="$sensor" \
+  lightning_module=eben \
+  lightning_module.description=from_pretrained-"$sensor" \
+  ++lightning_module.generator=dummy \
+  ++lightning_module.generator._target_=vibravox.torch_modules.dnn.eben_generator.EBENGenerator.from_pretrained \
+  ++lightning_module.generator.pretrained_model_name_or_path=Cnam-LMSSC/EBEN_"$sensor" \
+  ++lightning_module.discriminator=dummy \
+  ++lightning_module.discriminator._target_=vibravox.torch_modules.dnn.eben_discriminator.DiscriminatorEBENMultiScales.from_pretrained \
+  ++lightning_module.discriminator.pretrained_model_name_or_path=Cnam-LMSSC/DiscriminatorEBENMultiScales_"$sensor" \
+  +callbacks=[bwe_checkpoint] \
+  ++callbacks.checkpoint.monitor=validation/torchmetrics_stoi/synthetic \
+  ++trainer.check_val_every_n_epoch=15 \
+  ++trainer.max_epochs=300
