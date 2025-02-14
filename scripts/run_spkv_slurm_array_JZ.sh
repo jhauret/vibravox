@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=spkv_array_job
+#SBATCH --job-name=noisy_spkv_array_job
 #SBATCH --output=slurm-%A_%a.out
 #SBATCH --error=slurm-%A_%a.err
 #SBATCH --constraint=v100-16g
