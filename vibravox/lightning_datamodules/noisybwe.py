@@ -48,7 +48,11 @@ class NoisyBWELightningDataModule(LightningDataModule):
         super().__init__()
         
         self.sample_rate = sample_rate
-        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox-test", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
+        assert dataset_name in ["Cnam-LMSSC/vibravox",
+                                "Cnam-LMSSC/vibravox2",
+                                "Cnam-LMSSC/vibravox-test",
+                                "Cnam-LMSSC/vibravox_mixed_for_spkv",
+                                "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
             f"dataset_name {dataset_name} not supported."
         self.dataset_name = dataset_name
         self.sensor = sensor
