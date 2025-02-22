@@ -55,7 +55,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       ++trainer.check_val_every_n_epoch=15 \
       ++trainer.max_epochs=500
     ```
-  - (Experimental) Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment:
+  - Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment: (weights initialized from [vibravox_EBEN_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_models) )
     ```
     python run.py \
       lightning_datamodule=noisybwe \
@@ -97,12 +97,24 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
     ++trainer.max_epochs=30
   ```
 
-- Test [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification on `speech_clean`:
-```
-python run.py \
-  lightning_datamodule=spkv \
-  lightning_module=ecapa2 \
-  logging=csv \
-  ++trainer.limit_train_batches=0 \
-  ++trainer.limit_val_batches=0
-```
+- [ECAPA2](https://huggingface.co/Jenthe/ECAPA2) for Speaker Verification:
+  - Test the model on `speech_clean`: 
+  ```
+  python run.py \
+    lightning_datamodule=spkv \
+    lightning_module=ecapa2 \
+    logging=csv \
+    ++trainer.limit_train_batches=0 \
+    ++trainer.limit_val_batches=0
+  ```
+  - Test on `speech_clean` mixed with `speechless_noisy`, representative of `speech_noisy` with the exact same pairs that were used on `speech_clean`, allowing direct comparison of results:
+  ```
+  python run.py \
+    lightning_datamodule=spkv \
+    lightning_datamodule.dataset_name=Cnam-LMSSC/vibravox_mixed_for_spkv \
+    lightning_datamodule.subset=speech_noisy_mixed \
+    lightning_module=ecapa2 \
+    logging=csv \
+    ++trainer.limit_train_batches=0 \
+    ++trainer.limit_val_batches=0
+  ```

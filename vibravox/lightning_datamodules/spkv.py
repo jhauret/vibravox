@@ -48,9 +48,17 @@ class SPKVLightningDataModule(LightningDataModule):
         super().__init__()
 
         self.sample_rate = sample_rate
-        assert dataset_name in ["Cnam-LMSSC/vibravox", "Cnam-LMSSC/vibravox2", "Cnam-LMSSC/vibravox-test", "Cnam-LMSSC/vibravox_enhanced_by_EBEN"], \
-            f"dataset_name {dataset_name} not supported."
+        assert dataset_name in [
+            "Cnam-LMSSC/vibravox",
+            "Cnam-LMSSC/vibravox-test",
+            "Cnam-LMSSC/vibravox_mixed_for_spkv" "Cnam-LMSSC/vibravox_enhanced_by_EBEN",
+        ], f"dataset_name {dataset_name} not supported."
         self.dataset_name = dataset_name
+        if self.dataset_name != "Cnam-LMSSC/vibravox-test":
+            assert subset in [
+                "speech_clean",
+                "speech_noisy_mixed",
+            ], "speech_noisy is not supported for SPKV (too few samples to have relevant results)"
         self.subset = subset
         self.sensorA = sensor_a
         self.sensorB = sensor_b
@@ -72,9 +80,7 @@ class SPKVLightningDataModule(LightningDataModule):
             That is why it is necessary to define attributes here rather than in __init__.
         """
 
-        dataset_dict = load_dataset(
-            self.dataset_name, self.subset, streaming=self.streaming
-        )
+        dataset_dict = load_dataset(self.dataset_name, self.subset, streaming=self.streaming)
 
         if stage == "fit" or stage is None:
             # Generating dataset for training and validation
@@ -89,16 +95,18 @@ class SPKVLightningDataModule(LightningDataModule):
 
                 # Only keep the relevant columns for this task :
                 train_dataset = train_dataset.select_columns(
-                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"]
+                )
                 val_dataset = val_dataset.select_columns(
-                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"]
+                )
 
                 # Resample the audios to the right sample rate
                 train_dataset = train_dataset.cast_column(
-                f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
+                    f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
                 val_dataset = val_dataset.cast_column(
-                f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
+                    f"audio.{self.sensorA}", Audio(sampling_rate=self.sample_rate, mono=False)
                 )
 
                 # Tag a column with the sensor name :
@@ -116,14 +124,18 @@ class SPKVLightningDataModule(LightningDataModule):
 
                 # Only keep the relevant columns for this task :
                 train_dataset_a = train_dataset.select_columns(
-                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"]
+                )
                 train_dataset_b = train_dataset.select_columns(
-                    [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"]
+                )
 
                 val_dataset_a = val_dataset.select_columns(
-                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"]
+                )
                 val_dataset_b = val_dataset.select_columns(
-                    [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
+                    [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"]
+                )
 
                 # Resample the audios to the right sample rate
                 train_dataset_a = train_dataset_a.cast_column(
@@ -157,13 +169,15 @@ class SPKVLightningDataModule(LightningDataModule):
                 val_dataset_b = val_dataset_b.add_column("sensor", [self.sensorB] * len(val_dataset_b))
 
                 # Interleave datasets of two sensors for training/validation :
-                train_dataset = interleave_datasets(datasets=[train_dataset_a, train_dataset_b],
-                                                         probabilities=[0.5, 0.5],
-                                                         stopping_strategy='all_exhausted')
+                train_dataset = interleave_datasets(
+                    datasets=[train_dataset_a, train_dataset_b],
+                    probabilities=[0.5, 0.5],
+                    stopping_strategy="all_exhausted",
+                )
 
-                val_dataset = interleave_datasets(datasets=[val_dataset_a, val_dataset_b],
-                                                       probabilities=[0.5, 0.5],
-                                                       stopping_strategy='all_exhausted')
+                val_dataset = interleave_datasets(
+                    datasets=[val_dataset_a, val_dataset_b], probabilities=[0.5, 0.5], stopping_strategy="all_exhausted"
+                )
 
             if train_dataset is not None and val_dataset is not None:
                 # Setting format to torch
@@ -188,9 +202,11 @@ class SPKVLightningDataModule(LightningDataModule):
 
             # Only keep the relevant columns for this task :
             test_dataset_a = test_dataset.select_columns(
-                [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"])
+                [f"audio.{self.sensorA}", "speaker_id", "sentence_id", "gender"]
+            )
             test_dataset_b = test_dataset.select_columns(
-                [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"])
+                [f"audio.{self.sensorB}", "speaker_id", "sentence_id", "gender"]
+            )
 
             # Tag a column with the sensor name :
             test_dataset_a = test_dataset_a.add_column("sensor", [self.sensorA] * len(test_dataset_a))
@@ -206,14 +222,19 @@ class SPKVLightningDataModule(LightningDataModule):
             )
 
             # Load the pickle file located in pkfile_path generated by scripts/gen_pairs_for_spkv.py :
-            pickle_file = f"configs/lightning_datamodule/spkv_pairs/{self.dataset_name.split('/')[1]}/{self.subset}/{self.pairs}.pkl"
+            if self.dataset_name == "Cnam-LMSSC/vibravox-test":
+                pickle_file = f"configs/lightning_datamodule/spkv_pairs/vibravox-test/{self.subset}/{self.pairs}.pkl"
+            else:
+                pickle_file = f"configs/lightning_datamodule/spkv_pairs/{self.pairs}.pkl"
 
-            pickle_path = Path(__file__).parent.parent.parent /pickle_file
+            pickle_path = Path(__file__).parent.parent.parent / pickle_file
 
             if not pickle_path.exists():
-                raise ValueError(f"File {pickle_path} does not exist, please generate one for your dataset using scripts/gen_pairs_for_spkv.py")
+                raise ValueError(
+                    f"File {pickle_path} does not exist, please generate one for your dataset using scripts/gen_pairs_for_spkv.py"
+                )
 
-            with open( pickle_path, 'rb') as file:
+            with open(pickle_path, "rb") as file:
                 pairs = pickle.load(file)
 
             test_dataset_a = test_dataset_a.select([pair[0] for pair in pairs])
@@ -227,7 +248,6 @@ class SPKVLightningDataModule(LightningDataModule):
             # Setting format to torch
             self.test_dataset_a = test_dataset_a.with_format("torch")
             self.test_dataset_b = test_dataset_b.with_format("torch")
-
 
     def train_dataloader(self):
         """
@@ -267,43 +287,49 @@ class SPKVLightningDataModule(LightningDataModule):
             Collection of two DataLoaders corresponding to dataset_A and dataset_B
         """
 
-        dataloader_a = DataLoader(self.test_dataset_a,
-                                  batch_size=self.batch_size,
-                                  num_workers=self.num_workers,
-                                  collate_fn=self.data_collator,
-                                  shuffle=False)  # We do not shuffle the dataset to keep the order of the pairs
+        dataloader_a = DataLoader(
+            self.test_dataset_a,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            collate_fn=self.data_collator,
+            shuffle=False,
+        )  # We do not shuffle the dataset to keep the order of the pairs
 
-        dataloader_b = DataLoader(self.test_dataset_b,
-                                  batch_size=self.batch_size,
-                                  num_workers=self.num_workers,
-                                  collate_fn=self.data_collator,
-                                  shuffle=False)
+        dataloader_b = DataLoader(
+            self.test_dataset_b,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            collate_fn=self.data_collator,
+            shuffle=False,
+        )
 
-        return CombinedLoader(iterables={"sensor_a": dataloader_a, "sensor_b": dataloader_b}, mode='min_size')
+        return CombinedLoader(iterables={"sensor_a": dataloader_a, "sensor_b": dataloader_b}, mode="min_size")
 
-    def data_collator(self, batch: List[Dict[str, Union[torch.Tensor, str, int]]]) -> Dict[str, Union[torch.Tensor, List[str], List[int]]]:
+    def data_collator(
+        self, batch: List[Dict[str, Union[torch.Tensor, str, int]]]
+    ) -> Dict[str, Union[torch.Tensor, List[str], List[int]]]:
         """
-            Collates data samples into a single batch
+        Collates data samples into a single batch
 
-            Note : since SPKV uses a CombinedLoader, this data_collator is used for both DataLoader
+        Note : since SPKV uses a CombinedLoader, this data_collator is used for both DataLoader
 
-            Parameters:
-                batch (List[Dict[str, Union[torch.Tensor, str, int]]]): List of dictionaries with keys 'audio', 'speaker_id', 'sentence_id', 'gender', and 'sensor'
-                Each Dict has the following keys :
-                    - 'audio' (torch.Tensor of dimension (sample_rate * duration)),
-                    - 'speaker_id' (str),
-                    - 'sentence_id' (torch.Tensor of int),
-                    - 'gender' (str),
-                    - 'sensor' (str)
+        Parameters:
+            batch (List[Dict[str, Union[torch.Tensor, str, int]]]): List of dictionaries with keys 'audio', 'speaker_id', 'sentence_id', 'gender', and 'sensor'
+            Each Dict has the following keys :
+                - 'audio' (torch.Tensor of dimension (sample_rate * duration)),
+                - 'speaker_id' (str),
+                - 'sentence_id' (torch.Tensor of int),
+                - 'gender' (str),
+                - 'sensor' (str)
 
-            Returns:
-                Dict : A dictionary containing collated data with keys:
-                - 'audio' (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
-                - 'speaker_id' (List[str]),
-                - 'sentence_id' (List[torch.Tensor of int]),
-                - 'gender' (List[str]),
-                - 'sensor' (List[str])
-            """
+        Returns:
+            Dict : A dictionary containing collated data with keys:
+            - 'audio' (torch.Tensor of dimension (batch_size, 1, sample_rate * duration)),
+            - 'speaker_id' (List[str]),
+            - 'sentence_id' (List[torch.Tensor of int]),
+            - 'gender' (List[str]),
+            - 'sensor' (List[str])
+        """
 
         audio_batch = [sample["audio"]["array"] for sample in batch]
         audio_batch = pad_sequence(audio_batch, batch_first=True, padding_value=0.0).unsqueeze(1)
