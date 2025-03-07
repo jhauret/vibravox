@@ -46,45 +46,44 @@ def sample(batch_size, time_len) -> torch.Tensor:
 
 @pytest.fixture(params=[1])
 def in_channels(request) -> int:
-    """Number of time samples."""
     return request.param
 
 @pytest.fixture(params=[3])
 def out_channels(request) -> int:
-    """Number of time samples."""
     return request.param
 
-@pytest.fixture(params=[1,3,4])
-def kernel(request) -> int:
-    """Number of time samples."""
+@pytest.fixture(params=[1,3,4,16])
+def kernel_size(request) -> int:
+    return request.param
+
+@pytest.fixture(params=[1,2,4,8])
+def stride(request) -> int:
     return request.param
 
 @pytest.fixture(params=[1,3,9])
-def stride(request) -> int:
-    """Number of time samples."""
-    return request.param
-
-@pytest.fixture(params=[1])
 def dilation(request) -> int:
-    """Number of time samples."""
     return request.param
 
 @pytest.fixture(params=[1])
 def groups(request) -> int:
-    """Number of time samples."""
     return request.param
 
-@pytest.fixture(params=[True])
-def bias(request) -> int:
-    """Number of time samples."""
+@pytest.fixture(params=[False])
+def bias(request) -> bool:
     return request.param
 
 @pytest.fixture
-def causal_conv1d_instance(in_channels, out_channels, kernel,stride, dilation, groups, bias) -> CausalConv1d:
-    """
-    Test for conv1D streaming
-    """
-    return CausalConv1d(in_channels, out_channels, kernel,stride, dilation, groups, bias)
+def causal_conv1d_instance(in_channels, out_channels, kernel_size, stride, dilation, groups, bias) -> CausalConv1d:
+
+    causal_conv = CausalConv1d(in_channels=in_channels,
+                        out_channels=out_channels,
+                        kernel_size=kernel_size,
+                        stride=stride,
+                        dilation=dilation,
+                        groups=groups,
+                        bias=bias)
+
+    return causal_conv
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
