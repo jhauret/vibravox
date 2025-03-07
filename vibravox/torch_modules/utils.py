@@ -44,7 +44,7 @@ class CausalConv1d(nn.Module):
         )
 
         # State buffer for streaming (inference)
-        self.register_buffer('state', torch.zeros(in_channels, self.padding))
+        self.register_buffer('state', torch.zeros(4, in_channels, self.padding))
         self.training_mode = True  # Default to training mode
 
     def forward(self, x):
@@ -52,13 +52,15 @@ class CausalConv1d(nn.Module):
             # Use state for streaming inference
             x = torch.cat((self.state, x), dim=-1)
             out = self.conv(x)
-            self.state = x[:, :, -self.padding:].detach()
+            if self.padding!=0:
+                self.state = x[:, :, -self.padding:].detach()
 
         else:
             # Apply causal padding directly during training
             x_padded = F.pad(x, (self.padding, 0))
             out = self.conv(x_padded)
-            out = out[:, :, :-self.padding]  # Remove causal padding
+            if self.padding!=0:
+                out = out[:, :, :-self.padding]  # Remove causal padding
 
         return out
 

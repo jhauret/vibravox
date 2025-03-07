@@ -6,6 +6,7 @@ import transformers
 from vibravox.lightning_datamodules.spkv import SPKVLightningDataModule
 from vibravox.lightning_datamodules.stp import STPLightningDataModule
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
+from vibravox.torch_modules.utils import CausalConv1d
 from vibravox.torch_modules.dnn.eben_generator import EBENGenerator
 from vibravox.torch_modules.losses.feature_loss import (
     FeatureLossForDiscriminatorMelganMultiScales,
@@ -30,7 +31,7 @@ def batch_size(request) -> int:
     return request.param
 
 
-@pytest.fixture(params=[15679])
+@pytest.fixture(params=[1579])
 def time_len(request) -> int:
     """Number of time samples."""
     return request.param
@@ -43,6 +44,47 @@ def sample(batch_size, time_len) -> torch.Tensor:
     """
     return torch.randn(batch_size, 1, time_len)
 
+@pytest.fixture(params=[1])
+def in_channels(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[3])
+def out_channels(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[1,3,4])
+def kernel(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[1,3,9])
+def stride(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[1])
+def dilation(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[1])
+def groups(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture(params=[True])
+def bias(request) -> int:
+    """Number of time samples."""
+    return request.param
+
+@pytest.fixture
+def causal_conv1d_instance(in_channels, out_channels, kernel,stride, dilation, groups, bias) -> CausalConv1d:
+    """
+    Test for conv1D streaming
+    """
+    return CausalConv1d(in_channels, out_channels, kernel,stride, dilation, groups, bias)
 
 @pytest.fixture
 def bwe_lightning_datamodule_instance_from_hydra() -> BWELightningDataModule:
