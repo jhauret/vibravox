@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 
+#Vscode
+.vscode/
+
 # IntelliJ project files
 .idea
 *.iml
