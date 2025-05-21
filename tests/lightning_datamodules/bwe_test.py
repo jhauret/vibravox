@@ -1,6 +1,11 @@
 import torch
 import pytest
+import os
+from huggingface_hub import login
 from vibravox.lightning_datamodules.bwe import BWELightningDataModule
+
+if "HF_TOKEN" in os.environ:
+    login(token=os.environ["HF_TOKEN"])
 
 
 class TestBWELightningDataModule:
@@ -53,9 +58,7 @@ class TestBWELightningDataModule:
 
         # Note: applying remove_hf on reference_audio and remove_bf on corrupted audio is not necessary
 
-        correlation = torch.nn.functional.conv1d(
-            corrupted_audio, reference_audio, padding=corrupted_audio.shape[-1]
-        )
+        correlation = torch.nn.functional.conv1d(corrupted_audio, reference_audio, padding=corrupted_audio.shape[-1])
 
         shift = torch.argmax(correlation) - corrupted_audio.shape[-1] + 1
 
@@ -65,6 +68,4 @@ class TestBWELightningDataModule:
 
     def test_hydra_instantiation(self, bwe_lightning_datamodule_instance_from_hydra):
 
-        assert isinstance(
-            bwe_lightning_datamodule_instance_from_hydra, BWELightningDataModule
-        )
+        assert isinstance(bwe_lightning_datamodule_instance_from_hydra, BWELightningDataModule)

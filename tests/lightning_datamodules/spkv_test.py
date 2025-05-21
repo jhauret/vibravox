@@ -1,6 +1,11 @@
 import torch
 import pytest
+import os
+from huggingface_hub import login
 from vibravox.lightning_datamodules.spkv import SPKVLightningDataModule
+
+if "HF_TOKEN" in os.environ:
+    login(token=os.environ["HF_TOKEN"])
 
 
 class TestSPKVLightningDataModule:
@@ -35,8 +40,12 @@ class TestSPKVLightningDataModule:
 
         # assert isinstance(dataloader_sample, dict), "Expected dataloader_sample to be a dictionary."
         # assert dataloader_sample.keys() == {"sensor_a", "sensor_b"}
-        assert isinstance(dataloader_sample_0["sensor_a"], dict), "Expected dataloader_sample['sensor_a'] to be a dictionary."
-        assert isinstance(dataloader_sample_0["sensor_b"], dict), "Expected dataloader_sample['sensor_b'] to be a dictionary."
+        assert isinstance(
+            dataloader_sample_0["sensor_a"], dict
+        ), "Expected dataloader_sample['sensor_a'] to be a dictionary."
+        assert isinstance(
+            dataloader_sample_0["sensor_b"], dict
+        ), "Expected dataloader_sample['sensor_b'] to be a dictionary."
         assert dataloader_sample_0["sensor_a"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
         assert dataloader_sample_0["sensor_b"].keys() == {"audio", "speaker_id", "sentence_id", "gender", "sensor"}
 
@@ -69,23 +78,29 @@ class TestSPKVLightningDataModule:
         assert isinstance(dataloader_sample_0["sensor_a"]["sensor"][0], str)
         assert isinstance(dataloader_sample_0["sensor_b"]["sensor"][0], str)
 
-        assert dataloader_sample_0["sensor_a"]["sensor"][0] in ["temple_vibration_pickup",
-                                                                "throat_microphone",
-                                                                "rigid_in_ear_microphone",
-                                                                "soft_in_ear_microphone",
-                                                                "forehead_accelerometer",
-                                                                "headset_microphone"]
+        assert dataloader_sample_0["sensor_a"]["sensor"][0] in [
+            "temple_vibration_pickup",
+            "throat_microphone",
+            "rigid_in_ear_microphone",
+            "soft_in_ear_microphone",
+            "forehead_accelerometer",
+            "headset_microphone",
+        ]
 
-        assert dataloader_sample_0["sensor_b"]["sensor"][0] in ["temple_vibration_pickup",
-                                                                "throat_microphone",
-                                                                "rigid_in_ear_microphone",
-                                                                "soft_in_ear_microphone",
-                                                                "forehead_accelerometer",
-                                                                "headset_microphone"]
+        assert dataloader_sample_0["sensor_b"]["sensor"][0] in [
+            "temple_vibration_pickup",
+            "throat_microphone",
+            "rigid_in_ear_microphone",
+            "soft_in_ear_microphone",
+            "forehead_accelerometer",
+            "headset_microphone",
+        ]
 
     def test_dataset_fit_stage_returns_type(self, spkv_lightning_datamodule_same_sensors_instance):
-        if spkv_lightning_datamodule_same_sensors_instance.dataset_name=="Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
-            pytest.skip("Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets")
+        if spkv_lightning_datamodule_same_sensors_instance.dataset_name == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+            pytest.skip(
+                "Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets"
+            )
         spkv_lightning_datamodule_same_sensors_instance.setup("fit")
         val_dataset = spkv_lightning_datamodule_same_sensors_instance.val_dataset
         train_dataset = spkv_lightning_datamodule_same_sensors_instance.train_dataset
@@ -108,8 +123,10 @@ class TestSPKVLightningDataModule:
         assert isinstance(dataset_sample_train["sensor"], str)
 
     def test_dataloader_fit_stage_returns_format(self, spkv_lightning_datamodule_same_sensors_instance):
-        if spkv_lightning_datamodule_same_sensors_instance.dataset_name=="Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
-            pytest.skip("Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets")
+        if spkv_lightning_datamodule_same_sensors_instance.dataset_name == "Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp":
+            pytest.skip(
+                "Skipping for 'Cnam-LMSSC/vibravox_enhanced_by_EBEN_tmp' because there is no train/validation sets"
+            )
 
         spkv_lightning_datamodule_same_sensors_instance.setup("fit")
         train_dataloader = spkv_lightning_datamodule_same_sensors_instance.train_dataloader()
@@ -151,22 +168,23 @@ class TestSPKVLightningDataModule:
         assert isinstance(train_dataloader_sample["sensor"][0], str)
         assert isinstance(val_dataloader_sample["sensor"][0], str)
 
-        assert train_dataloader_sample["sensor"][0] in ["temple_vibration_pickup",
-                                                        "throat_microphone",
-                                                        "rigid_in_ear_microphone",
-                                                        "soft_in_ear_microphone",
-                                                        "forehead_accelerometer",
-                                                        "headset_microphone"]
+        assert train_dataloader_sample["sensor"][0] in [
+            "temple_vibration_pickup",
+            "throat_microphone",
+            "rigid_in_ear_microphone",
+            "soft_in_ear_microphone",
+            "forehead_accelerometer",
+            "headset_microphone",
+        ]
 
-        assert val_dataloader_sample["sensor"][0] in ["temple_vibration_pickup",
-                                                      "throat_microphone",
-                                                      "rigid_in_ear_microphone",
-                                                      "soft_in_ear_microphone",
-                                                      "forehead_accelerometer",
-                                                      "headset_microphone"]
+        assert val_dataloader_sample["sensor"][0] in [
+            "temple_vibration_pickup",
+            "throat_microphone",
+            "rigid_in_ear_microphone",
+            "soft_in_ear_microphone",
+            "forehead_accelerometer",
+            "headset_microphone",
+        ]
 
     def test_hydra_instantiation(self, spkv_lightning_datamodule_instance_from_hydra):
-        assert isinstance(
-            spkv_lightning_datamodule_instance_from_hydra, SPKVLightningDataModule
-        )
-
+        assert isinstance(spkv_lightning_datamodule_instance_from_hydra, SPKVLightningDataModule)
