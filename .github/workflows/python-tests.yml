@@ -7,9 +7,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      CI: true
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
     strategy:
       matrix:
-        python-version: [3.12] # Specify the Python versions you want to test
+        python-version: [3.12]
 
     steps:
     - name: Checkout repository
@@ -25,9 +29,8 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest
+
     - name: Run tests
       run: |
         python -m pytest tests/
-      env:
-        CI: true
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
