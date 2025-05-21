@@ -179,52 +179,40 @@ class PseudoQMFBanks(nn.Module):
 
         return analysis_weights, synthesis_weights
 
-    def forward(self, signal, stage, bands="all"):
+    def forward(self, signal: torch.Tensor, stage: str, bands: int = -1) -> torch.Tensor:
         """
         Forward pass of the PQMF module.
 
         Args:
-            signal (torch.Tensor): The input signal.
+            signal (torch.Tensor): The input signal of shape (batch, channels, time).
             stage (str): The stage of processing, either "analysis" or "synthesis".
-            bands (str or int): The number of bands to compute starting from first ones.
-                                'all' for all bands, or an integer value.
+            bands (int): The number of bands to compute from the beginning. Use -1 for all bands.
 
         Returns:
             torch.Tensor: The output signal after analysis or synthesis.
         """
-
         if stage == "analysis":
-            if bands == "all":
-                # Compute all bands
-                return torch.nn.functional.conv1d(
-                    signal,
-                    self.analysis_weights,
-                    bias=None,
-                    stride=(self._decimation,),
-                    padding=(self._kernel_size - 1,),
-                )
-            else:
-                # Compute only the first bands
-                return torch.nn.functional.conv1d(
-                    signal,
-                    self.analysis_weights[:bands, :, :],
-                    bias=None,
-                    stride=(self._decimation,),
-                    padding=(self._kernel_size - 1,),
-                )
-        elif stage == "synthesis":
-            # Number of channels is equal to the decimation factor
+            weights = self.analysis_weights if bands == -1 else self.analysis_weights[:bands, :, :]
+            return torch.nn.functional.conv1d(
+                signal,
+                weights,
+                bias=None,
+                stride=self._decimation,
+                padding=self._kernel_size - 1,
+            )
+
+        if stage == "synthesis":
             return torch.nn.functional.conv_transpose1d(
                 signal,
                 self.synthesis_weights,
                 bias=None,
-                stride=(self._decimation,),
+                stride=self._decimation,
                 output_padding=self._decimation - 2,
                 groups=self._decimation,
-                padding=(self._kernel_size - 1,),
+                padding=self._kernel_size - 1,
             )
-        else:
-            raise ValueError(f"Stage: {stage} is not recognized.")
+
+        raise ValueError(f"Invalid stage '{stage}'. Expected 'analysis' or 'synthesis'.")
 
     def cut_tensor(self, tensor):
         """
@@ -257,18 +245,9 @@ if __name__ == "__main__":
 
     # Statistics
     print(f"Original signal length: {audio.shape[2]} with {audio.shape[1]} channel")
-    print(
-        f"Decomposed signal length: {audio_decomposed.shape[2]} with {audio_decomposed.shape[1]} channels"
-    )
-    print(
-        f"Recomposed signal length: {audio_recomposed.shape[2]} with {audio_recomposed.shape[1]} channel"
-    )
-    snr = (
-        10
-        * torch.log10(
-            (audio_recomposed ** 2).mean() / ((audio - audio_recomposed) ** 2).mean()
-        ).item()
-    )
+    print(f"Decomposed signal length: {audio_decomposed.shape[2]} with {audio_decomposed.shape[1]} channels")
+    print(f"Recomposed signal length: {audio_recomposed.shape[2]} with {audio_recomposed.shape[1]} channel")
+    snr = 10 * torch.log10((audio_recomposed**2).mean() / ((audio - audio_recomposed) ** 2).mean()).item()
     print(f"SNR of chirp_recomposed: {snr:.2f}dB")
     pqmf_params = sum(p.numel() for p in pqmf.parameters())
     print(f"PQMF params: {pqmf_params}")
