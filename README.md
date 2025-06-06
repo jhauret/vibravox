@@ -20,7 +20,7 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 
 ## Resources:
 
-- **📝**: The paper related to this project is available on arXiv on [this link](https://arxiv.org/abs/2407.11828).
+- **📝**: The Open access paper published in Speech Communication related to this project is available on [arXiv](https://arxiv.org/abs/2407.11828) and [Speech Communication](https://www.sciencedirect.com/science/article/pii/S0167639325000536)
 - **🤗**: The dataset used in this project is hosted by Hugging Face. You can access it [here](https://huggingface.co/datasets/Cnam-LMSSC/vibravox).  
 - **🌐**: For more information about the project, visit our [project page](https://vibravox.cnam.fr/).
 - **🏆**: Explore Leaderboards on [Papers With Code](https://paperswithcode.com/paper/vibravox-a-dataset-of-french-speech-captured).
@@ -118,3 +118,33 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
     ++trainer.limit_train_batches=0 \
     ++trainer.limit_val_batches=0
   ```
+
+## Cite our work 
+
+If you use code in this repository or the Vibravox dataset (either curated or non-curated versions) for research, **please cite this paper** :
+
+```bibtex
+@article{hauret2025vibravox,
+      title={{Vibravox: A dataset of french speech captured with body-conduction audio sensors}},
+      author={{Hauret, Julien and Olivier, Malo and Joubaud, Thomas and Langrenne, Christophe and
+        Poir{\'e}e, Sarah and Zimpfer, V{\'e}ronique and Bavu, {\'E}ric},
+      journal={Speech Communication},
+      pages={103238},
+      year={2025},
+      publisher={Elsevier}
+}
+```
+
+**and this HuggingFace repository**, which is linked to a DOI :
+
+```bibtex
+@misc{cnamlmssc2024vibravoxdataset,
+    author={Hauret, Julien and Olivier, Malo and Langrenne, Christophe and
+        Poir{\'e}e, Sarah and Bavu, {\'E}ric},
+    title        = { {Vibravox} (Revision 7990b7d) },
+    year         = 2024,
+    url          = { https://huggingface.co/datasets/Cnam-LMSSC/vibravox },
+    doi          = { 10.57967/hf/2727 },
+    publisher    = { Hugging Face }
+}
+```
