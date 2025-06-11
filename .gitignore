@@ -13,3 +13,6 @@ gen
 
 # run outputs
 outputs
+
+build/
+vibravox.egg-info/
