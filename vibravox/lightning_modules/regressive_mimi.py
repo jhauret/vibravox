@@ -63,7 +63,6 @@ class RegressiveMimiLightningModule(LightningModule):
         self.metrics: MetricCollection = metrics
         self.loss_feature_fn = loss_feature_fn
         self.num_val_runs = 0
-        self.cer_metric = torchmetrics.text.CharErrorRate()
 
     def forward(self, batch) -> Any:
         """
