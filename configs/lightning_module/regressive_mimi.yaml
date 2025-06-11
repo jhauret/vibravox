@@ -1,4 +1,4 @@
-_target_: vibravox.lightning_modules.regressive_codec.RegressiveCodecLightningModule
+_target_: vibravox.lightning_modules.regressive_mimi.RegressiveMimiLightningModule
 
 sample_rate: ${sample_rate}
 description: "RegressiveMiMi"
