@@ -44,7 +44,7 @@ class RegressiveMimiLightningModule(LightningModule):
         self.trainable_mimi_model.train()
 
         # Set the number of codebooks to the total number of codebooks in the model for better quality
-        self.trainable_mimi_model.set_num_codebooks(self.model.total_codebooks)
+        self.trainable_mimi_model.set_num_codebooks(self.trainable_mimi_model.total_codebooks)
 
         # Only used to compute the reference features
         self.frozen_mimi_model.train()
