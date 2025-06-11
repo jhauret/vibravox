@@ -5,7 +5,6 @@ from pathlib import Path
 from moshi.models import loaders
 from typing import Any, Dict
 import torchmetrics.text
-from loguru import logger
 import torch
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
