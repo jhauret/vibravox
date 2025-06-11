@@ -23,8 +23,18 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 - **🌐**: For more information about the project, visit our [project page](https://vibravox.cnam.fr/).
 - **🏆**: Explore Leaderboards on [Papers With Code](https://paperswithcode.com/paper/vibravox-a-dataset-of-french-speech-captured).
 
-## Setup
-```pip install vibravox```
+## Setup 
+#### Create your environment (example is given with `pyenv` here)
+```
+pyenv update
+pyenv install 3.12.O
+pyenv virtualenv 3.12.0 vibravox-env
+pyenv local vibravox-env
+```
+#### Install `vibravox`
+```
+pip install vibravox
+```
 
 ## Available sensors
 
