@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="./logo.png" style="object-fit:contain; width:250px; height:250px; border: solid 1px #CCC">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/65302a613ecbe51d6a6ddcec/zhB1fh-c0pjlj-Tr4Vpmr.png" style="object-fit:contain; width:250px; height:250px; border: solid 1px #CCC">
 </p>
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white"></a>
@@ -9,8 +9,6 @@
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning 2.2-792ee5?style=for-the-badge&logo=lightning&logoColor=white"></a>
 <a href="https://hydra.cc/"><img alt="Config: hydra" src="https://img.shields.io/badge/-🐉 hydra 1.3-89b8cd?style=for-the-badge&logo=hydra&logoColor=white"></a>
 <a href="https://huggingface.co/datasets"><img alt="HuggingFace Datasets" src="https://img.shields.io/badge/datasets 2.19-yellow?style=for-the-badge&logo=huggingface&logoColor=white"></a>
-
-
 
 Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibravox dataset.
 
