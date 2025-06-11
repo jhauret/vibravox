@@ -1,10 +1,10 @@
 noresqa_mos:
   _target_: vibravox.metrics.noresqa_mos.NoresqaMOS
-  sample_rate: ${sample_rate}
+  sample_rate: 16000
 
 torchmetrics_si_sdr:
   _target_: torchmetrics.audio.ScaleInvariantSignalDistortionRatio
 
 torchmetrics_stoi:
   _target_: torchmetrics.audio.ShortTimeObjectiveIntelligibility
-  fs: ${sample_rate}
+  fs: 16000
