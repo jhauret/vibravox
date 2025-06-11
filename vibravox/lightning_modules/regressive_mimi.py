@@ -17,7 +17,6 @@ class RegressiveMimiLightningModule(LightningModule):
         self,
         sample_rate: int,
         optimizer: partial[torch.optim.Optimizer],
-        codec: str,
         metrics: MetricCollection = None,
         loss_feature_fn: torch.nn.Module = None,
         description: str = None,
@@ -35,6 +34,7 @@ class RegressiveMimiLightningModule(LightningModule):
         assert sample_rate == 24_000, "sample_rate must be 24_000 Hz for this model"
 
         self.sample_rate: int = sample_rate
+        self.description: str = description
 
         weight_path = loaders.hf_hub_download(loaders.DEFAULT_REPO, loaders.MIMI_NAME)
 
