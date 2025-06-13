@@ -51,7 +51,8 @@ class SPKVLightningDataModule(LightningDataModule):
         assert dataset_name in [
             "Cnam-LMSSC/vibravox",
             "Cnam-LMSSC/vibravox-test",
-            "Cnam-LMSSC/vibravox_mixed_for_spkv" "Cnam-LMSSC/vibravox_enhanced_by_EBEN",
+            "Cnam-LMSSC/vibravox_mixed_for_spkv",
+            "Cnam-LMSSC/vibravox_enhanced_by_EBEN",
         ], f"dataset_name {dataset_name} not supported."
         self.dataset_name = dataset_name
         if self.dataset_name != "Cnam-LMSSC/vibravox-test":
