@@ -78,15 +78,23 @@ class BaseSELightningModule(LightningModule, ABC):
 
         # Log metrics
         if "reference" in outputs:
-            metrics_to_log = self.metrics(self.resampler_to_16k(outputs["enhanced"]), self.resampler_to_16k(outputs["reference"]))
+            metrics_to_log = self.metrics(
+                self.resampler_to_16k(outputs["enhanced"]), self.resampler_to_16k(outputs["reference"])
+            )
             if self.first_sample is None:
                 self.first_sample = self.resampler_to_16k(outputs["reference"])
         else:
-            metrics_to_log = {"torchsquim_stoi": self.metrics["torchsquim_stoi"](self.resampler_to_16k(outputs["enhanced"]))}
+            metrics_to_log = {
+                "torchsquim_stoi": self.metrics["torchsquim_stoi"](self.resampler_to_16k(outputs["enhanced"]))
+            }
             # We pick a clean airborne sample to be used as the non-matching reference for the noresqa_mos metric in "speech_noisy"
             if self.first_sample is not None:
                 metrics_to_log.update(
-                    {"noresqa_mos": self.metrics["noresqa_mos"](self.resampler_to_16k(outputs["enhanced"]), self.first_sample)}
+                    {
+                        "noresqa_mos": self.metrics["noresqa_mos"](
+                            self.resampler_to_16k(outputs["enhanced"]), self.first_sample
+                        )
+                    }
                 )
 
         self.log_dict(
