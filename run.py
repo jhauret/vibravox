@@ -3,7 +3,6 @@ This script is the entry point for training and testing the model.
 It instantiates all necessary modules, trains the model and tests it.
 """
 
-
 import os
 from typing import List
 import warnings
@@ -37,31 +36,21 @@ def main(cfg: DictConfig):
     """
 
     # Instantiate LightningDataModule
-    lightning_datamodule: LightningDataModule = hydra.utils.instantiate(
-        cfg.lightning_datamodule
-    )
+    lightning_datamodule: LightningDataModule = hydra.utils.instantiate(cfg.lightning_datamodule)
 
     # Instantiate LightningModule
-    metrics: MetricCollection = MetricCollection(
-        dict(hydra.utils.instantiate(cfg.metrics))
-    )
-    lightning_module: LightningModule = hydra.utils.instantiate(
-        cfg.lightning_module,
-        metrics=metrics,
-    )
+    lightning_module: LightningModule = hydra.utils.instantiate(cfg.lightning_module)
 
     # Instantiate Trainer
     callbacks: List[Callback] = list(hydra.utils.instantiate(cfg.callbacks).values())
     logger: Logger = hydra.utils.instantiate(cfg.logging.logger)
-    trainer: Trainer = hydra.utils.instantiate(
-        cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
-    )
+    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger, _convert_="partial")
 
     # Train the model ⚡
     trainer.fit(lightning_module, datamodule=lightning_datamodule)
 
     # Test the model
-    trainer.test(ckpt_path='last', datamodule=lightning_datamodule)
+    trainer.test(ckpt_path="last", datamodule=lightning_datamodule)
 
 
 def setup_environment():

@@ -1,2 +1,0 @@
-per:
-  _target_: torchmetrics.text.CharErrorRate

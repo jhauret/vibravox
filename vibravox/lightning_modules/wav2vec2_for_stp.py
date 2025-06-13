@@ -6,6 +6,7 @@ import transformers
 from lightning import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
+from torchmetrics.text import CharErrorRate
 from transformers import Wav2Vec2Processor
 
 
@@ -14,7 +15,6 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         self,
         wav2vec2_for_ctc: transformers.Wav2Vec2ForCTC,
         optimizer: partial[torch.optim.Optimizer],
-        metrics: MetricCollection,
         push_to_hub_after_testing: bool = False,
     ):
         """
@@ -23,7 +23,6 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
         Args:
             wav2vec2_for_ctc (torch.nn.Module): Neural network to enhance the speech
             optimizer (partial[torch.optim.Optimizer]): Optimizer
-            metrics (MetricCollection): Metrics to be computed.
             push_to_hub_after_testing (bool): If True, the model is pushed to the Hugging Face hub after testing. Defaults to False.
         """
         super().__init__()
@@ -36,7 +35,7 @@ class Wav2Vec2ForSTPLightningModule(LightningModule):
 
         self.optimizer: torch.optim.Optimizer = optimizer(params=self.wav2vec2_for_ctc.parameters())
 
-        self.metrics: MetricCollection = metrics
+        self.metrics = MetricCollection(dict(char_error_rate=CharErrorRate()))
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
 
     def training_step(self, batch: Dict[str, torch.Tensor]):
