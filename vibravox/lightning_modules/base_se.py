@@ -15,7 +15,7 @@ from vibravox.metrics.torchsquim_stoi import TorchsquimSTOI
 
 class BaseSELightningModule(LightningModule, ABC):
     """
-    A base LightningModule for speech enhancement tasks to reduce boilerplate code.
+    A base LightningModule for Speech Enhancement task to reduce boilerplate code.
 
     It handles common logic for:
     - Storing common parameters (`sample_rate`, `description`).
@@ -52,6 +52,7 @@ class BaseSELightningModule(LightningModule, ABC):
         self.dataloader_names: List[str] = None
 
         self.resampler_to_16k = Resample(orig_freq=sample_rate, new_freq=16_000)
+        self.first_sample: torch.Tensor = None
 
     # --- Abstract Methods (to be implemented by subclasses) ---
 

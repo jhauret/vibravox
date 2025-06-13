@@ -78,7 +78,6 @@ class EBENLightningModule(BaseSELightningModule):
 
         self.push_to_hub_after_testing: bool = push_to_hub_after_testing
         self.automatic_optimization: bool = False
-        self.first_sample: torch.Tensor = None
 
     def training_step(self, batch: Dict[str, torch.Tensor]):
         """
