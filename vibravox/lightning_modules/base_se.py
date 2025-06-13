@@ -7,6 +7,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 
 from torchmetrics import MetricCollection
 from torchmetrics.audio import ScaleInvariantSignalDistortionRatio, ShortTimeObjectiveIntelligibility
+from torchaudio.transforms import Resample
 
 from vibravox.metrics.noresqa_mos import NoresqaMOS
 from vibravox.metrics.torchsquim_stoi import TorchsquimSTOI
@@ -50,6 +51,8 @@ class BaseSELightningModule(LightningModule, ABC):
         self.num_val_runs: int = 0
         self.dataloader_names: List[str] = None
 
+        self.resampler_to_16k = Resample(orig_freq=sample_rate, new_freq=16_000)
+
     # --- Abstract Methods (to be implemented by subclasses) ---
 
     @abstractmethod
@@ -62,7 +65,7 @@ class BaseSELightningModule(LightningModule, ABC):
 
     def common_eval_logging(self, stage: str, outputs: STEP_OUTPUT, batch_idx: int, dataloader_idx: int) -> None:
         """
-        Common evaluation logging for validation and test.
+        Common evaluation logging for validation and test. Metrics are computed at 16kHz.
 
         Args:
             stage (str): Stage of the evaluation. One of {"validation", "test"}
@@ -70,19 +73,20 @@ class BaseSELightningModule(LightningModule, ABC):
             batch_idx (int): Index of the batch
             dataloader_idx (int): Index of the dataloader
         """
+
         dl_name_suffix = f"/{self.dataloader_names[dataloader_idx]}" if self.dataloader_names is not None else ""
 
         # Log metrics
         if "reference" in outputs:
-            metrics_to_log = self.metrics(outputs["enhanced"], outputs["reference"])
+            metrics_to_log = self.metrics(self.resampler_to_16k(outputs["enhanced"]), self.resampler_to_16k(outputs["reference"]))
             if self.first_sample is None:
-                self.first_sample = outputs["reference"]
+                self.first_sample = self.resampler_to_16k(outputs["reference"])
         else:
-            metrics_to_log = {"torchsquim_stoi": self.metrics["torchsquim_stoi"](outputs["enhanced"])}
+            metrics_to_log = {"torchsquim_stoi": self.metrics["torchsquim_stoi"](self.resampler_to_16k(outputs["enhanced"]))}
             # We pick a clean airborne sample to be used as the non-matching reference for the noresqa_mos metric in "speech_noisy"
             if self.first_sample is not None:
                 metrics_to_log.update(
-                    {"noresqa_mos": self.metrics["noresqa_mos"](outputs["enhanced"], self.first_sample)}
+                    {"noresqa_mos": self.metrics["noresqa_mos"](self.resampler_to_16k(outputs["enhanced"]), self.first_sample)}
                 )
 
         self.log_dict(

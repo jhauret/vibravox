@@ -3,8 +3,6 @@ from typing import Any, Dict
 
 import torch
 from lightning.pytorch.utilities.types import STEP_OUTPUT
-from torchmetrics import MetricCollection
-
 from vibravox.lightning_modules.base_se import BaseSELightningModule
 
 
@@ -132,16 +130,6 @@ class EBENLightningModule(BaseSELightningModule):
 
         return {"corrupted": corrupted_speech, "enhanced": enhanced_speech, "reference": reference_speech}
 
-    def configure_optimizers(self):
-        """
-        Method to configure optimizers and schedulers. Automatically called by Lightning's Trainer.
-
-        Returns:
-            List[torch.optimizer.Optimizer]
-
-        """
-        return [self.generator_optimizer, self.discriminator_optimizer]
-
     def common_eval_step(
         self, batch: Dict[str, torch.Tensor], batch_idx: int, stage: str, dataloader_idx: int
     ) -> STEP_OUTPUT:
@@ -174,7 +162,18 @@ class EBENLightningModule(BaseSELightningModule):
                 )
                 for key, value in atomic_losses.items():
                     self.log(f"{stage}/{net_type}/{key}{dl_name}", value, sync_dist=True, add_dataloader_idx=False)
+
         return outputs
+
+    def configure_optimizers(self):
+        """
+        Method to configure optimizers and schedulers. Automatically called by Lightning's Trainer.
+
+        Returns:
+            List[torch.optimizer.Optimizer]
+
+        """
+        return [self.generator_optimizer, self.discriminator_optimizer]
 
     def on_test_end(self) -> None:
         if self.push_to_hub_after_testing:
