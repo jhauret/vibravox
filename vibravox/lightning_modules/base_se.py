@@ -34,7 +34,6 @@ class BaseSELightningModule(LightningModule, ABC):
         description: str,
     ):
         super().__init__()
-        self.save_hyperparameters(ignore=["metrics"])
 
         self.sample_rate = sample_rate
         self.metrics = MetricCollection(
