@@ -20,5 +20,4 @@ defaults:
   - callbacks: # List of callbacks
       - rich_model_summary
   - logging: tensorboard
-  - metrics: ${lightning_datamodule}
   - _self_ # priority is given to train.yaml for overrides

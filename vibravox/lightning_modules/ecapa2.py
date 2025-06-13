@@ -14,19 +14,19 @@ from torchmetrics.functional import (
 
 from huggingface_hub import hf_hub_download
 
+from vibravox.metrics.equal_error_rate import EqualErrorRate
+from vibravox.metrics.minimum_dcf import MinimumDetectionCostFunction
+from vibravox.metrics.embedding_distance import BinaryEmbeddingDistance
+
 
 class ECAPA2LightningModule(LightningModule):
     def __init__(
         self,
-        metrics: MetricCollection,
     ):
         """
         Initializes the ECAPA2 model with Pytorch Lightning paradigm.
 
         The model is loaded as a JIT RecursiveScriptModule. Therefore, it can only be employed for testing.
-
-        Args:
-            metrics (MetricCollection): collection of metrics to compute
         """
         super().__init__()
 
@@ -40,7 +40,20 @@ class ECAPA2LightningModule(LightningModule):
         self.ecapa2.half()  # optional, but results in faster inference
 
         # Metrics
-        self.metrics = metrics
+        self.metrics = MetricCollection(
+            dict(
+                equal_error_rate=EqualErrorRate(score_key="cosine_similarity", label_key="label", thresholds=None),
+                minimum_detection_cost_function=MinimumDetectionCostFunction(
+                    score_key="cosine_similarity",
+                    label_key="label",
+                    thresholds=None,
+                    target_probability=0.05,
+                    false_reject_cost=1.0,
+                    false_accept_cost=1.0,
+                ),
+                binary_embedding_distance=BinaryEmbeddingDistance(score_key="euclidean_distance", label_key="label"),
+            )
+        )
 
     def training_step(self, batch):
         """
