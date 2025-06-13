@@ -176,59 +176,6 @@ class EBENLightningModule(BaseSELightningModule):
                     self.log(f"{stage}/{net_type}/{key}{dl_name}", value, sync_dist=True, add_dataloader_idx=False)
         return outputs
 
-    def common_eval_logging(self, stage: str, outputs: STEP_OUTPUT, batch_idx: int, dataloader_idx: int) -> None:
-        """
-        Common evaluation logging for validation and test.
-
-        Args:
-            stage (str): Stage of the evaluation. One of {"validation", "test"}
-            outputs (STEP_OUTPUT): Output of the validation step
-            batch_idx (int): Index of the batch
-            dataloader_idx (int): Index of the dataloader
-        """
-        dl_name_suffix = f"/{self.dataloader_names[dataloader_idx]}" if self.dataloader_names is not None else ""
-
-        # Log metrics
-        if "reference" in outputs:
-            metrics_to_log = self.metrics(outputs["enhanced"], outputs["reference"])
-            if self.first_sample is None:
-                self.first_sample = outputs["reference"]
-        else:
-            metrics_to_log = {"torchsquim_stoi": self.metrics["torchsquim_stoi"](outputs["enhanced"])}
-            if self.first_sample is not None:
-                metrics_to_log.update(
-                    {"noresqa_mos": self.metrics["noresqa_mos"](outputs["enhanced"], self.first_sample)}
-                )
-
-        self.log_dict(
-            {f"{stage}/{k}{dl_name_suffix}": v for k, v in metrics_to_log.items()},
-            sync_dist=True,
-            prog_bar=True,
-            add_dataloader_idx=False,
-        )
-
-        # Log audio
-        if batch_idx < 15 and ((self.logger and self.num_val_runs > 1) or stage == "test"):
-            dl_name_prefix = (
-                f"{stage}_{self.dataloader_names[dataloader_idx]}_"
-                if self.dataloader_names
-                else f"{stage}_{dataloader_idx}_"
-            )
-            self.log_audio(
-                outputs["enhanced"], f"{dl_name_prefix}{batch_idx}/enhanced", self.num_val_runs, self.sample_rate
-            )
-            if self.num_val_runs == 2 or stage == "test":
-                self.log_audio(
-                    outputs["corrupted"], f"{dl_name_prefix}{batch_idx}/corrupted", self.num_val_runs, self.sample_rate
-                )
-                if "reference" in outputs:
-                    self.log_audio(
-                        outputs["reference"],
-                        f"{dl_name_prefix}{batch_idx}/reference",
-                        self.num_val_runs,
-                        self.sample_rate,
-                    )
-
     def on_test_end(self) -> None:
         if self.push_to_hub_after_testing:
             self.generator.push_to_hub(
