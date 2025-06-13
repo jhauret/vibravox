@@ -5,7 +5,7 @@ import torch
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MetricCollection
 
-from base_se import BaseSELightningModule
+from vibravox.lightning_modules.base_se import BaseSELightningModule
 
 
 class EBENLightningModule(BaseSELightningModule):
