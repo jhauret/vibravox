@@ -39,10 +39,13 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
 - 🔵:`rigid_in_ear_microphone`
 - 🔴:`soft_in_ear_microphone`
 - 🧊:`temple_vibration_pickup`
-## Run some models
 
-- [EBEN](https://github.com/jhauret/eben) for Bandwidth Extension  
+## Run some models
+(non explicit list of models, just examples)
+
+- [EBEN](https://github.com/jhauret/eben) or [Mimi](https://github.com/kyutai-labs/moshi) for Bandwidth Extension  
   - Train and test on `speech_clean`, for recordings in a quiet environment:
+    - For EBEN:
     ```
     python run.py \
       lightning_datamodule=bwe \
@@ -53,7 +56,19 @@ Speech to Phoneme, Bandwidth Extension and Speaker Verification using the Vibrav
       ++trainer.check_val_every_n_epoch=15 \
       ++trainer.max_epochs=500
     ```
-  - Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment: (weights initialized from [vibravox_EBEN_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_models) )
+    - For Mimi:
+    ```
+    python run.py \
+      sample_rate=24000 \
+      lightning_datamodule=bwe \
+      lightning_datamodule.sensor=throat_microphone \
+      lightning_datamodule.batch_size=16 \
+      lightning_module=regressive_mimi \
+      lightning_module.optimizer.lr=1e-4 \
+      +callbacks=[bwe_checkpoint] \
+    ```
+  - Train on `speech_clean` mixed with `speechless_noisy` and test on `speech_noisy`, for recordings in a noisy environment: 
+    - For EBEN with weights initialized from [vibravox_EBEN_models](https://huggingface.co/Cnam-LMSSC/vibravox_EBEN_models):
     ```
     python run.py \
       lightning_datamodule=noisybwe \
